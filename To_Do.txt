@@ -7,4 +7,6 @@ Add Date and Editor name to Fields for summary files
 Ensure that the third ID field is optional (and change the order so it is last). 
 Add a backcasting feature for calculating the first IBI accurately.
 Use derivatives instead of max values to identify peaks
+May need to consider allowing: warmup, iterations, adapt_delta, & tree_depth to be specified by user
+
 
