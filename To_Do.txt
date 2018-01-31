@@ -1,12 +1,17 @@
 To Do List: 
-Need to split raw and edited IBI files by task
-Need to split out raw PPG files by task
-Need to add the "messy" section button and be able to "split" output around bad sections
-Fix glitch where if there are no edits the program returns an error
-Add Date and Editor name to Fields for summary files
-Ensure that the third ID field is optional (and change the order so it is last). 
-Add a backcasting feature for calculating the first IBI accurately.
-Use derivatives instead of max values to identify peaks
-May need to consider allowing: warmup, iterations, adapt_delta, & tree_depth to be specified by user
+-Need to split raw and edited IBI files by task
+-Need to split out raw PPG files by task
+-Need to add the "messy" section button and be able to "split" output around bad sections
+-Fix glitch where if there are no edits the program returns an error
+-Add Date and Editor name to Fields for summary files
+-Ensure that the third ID field is optional (and change the order so it is last). 
+-Add a backcasting feature for calculating the first IBI accurately.
+-Use derivatives instead of max values to identify peaks
+-May need to consider allowing: warmup, iterations, adapt_delta, & tree_depth to be specified by user
+-Change add point so it is picking the local maximum of the PPG waveform
+-Verify that the divide and average functions are working as intended
+-Add warnings for when functions are incorrectly specified. 
+-Include a summary of the Gaussian Processes used to impute data
+-Include graphic checks to examine the relation between edits and variability
 
 

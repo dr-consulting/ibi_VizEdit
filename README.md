@@ -10,7 +10,7 @@ Please note that IBI VizEdit is beta software. It has not been fully tested, and
 
 Please cite as: 
 
-Barstead, M. G. (2018). IBI VizEdit v.0.5: An RShiny Application[Computer software]. University of Maryland.
+Barstead, M. G. (2018). IBI VizEdit v.0.5: An RShiny Application [Computer software]. University of Maryland.
 
 ## Features and Settings
 
@@ -42,16 +42,50 @@ Once you have loaded the various settings for the program, your next task is to 
 
 ## Editing Your File 
 
-More details coming...
+There are two different editing panels as part of IBI VizEdit. The specific portion of the file you decide to view and edit on either the "Basic" or the "Advanced" panel is controlled by the small horizontal graphic at the bottom of the "Basic Editing Panel".  Simply use your mouse to highlight a section of the overall file and VizEdit will display that portion of the file in visual editing interface on both panels.
 
-## Interpreting Your Output
+The basic panel allows you to perform several simple functions. 
 
-More details coming...
+1. With add/delete turned on you can manually **ADD** a peak with a single click at the exact point (referenced to the x-axis) you believe a beat should have been identified. 
+2. **DELETE** incorrectly identified points. 
+3. **COMBINE** two or more interbeat intervals that were incorrectly identified by the peak detection algorithm. 
+4. **DIVIDE** a point where the peak detection program "skipped" over the identification of previous heart rate points.
+5. **AVERAGE** nearby IBIs when there are issues with detection peak detections.  
+
+The advanced panel offers a new suite of data imputation techniques that, as of yet, have not been included in previous heart rate editing packages. Chief among these techniques is the incorporation of Gaussian process models. 
+
+Gaussian process models are incredibly flexible, albeit computationally demanding. In IBI VizEdit, data imputation via Gaussian process models is implemented using Stan with R's Stan interface package `rstan`. Use of this feature requires separate installation of Stan and `rstan` (for more information visit this site).  
+
+Depending on the downsampling rate, the size of your file, the amount of time that requires imputation, and the consistency of the surrounding data will determine how long the model takes to run. See the IBI VizEdit manual for more information about the Gaussian process models implemented in IBI VizEdit. 
+
+IBI VizEdit also implements a simpler seasonal decomposition approach in order to aid researchers in identifying peaks. While useful for small sections of data, this technique will underestimate variability in heart rate relative to the more involved Gaussian process technique outlined above. 
+
+## What is in Your Output
+
+Once you have finished editing your document and you have selected the "Save" button on the main panel, a separate output directory will be created in your working directory folder that includes: 
+
+1. `ID#_Optional(ID)_Timepoint_Case_Processing_Summary.rtf`: This file includes summary information about the your file and editing choices: 
+2. - The output of the peak detection algorithm and the final bandwidth used for identifying peaks. 
+   - Average heart period and heart rate variability for the entire file as well as split by task/condition. 
+   - An editing summary that identifies every unique edit made including the value of the edited IBI, the time point of the edit, and the type of edit made. 
+   - A summary of the results from each Gaussian Process used to impute data, including the final output for parameters estimated by the models.
+
+
+2. `ID#_Optional(ID)_Timepoint_Hz_PPG.txt`: The downsampled file of the original signal. 
+3. `ID#_Optional(ID)_Timepoint_raw_IBI.txt`: The unedited version of the original IBI file as produced by the peak detection algorithm. 
+4.  `ID#_Optional(ID)_Timepoint_Xs_Epochs.csv`: A time series file with summary statistics computed for heart period (HP), root mean square of successive differences (rmssd), and standard deviation (sd) by user-specified epoch length. If the researcher selects multiple epoch lengths when setting up the editing session, multiple separate files will be included in the output. 
+5. `ID#_Optional(ID)_Timepoint_edited_IBI.txt`: The complete edited file. Edited IBI files are also output by by task. 
+6.  `ID#_Optional(ID)_Timepoint_edited_Task.csv`: Summary values (e.g., HP, rmssd, and sd) separated out by task/condition.  
 
 ## Advice on Editing Choices
 
-More details coming... 
+There are more detailed instructions for using the program in the IBI VizEdit manual. Briefly, it is worth highlighting that in granting researchers more freedom to edit their PPG heart rate files, even greater responsibility is placed on the researcher to check his or her work. 
 
-## Gaussian Processes, Stan, and Rstan
+To ensure responsible and effective use of the program you should ensure that: 
+
+1. You have successfully edited the practice files that are included in this repository. On average, your error rate should be no greater than ___. [The actual value to be determined based on incomplete pilot work.]
+2. When editing your own data, be sure to perform post-editing checks. As part of your editing, you can see a running plot in the RStudio plot viewer that plots the number of edits along with the rmssd. In an ideal situation, you would see no correspondence between the number of edits and heart rate variability. This is useful, though probably not a sufficient check to ensure that your edits are not adding any systematic source of variation from the choices you make. 
+
+## Stan and `rstan` in IBI VizEdit
 
 More details on this coming... 
