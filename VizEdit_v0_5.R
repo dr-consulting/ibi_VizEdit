@@ -85,6 +85,9 @@ ui <- shinyUI(
                          ),
                textInput(inputId='time.id',
                          label = 'Time Point:'
+                         ), 
+               textInput(inputID='editor',
+                         label = 'Editor Name:'
                          )
                ),
         column(3,
@@ -365,7 +368,8 @@ server <- function(input, output) {
     add.delete.on=0,
     rf20=NULL,
     select.on2=0,
-    add.delete.on2=0
+    add.delete.on2=0,
+    start.time=NULL
   )
   
   #=====================================================================================
@@ -436,12 +440,13 @@ server <- function(input, output) {
   })
   #=====================================================================================
   #-------------------------------------------------------------------------------------
-  #Input information for subject
+  #Input information for subject/Editor
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   sub.id<-reactive({input$sub.id})
   study.id<-reactive({input$study.id})
   time.id<-reactive({input$time.id})
+  editor.id<-reactive({input$editor})
 
   #=====================================================================================
   #-------------------------------------------------------------------------------------
@@ -1619,16 +1624,15 @@ server <- function(input, output) {
         tmp.IBI<-rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]
         tot.IBI<-c(tot.IBI, length(tmp.IBI[,1]))
         task.edits<-c(task.edits, length(unique(tmp.edit[,2])))
-        tmp.IBI.raw<-rv$IBI.raw[rv$IBI.raw$Time>tmp$Time[1] & rv$IBI.raw$Time<tmp$Time[2]]
+        tmp.IBI.raw<-rv$I--BI.raw[rv$IBI.raw$Time>tmp$Time[1] & rv$IBI.raw$Time<tmp$Time[2]]
         tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2]]
         write.table(tmp.IBI, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                Task.un[i],'IBI_edited.txt', sep = '_')))
         write.table(tmp.IBI.raw, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                   Task.un[i],'IBI_raw.txt', sep = '_')))
-        write.table(tmp.IBI.raw, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+        write.table(tmp.PPG, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                       Task.un[i], DS(), 'Hz',
                                                                       'PPG.txt', sep = '_')))
-        
       }
       p.edits<-task.edits/tot.IBI
       task.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(Task.un)),
@@ -1672,6 +1676,9 @@ server <- function(input, output) {
       rtffile <- RTF(paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                    'Cases Processing Summary.rtf', sep = '_')))
       addParagraph(rtffile, 'IBI VizEdit v0.5\nAuthor: Matthew G. Barstead\n(c) 2017')
+      addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(), '\n',
+                                  'Total Editing Time:', Sys.time()-rv$start.time))
+      addParagraph(rtffile, paste('Edited by:', editor.id()))
       addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
       addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
       addTable(rtffile, as.data.frame(round(rv$tab.comp, digits = 3)))
@@ -1759,8 +1766,15 @@ server <- function(input, output) {
         tmp.IBI<-rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]
         tot.IBI<-c(tot.IBI, length(tmp.IBI[,1]))
         task.edits<-c(task.edits, length(unique(tmp.edit[,2])))
+        tmp.IBI.raw<-rv$I--BI.raw[rv$IBI.raw$Time>tmp$Time[1] & rv$IBI.raw$Time<tmp$Time[2]]
+        tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2]]
         write.table(tmp.IBI, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                   Task.un[i],'IBI_edited.txt', sep = '_')))
+        write.table(tmp.IBI.raw, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+                                                                      Task.un[i],'IBI_raw.txt', sep = '_')))
+        write.table(tmp.PPG, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+                                                                  Task.un[i], DS(), 'Hz',
+                                                                  'PPG.txt', sep = '_')))
       }
       p.edits<-task.edits/tot.IBI
       task.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(Task.un)),
@@ -1804,6 +1818,9 @@ server <- function(input, output) {
       rtffile <- RTF(paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                            'Cases Processing Summary.rtf', sep = '_')))
       addParagraph(rtffile, 'IBI VizEdit v0.5\nAuthor: Matthew G. Barstead\n(c) 2017')
+      addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(), '\n',
+                                  'Total Editing Time:', Sys.time()-rv$start.time))
+      addParagraph(rtffile, paste('Edited by:', editor.id()))
       addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
       addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
       addTable(rtffile, as.data.frame(round(rv$tab.comp, digits = 3)))

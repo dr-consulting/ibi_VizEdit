@@ -1,7 +1,6 @@
 To Do List: 
 -Need to add the "messy" section button and be able to "split" output around bad sections
 -Fix glitch where if there are no edits the program returns an error
--Add Date and Editor name to Fields for summary files
 -Ensure that the third ID field is optional (and change the order so it is last). 
 -Add a backcasting feature for calculating the first IBI accurately.
 -Use derivatives instead of max values to identify peaks
