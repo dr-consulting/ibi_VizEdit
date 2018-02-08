@@ -80,12 +80,12 @@ ui <- shinyUI(
                textInput(inputId='sub.id', 
                          label = 'Subject ID:'
                          ),
-               textInput(inputId='study.id',
-                         label = 'Study ID:'
-                         ),
                textInput(inputId='time.id',
                          label = 'Time Point:'
                          ), 
+               textInput(inputId='study.id',
+                         label = '(Optional) Study ID:'
+                         ),
                textInput(inputID='editor',
                          label = 'Editor Name:'
                          )
