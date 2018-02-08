@@ -1568,6 +1568,10 @@ server <- function(input, output) {
     if(!is.null(input$save)){
       #browser()
       #Prepping relevant information for summary document
+      sub.dir<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output/', sep = '_'))
+      dirList<-list.dirs(rv$out.dir)
+      sub.dir2<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output', sep = '_'))
+      if(sum(dirList==sub.dir2)==0){dir.create(sub.dir)}
       sampling<-cbind(Hz(), DS())
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
@@ -1612,8 +1616,19 @@ server <- function(input, output) {
         task.rmssd<-c(task.rmssd, rmssd(rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]))
         task.hp<-c(task.hp, mean(rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]))
         task.sd<-c(task.sd, sd(rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]))
-        tot.IBI<-c(tot.IBI, length(rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]))
+        tmp.IBI<-rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]
+        tot.IBI<-c(tot.IBI, length(tmp.IBI[,1]))
         task.edits<-c(task.edits, length(unique(tmp.edit[,2])))
+        tmp.IBI.raw<-rv$IBI.raw[rv$IBI.raw$Time>tmp$Time[1] & rv$IBI.raw$Time<tmp$Time[2]]
+        tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2]]
+        write.table(tmp.IBI, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+                                                               Task.un[i],'IBI_edited.txt', sep = '_')))
+        write.table(tmp.IBI.raw, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+                                                                  Task.un[i],'IBI_raw.txt', sep = '_')))
+        write.table(tmp.IBI.raw, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+                                                                      Task.un[i], DS(), 'Hz',
+                                                                      'PPG.txt', sep = '_')))
+        
       }
       p.edits<-task.edits/tot.IBI
       task.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(Task.un)),
@@ -1626,10 +1641,6 @@ server <- function(input, output) {
                           round(p.edits, digits = 5))
       colnames(task.DF)<-c('id', 'Task', 'RMSSD', 'HP', 'SD', 'Total IBIs', 'Total edits', 'Proportion Edits')
       #------------------------------------------------------
-      sub.dir<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output/', sep = '_'))
-      dirList<-list.dirs(rv$out.dir)
-      sub.dir2<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output', sep = '_'))
-      if(sum(dirList==sub.dir2)==0){dir.create(sub.dir)}
       #stats by epoch
       epoch.length<-epoch()
       for(e in 1:length(epoch.length)){
@@ -1697,6 +1708,10 @@ server <- function(input, output) {
     if(!is.null(input$save.close)){
       #browser()
       #Prepping relevant information for summary document
+      sub.dir<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output/', sep = '_'))
+      dirList<-list.dirs(rv$out.dir)
+      sub.dir2<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output', sep = '_'))
+      if(sum(dirList==sub.dir2)==0){dir.create(sub.dir)}
       sampling<-cbind(Hz(), DS())
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
@@ -1741,8 +1756,11 @@ server <- function(input, output) {
         task.rmssd<-c(task.rmssd, rmssd(rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]))
         task.hp<-c(task.hp, mean(rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]))
         task.sd<-c(task.sd, sd(rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]))
-        tot.IBI<-c(tot.IBI, length(rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]))
+        tmp.IBI<-rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]
+        tot.IBI<-c(tot.IBI, length(tmp.IBI[,1]))
         task.edits<-c(task.edits, length(unique(tmp.edit[,2])))
+        write.table(tmp.IBI, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+                                                                  Task.un[i],'IBI_edited.txt', sep = '_')))
       }
       p.edits<-task.edits/tot.IBI
       task.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(Task.un)),
@@ -1755,10 +1773,6 @@ server <- function(input, output) {
                           round(p.edits, digits = 5))
       colnames(task.DF)<-c('id', 'Task', 'RMSSD', 'HP', 'SD', 'Total IBIs', 'Total edits', 'Proportion Edits')
       #------------------------------------------------------
-      sub.dir<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output/', sep = '_'))
-      dirList<-list.dirs(rv$out.dir)
-      sub.dir2<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output', sep = '_'))
-      if(sum(dirList==sub.dir2)==0){dir.create(sub.dir)}
       #stats by epoch
       epoch.length<-epoch()
       for(e in 1:length(epoch.length)){

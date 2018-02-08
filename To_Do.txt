@@ -1,6 +1,4 @@
 To Do List: 
--Need to split raw and edited IBI files by task
--Need to split out raw PPG files by task
 -Need to add the "messy" section button and be able to "split" output around bad sections
 -Fix glitch where if there are no edits the program returns an error
 -Add Date and Editor name to Fields for summary files
@@ -13,5 +11,6 @@ To Do List:
 -Add warnings for when functions are incorrectly specified. 
 -Include a summary of the Gaussian Processes used to impute data
 -Include graphic checks to examine the relation between edits and variability
+-Add an eraser function - as a pre-requisite for one form of the GP imputation technique. 
 
 
