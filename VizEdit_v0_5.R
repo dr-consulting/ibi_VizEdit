@@ -86,7 +86,7 @@ ui <- shinyUI(
                textInput(inputId='study.id',
                          label = '(Optional) Study ID:'
                          ),
-               textInput(inputID='editor',
+               textInput(inputId='editor',
                          label = 'Editor Name:'
                          )
                ),
@@ -302,26 +302,45 @@ ui <- shinyUI(
                         ),
                tags$br(),
                tags$br(),
-               uiOutput(outputId = 'sim.on', 
+               uiOutput(outputId = 'ppg.erase', 
                         inline = T
                         ),
-               uiOutput(outputId = 'predict.on', 
+               uiOutput(outputId = 'ppg.restore', 
+                        inline = T
+               ),
+               uiOutput(outputId = 'seas.on', 
+                        inline = T
+                        ),
+               uiOutput(outputId = 'GP.on',
                         inline = T
                         ),
                tags$hr(),
-               numericInput(inputId = 'n.sims',
-                            label = 'Simulations',
-                            value = 100, 
-                            min = 10,
-                            max = 10000
+               numericInput(inputId = 'n.iter',
+                            label = 'GP iterations',
+                            value = 1000, 
+                            min = 500,
+                            max = 3000
                             ),
+               numericInput(inputId = 'n.wrm',
+                            label = 'GP warmup',
+                            value = 500, 
+                            min = 250,
+                            max = 1500
+               ),
+               tags$p('Warmup iterations should be 50% of total iterations'),
+               numericInput(inputId = 'adapt.delta',
+                            label = 'Delta Adaptation',
+                            value = .80,
+                            min = .70,
+                            max=.99),
+               tags$p('min delta = .70, max delta = .99; higher values can lead to slower run times'),
                tags$hr(),
                sliderInput(inputId = 'freq.select',
-                           label = 'Select Target HR',
-                           min = 40, 
-                           max = 140,
-                           value = c(80, 120),
-                           post = 'BPM'
+                           label = 'Select Target HP range',
+                           min = .3, 
+                           max = 1.5,
+                           value = c(.5, .75),
+                           post = 'IBI'
                            ),
                tags$hr(),
                verbatimTextOutput(outputId = "hover_info2"
@@ -363,10 +382,10 @@ server <- function(input, output) {
     tot.edits=data.frame(),
     base.on=0,
     adv.on=0,
-    pred.sim=NULL,
+    pred.seas=NULL,
     select.on=0,
     add.delete.on=0,
-    rf20=NULL,
+    GP=NULL,
     select.on2=0,
     add.delete.on2=0,
     start.time=NULL
@@ -475,6 +494,17 @@ server <- function(input, output) {
   
   #=====================================================================================
   #-------------------------------------------------------------------------------------
+  #Gaussian Process Base values
+  #=====================================================================================
+  #-------------------------------------------------------------------------------------
+  GP.iter<-reactive(as.numeric(input$n.iter))
+  GP.wrm<-reactive(as.numeric(input$n.wrm))
+  GP.delta<-reactive(as.numeric(input$adapt.delta))
+  HR.min<-60/reactive(as.numeric(input$freq.select[2]))
+  HR.max<-60/reactive(as.numeric(input$freq.select[1]))
+  
+  #=====================================================================================
+  #-------------------------------------------------------------------------------------
   #Hitting Load Button results in: 
   #=====================================================================================
   #-------------------------------------------------------------------------------------
@@ -484,6 +514,7 @@ server <- function(input, output) {
   observeEvent(input$load,{
     #browser()
     if(!is.null(input$fileIn)){
+      rv$start.time<-Sys.time()
       rv$out.dir<-parseDirPath(roots=c(User=user.folder), input$dir)
       file_selected<-parseFilePaths(roots=c(wd=rv$wd, User=user.folder), input$fileIn)
       rv$file.name<-as.character(file_selected$datapath)
@@ -540,6 +571,9 @@ server <- function(input, output) {
           tmp<-data.frame(tmp2, time)
           colnames(tmp)<-c('PPG', 'Time')
           rv$PPG.proc <- tmp[tmp$Time>=min(rv$sub.time$Time) - 3 & tmp$Time<=max(rv$sub.time$Time) + 3,]
+          rv$PPG.proc2<-rv$PPG.proc #can be edited by GP interpolation
+          rv$PPG.proc2<-data.frame(rv$PPG.proc2, 
+                                   Vals=rep('original', length(PPG.proc2[,1])))
         }
       }
       else{
@@ -558,7 +592,10 @@ server <- function(input, output) {
           time<-0:(length(tmp2)-1)/DS()
           tmp<-data.frame(tmp2, time)
           colnames(tmp)<-c('PPG', 'Time')
-          rv$PPG.proc <- tmp 
+          rv$PPG.proc <- tmp
+          rv$PPG.proc2<-rv$PPG.proc #can be edited by GP interpolation 
+          rv$PPG.proc2<-data.frame(rv$PPG.proc2, 
+                                   Vals=rep('original', length(PPG.proc2[,1])))
         }
       }
     }
@@ -636,13 +673,22 @@ server <- function(input, output) {
     return(data.frame(pos.x.max,pos.y.max))
   }
   #===========================================================================
-  #Function 2 - Summing IBIs from Raw PPG file: - problem is here (to start)
+  #Function 2 - Summing IBIs from Raw PPG file: 
   time.sum<-function(x){
     Z<-rep(NA, length(x))
     for(i in 1:length(x)){
       Z[i]<-ifelse(i==1, x[i], x[i]-x[i-1])
     }
     return(Z)  
+  }
+  #===========================================================================
+  #Function 2b - Summing Time from IBIs
+  IBI.sum<-function(x){
+    Z<-rep(NA, length(x))
+    for(i in 1:length(x)){
+      Z[i]<-sum(x[1:i])
+    }
+    return(Z)
   }
   #===========================================================================
   #Function 3 - Iterative function for getting IBIs
@@ -757,11 +803,11 @@ server <- function(input, output) {
       }
       else if(rv$adv.on==1){
         rv$adv.on<-0
-        if(!is.null(rv$pred.sim)){
-          rv$pred.sim<-NULL
+        if(!is.null(rv$pred.seas)){
+          rv$pred.seas<-NULL
         }
-        else if(!is.null(rv$rf20)){
-          rv$rf20<-NULL
+        else if(!is.null(rv$GP)){
+          rv$GP<-NULL
         }
       }
     }
@@ -944,44 +990,81 @@ server <- function(input, output) {
     }
   })
   
-  output$sim.on<-renderUI({
+  output$ppg.erase<-renderUI({
     if(rv$adv.on==0){
-      tags$button(id = 'sim.in',
+      tags$button(id = 'ppg.erase.in',
                   type = "button",
                   class = "btn action-button",
                   style="color: #000000; background-color: #E0F2F7; border-color: #FFFFFF",
-                  'Band + cosine Sim'
+                  'PPG Erase'
       )
     }
     else if(rv$adv.on==1){
-      tags$button(id = 'sim.in',
+      tags$button(id = 'ppg.erase.in',
                   type = "button",
                   class = "btn action-button",
                   style="color: #000000; background-color: #58D3F7; border-color: #FFFFFF",
-                  'Band + cosine Sim'
+                  'PPG Erase'
       )
     }
   })
   
-  output$predict.on<-renderUI({
+  output$ppg.restore<-renderUI({
     if(rv$adv.on==0){
-      tags$button(id = 'rf20.in',
+      tags$button(id = 'ppg.restore.in',
                   type = "button",
                   class = "btn action-button",
                   style="color: #000000; background-color: #E0F2F7; border-color: #FFFFFF",
-                  'Low Hz Stop'
+                  'PPG Restore'
       )
     }
     else if(rv$adv.on==1){
-      tags$button(id = 'rf20.in',
+      tags$button(id = 'ppg.restore.in',
                   type = "button",
                   class = "btn action-button",
                   style="color: #000000; background-color: #58D3F7; border-color: #FFFFFF",
-                  'Low Hz Stop'
+                  'PPG Restore'
       )
     }
   })
   
+  output$seas.on<-renderUI({
+    if(rv$adv.on==0){
+      tags$button(id = 'seas.in',
+                  type = "button",
+                  class = "btn action-button",
+                  style="color: #000000; background-color: #E0F2F7; border-color: #FFFFFF",
+                  'Seasonal'
+      )
+    }
+    else if(rv$adv.on==1){
+      tags$button(id = 'seas.in',
+                  type = "button",
+                  class = "btn action-button",
+                  style="color: #000000; background-color: #58D3F7; border-color: #FFFFFF",
+                  'Seasonal'
+      )
+    }
+  })
+
+  output$GP.on<-renderUI({
+    if(rv$adv.on==0){
+      tags$button(id = 'GP.in',
+                  type = "button",
+                  class = "btn action-button",
+                  style="color: #000000; background-color: #E0F2F7; border-color: #FFFFFF",
+                  'Bayesian GP'
+      )
+    }
+    else if(rv$adv.on==1){
+      tags$button(id = 'GP.in',
+                  type = "button",
+                  class = "btn action-button",
+                  style="color: #000000; background-color: #58D3F7; border-color: #FFFFFF",
+                  'Bayesian GP'
+      )
+    }
+  })    
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   #Color switching for buttons on Editing Panel (render UI) - Clicking functions
@@ -1069,7 +1152,7 @@ server <- function(input, output) {
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   
-  output$IBI <- output$IBI2 <- renderPlot({
+  output$IBI <- renderPlot({
     #browser()
     p.IBI<-ggplot()
     if(!is.null(rv$IBI.edit)){
@@ -1087,22 +1170,62 @@ server <- function(input, output) {
       }
       if(!is.null(input$zoom_brush)){
         p.IBI<-p.IBI+coord_cartesian(xlim = c(input$zoom_brush$xmin, input$zoom_brush$xmax), 
-                                     ylim = c(0, max(rv$IBI.edit$IBI)+.2))
+                                     ylim = c(0, max(rv$IBI.edit$IBI)+.05))
         if(!is.null(input$select_cases)){
           temp<-brushedPoints(rv$IBI.edit, input$select_cases)
           p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=temp, col='#82FA58')
         }
       }
-      if(!is.null(rv$pred.sim) & rv$adv.on==1){
-        p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG.adj), data=rv$pred.sim, col='#82FA58')
+      if(!is.null(rv$pred.seas) & rv$adv.on==1){
+        p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), data=rv$pred.seas, col='#82FA58')
       }
-      if(!is.null(rv$rf20) & rv$adv.on==1){
-        p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG.adj), data = rv$rf20, col='#58D3F7')
+      if(!is.null(rv$GP) & rv$adv.on==1){
+        p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), 
+                               data = rv$PPG.proc2[rv$PPG.proc2$Vals=='GP impute',],
+                               col='#58D3F7')
+      }
+    }
+    p.IBI
+  })
+
+  output$IBI2 <- renderPlot({
+    #browser()
+    p.IBI<-ggplot()
+    if(!is.null(rv$IBI.edit)){
+      p.IBI<-ggplot(data = rv$IBI.edit, aes(x=Time, y=IBI))+
+        geom_line(aes(x=Time, y=PPG), data=rv$PPG.proc2[rv$PPG.proc$Vals=='original',], 
+                  col='gray80')+
+        geom_point(col="red")+
+        geom_line(col="black")+
+        geom_vline(aes(xintercept=Time), data=rv$IBI.edit, color = 'red', lty='dashed', alpha=.25)+
+        xlab('Time(s)')+
+        ylab('IBI(s)')
+      if(!is.null(rv$sub.time)){
+        p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=rv$sub.time, show.legend = F)+
+          geom_text(aes(x=Time, label=Label, color=Task, y=min(rv$PPG.proc2$PPG)), data = rv$sub.time, show.legend = F,
+                    angle = 60, hjust=0)
+      }
+      if(!is.null(input$zoom_brush)){
+        p.IBI<-p.IBI+coord_cartesian(xlim = c(input$zoom_brush$xmin, input$zoom_brush$xmax), 
+                                     ylim = c(0, max(rv$IBI.edit$IBI)+.05))
+        if(!is.null(input$select_cases)){
+          temp<-brushedPoints(rv$IBI.edit, input$select_cases)
+          p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=temp, col='#82FA58')
+        }
+      }
+      if(!is.null(rv$pred.seas) & rv$adv.on==1){
+        p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), data=rv$pred.seas, col='#82FA58')
+      }
+      if(length(rv$PPG.proc2$Vals[rv$PPG.proc2$Vals=='GP impute'])>0){
+        p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), 
+                               data = rv$PPG.proc2[rv$PPG.proc2$Vals=='GP impute',], 
+                               col='#58D3F7')
       }
     }
     p.IBI
   })
   
+    
   output$PPG_overall<-renderPlot({
     #browser()
     p.PPG2<-ggplot()
@@ -1158,13 +1281,19 @@ server <- function(input, output) {
   observeEvent(input$Peak_click, {
     #browser()
     if(!is.null(input$Peak_click) & rv$add.delete.on==1){
-      Time<-c(rv$IBI.edit$Time, input$Peak_click$x)
+      temp.points<-nearPoints(df=rv$PPG.proc, 
+                              input$Peak_click,
+                              xvar='Time',
+                              yvar='PPG',
+                              threshold = 5)
+      new.time<-temp.points$Time[temp.points$PPG==max(temp.points$PPG)]
+      Time<-c(rv$IBI.edit$Time, new.time)
       Time<-Time[order(Time, decreasing = F)]
       Time2<-Time-min(Time)
       IBI<-time.sum(Time2)
       rv$IBI.edit<-data.frame(IBI, Time) 
-      tot.edits<-cbind(rv$IBI.edit$IBI[rv$IBI.edit$Time==input$Peak_click$x],
-                       input$Peak_click$x,
+      tot.edits<-cbind(rv$IBI.edit$IBI[rv$IBI.edit$Time==new.time],
+                       new.time,
                        1)
       tot.edits<-as.data.frame(tot.edits)
       colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
@@ -1175,14 +1304,20 @@ server <- function(input, output) {
   
   observeEvent(input$Peak_click2, {
     #browser()
-    if(!is.null(input$Peak_click2) & rv$add.delete.on2==1){
-      Time<-c(rv$IBI.edit$Time, input$Peak_click2$x)
+    if(!is.null(input$Peak_click2) & rv$add.delete.on==1){
+      temp.points<-nearPoints(df=rv$PPG.proc2, 
+                              input$Peak_click2,
+                              xvar='Time',
+                              yvar='PPG',
+                              threshold = 5)
+      new.time<-temp.points$Time[temp.points$PPG==max(temp.points$PPG)]
+      Time<-c(rv$IBI.edit$Time, new.time)
       Time<-Time[order(Time, decreasing = F)]
       Time2<-Time-min(Time)
       IBI<-time.sum(Time2)
       rv$IBI.edit<-data.frame(IBI, Time) 
-      tot.edits<-cbind(rv$IBI.edit$IBI[rv$IBI.edit$Time==input$Peak_click2$x],
-                       input$Peak_click2$x,
+      tot.edits<-cbind(rv$IBI.edit$IBI[rv$IBI.edit$Time==new.time],
+                       new.time,
                        1)
       tot.edits<-as.data.frame(tot.edits)
       colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
@@ -1249,7 +1384,7 @@ server <- function(input, output) {
   
   #=====================================================================================
   #-------------------------------------------------------------------------------------
-  #Setting up base functions - mirroring cardio edit functions
+  #Setting up base functions - mirroring Cardio Edit functions
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   observeEvent(input$add.in, {
@@ -1289,26 +1424,15 @@ server <- function(input, output) {
     if(!is.null(input$select_cases) & rv$base.on==1){
       average<-brushedPoints(rv$IBI.edit, input$select_cases, allRows = T)
       average.temp<-rv$IBI.edit[average$selected_==1,]
-      IBI<-mean(average.temp$IBI)*1:length(average.temp$IBI)
-      Time.before<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time<min(average.temp$Time)])
-      Time.after<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time>max(average.temp$Time)])
-      if(length(Time.before)==0){
-        Time<-c(IBI, Time.after)
-      }
-      else if(length(Time.after)==0){
-        Time.new<-Time.before[length(Time.before)]+IBI
-        Time<-c(Time.before, Time.new)
-      }
-      else{
-        Time.new<-Time.before[length(Time.before)]+IBI
-        Time<-c(Time.before, Time.new, Time.after)
-      }
-      Time2<-Time-min(Time)
-      IBI<-time.sum(Time2)
-      rv$IBI.edit<-data.frame(IBI, Time) 
-      tot.edits<-c(average.temp,3)
-      tot.edits<-as.data.frame(tot.edits)
-      colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
+      IBI.temp<-rep(mean(average.temp$IBI),length(average.temp$IBI))
+      IBI.before<-as.vector(rv$IBI.edit$IBI[rv$IBI.edit$Time<min(average.temp$Time)])
+      IBI.after<-as.vector(rv$IBI.edit$IBI[rv$IBI.edit$Time>max(average.temp$Time)])
+      IBI.temp<-c(IBI.before, IBI.temp, IBI.after)
+      Time<-IBI.sum(IBI.temp)
+      rv$IBI.edit<-data.frame(IBI=IBI.temp, Time=Time) 
+      tot.edits<-data.frame(IBI=average.temp$IBI,
+                            Time=average.temp$Time,
+                            Edit=rep(3, length(average.temp$IBI)))
       rv$tot.edits<-rbind(rv$tot.edits, tot.edits)  
     }
     rv$IBI.edit<-rv$IBI.edit
@@ -1320,23 +1444,12 @@ server <- function(input, output) {
       rv$denom<-round(input$divide.by, digits = 0)
       divide<-brushedPoints(rv$IBI.edit, input$select_cases, allRows = T)
       divide.temp<-rv$IBI.edit[divide$selected_==1,]
-      IBI<-(divide.temp$IBI/rv$denom)*1:rv$denom
-      Time.before<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time<min(divide.temp$Time)])
-      Time.after<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time>max(divide.temp$Time)])
-      if(length(Time.before)==0){
-        Time<-c(IBI, Time.after)
-      }
-      else if(length(Time.after)==0){
-        Time.new<-Time.before[length(Time.before)]+IBI
-        Time<-c(Time.before, Time.new)
-      }
-      else{
-        Time.new<-Time.before[length(Time.before)]+IBI
-        Time<-c(Time.before, Time.new, Time.after)
-      }
-      Time2<-Time-min(Time)
-      IBI<-time.sum(Time2)
-      rv$IBI.edit<-data.frame(IBI, Time) 
+      IBI.temp<-rep(divde.temp$IBI/rv$denom, rv$denom)
+      IBI.before<-as.vector(rv$IBI.edit$IBI[rv$IBI.edit$Time<min(divide.temp$Time)])
+      IBI.after<-as.vector(rv$IBI.edit$IBI[rv$IBI.edit$Time>max(divide.temp$Time)])
+      IBI.temp<-c(IBI.before, IBI.temp, IBI.after)
+      Time<-IBI.sum(IBI.temp)
+      rv$IBI.edit<-data.frame(IBI=IBI.temp, Time=Time) 
       tot.edits<-c(divide.temp,4)
       tot.edits<-as.data.frame(tot.edits)
       colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
