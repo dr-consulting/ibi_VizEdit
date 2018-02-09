@@ -7,10 +7,14 @@ functions{
 		vector y, 
 		real alpha1,
 		real alpha2,
+		real alpha3,
 		real rho1,
 		real rho2,
 		real rho3,
-		real HR_f){
+		real rho4,
+		real rho5,
+		real HR_f,
+		real R_f){
 					matrix[Nx, Ny] K1;
 					matrix[Nx, Ny] K2;
 					matrix[Nx, Ny] K3;
@@ -30,18 +34,30 @@ functions{
 							exp(-square(x[i]-y[j])/2/square(rho3));
 						}
 					}
-	
-					Sigma = K1+K2;
+					
+					//specifying random Gaussian process incorporates heart rate as a function of respiration
+					for(i in 1:Nx){
+						for(j in 1:Ny){
+							K3[i, j] = alpha3*exp(-2*square(sin(pi()*fabs(x[i]-y[j])*HR_f))/square(rho4))*
+							exp(-2*square(sin(pi()*fabs(x[i]-y[j])*R_f))/square(rho5));
+						}
+					}
+					
+					Sigma = K1+K2+K3;
 					return Sigma;
 				}
 	//function for posterior calculations
 	vector post_pred_rng(
 		real a1,
 		real a2,
+		real a3,
 		real r1, 
 		real r2,
-		real r3, 
-		real HR, 
+		real r3,
+		real r4,
+		real r5,
+		real HR,
+		real R,
 		real sn,
 		int No,
 		vector xo,
@@ -59,17 +75,17 @@ functions{
 	
 	//--------------------------------------------------------------------
 	//Kernel Multiple GPs for observed data
-	Ko = main_GP(No, xo, No, xo, a1, a2, r1, r2, r3, HR);
-	Ko = Ko + diag_matrix(rep_vector(1, No))*sn;
-	
+	Ko = main_GP(No, xo, No, xo, a1, a2, a3, r1, r2, r3, r4, r5, HR, R);
+	for(n in 1:No) Ko[n,n] += sn;
+		
 	//--------------------------------------------------------------------
 	//kernel for predicted data
-	Kp = main_GP(Np, xp, Np, xp, a1, a2, r1, r2, r3, HR);
-	Kp = Kp + diag_matrix(rep_vector(1, Np))*sn;
+	Kp = main_GP(Np, xp, Np, xp, a1, a2, a3, r1, r2, r3, r4, r5, HR, R);
+	for(n in 1:Np) Kp[n,n] += sn;
 		
 	//--------------------------------------------------------------------
 	//kernel for observed and predicted cross 
-	Kop = main_GP(No, xo, Np, xp, a1, a2, r1, r2, r3, HR);
+	Kop = main_GP(No, xo, Np, xp, a1, a2, a3, r1, r2, r3, r4, r5, HR, R);
 	
 	//--------------------------------------------------------------------
 	//Algorithm 2.1 of Rassmussen and Williams... 
@@ -89,6 +105,8 @@ data {
 	vector[N1] Y;
 	vector[N2] Xp;
 	real<lower=0> mu_HR;
+	real<lower=0> sigma_HR;
+	real<lower=0> R;
 }
 
 transformed data { 
@@ -99,10 +117,14 @@ transformed data {
 parameters {
 	real<lower=0> a1;
 	real<lower=0> a2;
+	real<lower=0> a3;
 	real<lower=0> r1;
 	real<lower=0> r2;
 	real<lower=0> r3;
+	real<lower=0> r4;
+	real<lower=0> r5;
 	real<lower=0> HR;
+	//real<lower=0> R;
 	real<lower=0> sigma_sq;
 }
 
@@ -111,23 +133,26 @@ model{
 	matrix[N1,N1] L_S;
 	
 	//using GP function from above 
-	Sigma = main_GP(N1, X, N1, X, a1, a2, r1, r2, r3, HR);
-	Sigma = Sigma + diag_matrix(rep_vector(1, N1))*sigma_sq;
+	Sigma = main_GP(N1, X, N1, X, a1, a2, a3, r1, r2, r3, r4, r5, HR, R);
+	for(n in 1:N1) Sigma[n,n] += sigma_sq;
 	
 	L_S = cholesky_decompose(Sigma);
 	Y ~ multi_normal_cholesky(mu, L_S);
 	
 	//priors for parameters
-	a1 ~ gamma(1,1);
-	a2 ~ gamma(1,1);
-	r1 ~ gamma(1,1);
-	r2 ~ gamma(1,1);
-	r3 ~ gamma(1,1);
-	sigma_sq ~ gamma(1,1);
-	HR ~ normal(mu_HR,.25);
+	a1 ~ normal(0,2);
+	a2 ~ normal(0,2);
+	a3 ~ normal(0,2);
+	//incorporate minimum and maximum distances - use invgamma
+	r1 ~ inv_gamma(5,5);
+	r2 ~ inv_gamma(5,5);
+	r3 ~ inv_gamma(5,5);
+	r4 ~ inv_gamma(5,5);
+	r5 ~ inv_gamma(5,5);
+	sigma_sq ~ normal(0,1);
+	HR ~ normal(mu_HR,sigma_HR);
 }
 
 generated quantities {
-	vector[N2] Ypred;
-	Ypred = post_pred_rng(a1, a2, r1, r2, r3, HR, sigma_sq, N1, X, N2, Xp, Y);
+	vector[N2] Ypred = post_pred_rng(a1, a2, a3, r1, r2, r3, r4, r5, HR, R, sigma_sq, N1, X, N2, Xp, Y);
 }

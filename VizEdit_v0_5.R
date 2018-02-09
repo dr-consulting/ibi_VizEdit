@@ -29,23 +29,17 @@ pacman::p_load(shiny,
                rpart, 
                party,
                tseries, 
-               seewave)
+               seewave, 
+               rstan,
+               rstanarm,
+               bayesplot,
+               MCMCvis, 
+               astsa, 
+               parallel)
 
-library(shiny)
-library(ggplot2)
-library(shinythemes)
-library(shinyFiles)
-library(signal)
-library(zoo)
-library(forecast)
-library(rtf)
-library(shinyBS)
-library(rpart)
-library(party)
-library(tseries)
-
-
-# Define UI for application that draws a histogram
+###########################################################################################
+###########################################################################################
+# Begining of the UI 
 ui <- shinyUI(
   fluidPage(theme = shinytheme('united'),
   titlePanel(
@@ -308,6 +302,7 @@ ui <- shinyUI(
                uiOutput(outputId = 'ppg.restore', 
                         inline = T
                ),
+               tags$hr(),
                uiOutput(outputId = 'seas.on', 
                         inline = T
                         ),
@@ -491,17 +486,6 @@ server <- function(input, output) {
   #-------------------------------------------------------------------------------------
   View.min<-reactive(as.numeric(input$Viewer[1]))
   View.max<-reactive(as.numeric(input$Viewer[2]))
-  
-  #=====================================================================================
-  #-------------------------------------------------------------------------------------
-  #Gaussian Process Base values
-  #=====================================================================================
-  #-------------------------------------------------------------------------------------
-  GP.iter<-reactive(as.numeric(input$n.iter))
-  GP.wrm<-reactive(as.numeric(input$n.wrm))
-  GP.delta<-reactive(as.numeric(input$adapt.delta))
-  HR.min<-60/reactive(as.numeric(input$freq.select[2]))
-  HR.max<-60/reactive(as.numeric(input$freq.select[1]))
   
   #=====================================================================================
   #-------------------------------------------------------------------------------------
@@ -1041,7 +1025,7 @@ server <- function(input, output) {
       tags$button(id = 'seas.in',
                   type = "button",
                   class = "btn action-button",
-                  style="color: #000000; background-color: #58D3F7; border-color: #FFFFFF",
+                  style="color: #000000; background-color: #E0F2F7; border-color: #FFFFFF",
                   'Seasonal'
       )
     }
@@ -1463,216 +1447,103 @@ server <- function(input, output) {
   #Advanced Options - Predicting Values
   #=====================================================================================
   #-------------------------------------------------------------------------------------
-  observeEvent(input$sim.in,{
-    #browser()
-    if(!is.null(input$select_cases)& rv$adv.on==1){
-      seas<-rv$PPG.proc
-      min.val<-input$select_cases$xmin+3
-      max.val<-input$select_cases$xmax+3
-      #filter main hr frequency before messy section - high pass
-      TIME.window<-round((min.val-15)*DS()):round((max.val+15)*DS())
-      
-      #pvals<-dnorm(TIME.window,
-                   #mean=(min.val+max.val)*DS()/2, 
-                   #sd=abs(min.val-max.val)*DS()/2/qnorm(.99))
-      
-      #pvals<-range01(pvals)
-      #pvals.inv<-1-pvals
-      
-      low.upper<-length(seas$Time[seas$Time<=min.val-3])
-      low.lower<-low.upper-99
-      low.range<-low.lower:low.upper
-      t<-1:DS()
-      upper.lower<-length(seas$Time)-length(seas$Time[seas$Time>=max.val-3])
-      upper.upper<-upper.lower+99
-      upper.range<-upper.lower:upper.upper
-      block.weights<-rep(0, length(seas$PPG))
-      block.weights[low.range]<-t/DS()
-      block.weights[upper.range]<-1-t/DS()
-      block.weights[(low.upper+1):(upper.lower-1)]<-1
-      block.weights.filter<-block.weights[TIME.window]
-      inv.block.weights.filter<-1-block.weights.filter
-      #plot(block.weights.filter)
-      #Note that the +3 and -3 adjustments are necessary to connect the PPG and the IBI files via 'Time'
-      sims<-2500
-      DF<-data.frame()
-      mean.Hz.low<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Time>min.val-3-15 & rv$IBI.edit$Time<min.val-3])
-      mean.Hz.high<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Time>max.val-3 & rv$IBI.edit$Time<max.val-3+15])
-      sd.Hz<-sd(1/rv$IBI.edit$IBI[3:(length(rv$IBI.edit$IBI)-3)], na.rm = T)
-      N<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>min.val-3 & rv$IBI.edit$Time<max.val-3])
-      se.Hz<-sd.Hz/sqrt(N)
-      low.range.IBI<-rv$IBI.edit[rv$IBI.edit$Time>min.val-15-3 & rv$IBI.edit$Time<min.val-3,]
-      cos.wv.Hz.low<-(low.range.IBI$Time[length(low.range.IBI[,1])]+3)*DS()
-      TIME.window.adj<-TIME.window-cos.wv.Hz.low
-      withProgress(message = 'Simulating PPG Data', value = 0,{
-        for(s in 1:sims){
-          Hz.temp.low<-rnorm(1, mean = mean.Hz.low, sd=se.Hz)
-          filter.band.temp.low<-ffilter(seas$PPG, 
-                                     from = Hz.temp.low-qnorm(.975)*se.Hz, 
-                                     to = Hz.temp.low+qnorm(.975)*se.Hz, f=DS())
-          filter.band.fin.low<-range01(filter.band.temp.low[TIME.window])*block.weights.filter
-          #
-          filter.high.temp.low<-ffilter(seas$PPG, 
-                                     from = Hz.temp.low+qnorm(.975)*se.Hz,
-                                     to = 3*Hz.temp.low+qnorm(.975)*se.Hz,
-                                     f=DS())
-          filter.high.fin.low<-range01(filter.high.temp.low[TIME.window])*inv.block.weights.filter
-          #
-          cos.wv.low<-cos(2*pi*TIME.window.adj*Hz.temp.low/DS())
-          cos.wv.low<-range01(cos.wv.low)*block.weights.filter
-          #
-          temp.vec<-rep(NA, length(TIME.window))
-          temp.vec[inv.block.weights.filter==1]<-range01(filter.high.fin.low[inv.block.weights.filter==1])
-          temp.vec[inv.block.weights.filter<1]<-range01(((filter.band.fin.low[inv.block.weights.filter<1]+
-                                                            cos.wv.low[inv.block.weights.filter<1])/2+
-                                                           filter.high.fin.low[inv.block.weights.filter<1]))
-          DF<-rbind(DF, temp.vec[inv.block.weights.filter<1])
-          #---------------------------------------------------------------------------------------------
-          Hz.temp.high<-rnorm(1, mean = mean.Hz.high, sd=se.Hz)
-          filter.band.temp.high<-ffilter(seas$PPG, 
-                                        from = Hz.temp.high-qnorm(.975)*se.Hz, 
-                                        to = Hz.temp.high+qnorm(.975)*se.Hz, f=DS())
-          filter.band.fin.high<-range01(filter.band.temp.high[TIME.window])*block.weights.filter
-          #
-          filter.high.temp.high<-ffilter(seas$PPG, 
-                                        from = Hz.temp.high+qnorm(.975)*se.Hz,
-                                        to = 3*Hz.temp.high+qnorm(.975)*se.Hz,
-                                        f=DS())
-          filter.high.fin.high<-range01(filter.high.temp.high[TIME.window])*inv.block.weights.filter
-          #
-          cos.wv.high<-cos(2*pi*TIME.window.adj*Hz.temp.high/DS())
-          cos.wv.high<-range01(cos.wv.high)*block.weights.filter
-          #
-          temp.vec<-rep(NA, length(TIME.window))
-          temp.vec[inv.block.weights.filter==1]<-range01(filter.high.fin.high[inv.block.weights.filter==1])
-          temp.vec[inv.block.weights.filter<1]<-range01(((filter.band.fin.high[inv.block.weights.filter<1]+
-                                                            cos.wv.high[inv.block.weights.filter<1])/2+
-                                                           filter.high.fin.high[inv.block.weights.filter<1]))
-          DF<-rbind(DF, temp.vec[inv.block.weights.filter<1])
-          incProgress(1/sims, detail = paste(round(s/sims*100), '% Complete'))
-        }
-      })
-      #plot(filter.band.fin)
-      #plot(colMeans(DF, na.rm = T), type='l')
-      #lines(seas$PPG[TIME.window], col='red')
-      #lines(block.weights.filter, col='green')
-      #lines(inv.block.weights.filter, col='blue')
-
-      #PPG.ts<-ts(seas$PPG[seas$Time>min.val & seas$Time<max.val])
-      PPG.adj<-range01(colMeans(DF, na.rm=T))
-      pred.dat<-cbind(PPG.adj, seas$Time[(low.lower+1):upper.upper])
-      colnames(pred.dat)<-c('PPG.adj', 'Time')
-      pred.dat<-as.data.frame(pred.dat)
-      rv$pred.sim<-pred.dat
-    }
+  observeEvent(input$ppg.erase.in,{
+    temp.DF<-brushedPoints(df=rv$PPG.proc2, input$select_cases, allRows = T)
+    rv$PPG.proc2$PPG[temp.DF$selected_==1]<-NA
+    rv$PPG.proc2$Vals[temp.DF$selected_==1]<-'removed'
   })
   
-  observeEvent(input$rf20.in, {
-    browser()
-    if(!is.null(input$select_cases)& rv$adv.on==1){
-      seas<-rv$PPG.proc
-      min.val<-input$select_cases$xmin+3
-      max.val<-input$select_cases$xmax+3
-      TIME.window<-round((min.val-15)*DS()):round((max.val+15)*DS())
-      #--
-      low.upper<-length(seas$Time[seas$Time<=min.val-3])
-      low.lower<-low.upper-99
-      low.range<-low.lower:low.upper
-      t<-1:DS()
-      upper.lower<-length(seas$Time)-length(seas$Time[seas$Time>=max.val-3])
-      upper.upper<-upper.lower+99
-      upper.range<-upper.lower:upper.upper
-      block.weights<-rep(0, length(seas$PPG))
-      block.weights[low.range]<-t/DS()
-      block.weights[upper.range]<-1-t/DS()
-      block.weights[(low.upper+1):(upper.lower-1)]<-1
-      block.weights.filter<-block.weights[TIME.window]
-      inv.block.weights.filter<-1-block.weights.filter
-      #--
-      sims<-input$n.sims
-      DF<-data.frame()
-      mu.Hz<-mean(1/rv$IBI.edit$IBI[5:(length(rv$IBI.edit$IBI)-5)], na.rm = T)
-      mean.Hz.low<-as.numeric(input$freq.select[1])/60
-      mean.Hz.high<-as.numeric(input$freq.select[2])/60
-      sd.Hz<-sd(1/rv$IBI.edit$IBI[5:(length(rv$IBI.edit$IBI)-5)], na.rm = T)
-      N<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>min.val-3 & rv$IBI.edit$Time<max.val-3])
-      se.Hz<-sd.Hz/sqrt(N)
-      low.range.IBI<-rv$IBI.edit[rv$IBI.edit$Time>min.val-15-3 & rv$IBI.edit$Time<min.val-3,]
-      cos.wv.Hz.strt<-(low.range.IBI$Time[length(low.range.IBI[,1])]+3)*DS()
-      TIME.window.adj<-TIME.window-cos.wv.Hz.strt
-      #--
-      withProgress(message = 'Simulating PPG Data', value = 0,{
-        for(s in 1:sims){
-          Hz.temp<-rnorm(1,
-                         mean = (mean.Hz.high+mean.Hz.low)/2, 
-                         sd = (mean.Hz.high-mean.Hz.low)/2/qnorm(.975)
-                         )
-          filter.stop.temp<-ffilter(seas$PPG,
-                                    from = Hz.temp-qnorm(.975)*se.Hz,
-                                    to = Hz.temp+qnorm(.975)*se.Hz,
-                                    bandpass = F,
-                                    f=DS())
-          
-          filter.stop.fin<-as.vector(range01(filter.stop.temp[TIME.window]))*inv.block.weights.filter
-          #
-          filter.band.temp<-ffilter(seas$PPG, 
-                                    from = Hz.temp-qnorm(.975)*se.Hz,
-                                    to = Hz.temp+qnorm(.975)*se.Hz,
-                                    f=DS())
-          filter.band.fin<-as.vector(range01(filter.band.temp[TIME.window]))*block.weights.filter
-          #
-          cos.wv<-cos(2*pi*TIME.window.adj*Hz.temp/DS())
-          cos.wv<-range01(cos.wv)*block.weights.filter
-          #
-          temp.vec<-rep(NA, length(TIME.window))
-          temp.vec[inv.block.weights.filter==1]<-range01(filter.stop.fin[inv.block.weights.filter==1])
-          temp.vec[inv.block.weights.filter<1]<-range01(((filter.band.fin[inv.block.weights.filter<1]+
-                                                            cos.wv[inv.block.weights.filter<1])/2+
-                                                           filter.stop.fin[inv.block.weights.filter<1]))
-          DF<-rbind(DF, temp.vec[inv.block.weights.filter<1])
-          #---------------------------------------------------------------------------------------------
-          Hz.temp<-rnorm(1,
-                         mean = mu.Hz, 
-                         sd = se.Hz
-                         )
-          filter.stop.temp<-ffilter(seas$PPG,
-                                    from = Hz.temp-qnorm(.975)*se.Hz,
-                                    to = Hz.temp+qnorm(.975)*se.Hz,
-                                    bandpass = F,
-                                    f=DS())
-          
-          filter.stop.fin<-as.vector(range01(filter.stop.temp[TIME.window]))*inv.block.weights.filter
-          #
-          filter.band.temp<-ffilter(seas$PPG, 
-                                    from = Hz.temp-qnorm(.975)*se.Hz,
-                                    to = Hz.temp+qnorm(.975)*se.Hz,
-                                    f=DS())
-          filter.band.fin<-as.vector(range01(filter.band.temp[TIME.window]))*block.weights.filter
-          #
-          cos.wv<-cos(2*pi*TIME.window.adj*Hz.temp/DS())
-          cos.wv<-range01(cos.wv)*block.weights.filter
-          #
-          temp.vec<-rep(NA, length(TIME.window))
-          temp.vec[inv.block.weights.filter==1]<-range01(filter.stop.fin[inv.block.weights.filter==1])
-          temp.vec[inv.block.weights.filter<1]<-range01(((filter.band.fin[inv.block.weights.filter<1]+
-                                                            cos.wv[inv.block.weights.filter<1])/2+
-                                                           filter.stop.fin[inv.block.weights.filter<1]))
-          DF<-rbind(DF, temp.vec[inv.block.weights.filter<1])
-          incProgress(1/sims, detail = paste(round(s/sims*100), '% Complete'))
-        }
-      })
-      #plot(filter.band.fin)
-      #plot(colMeans(DF, na.rm = T), type='l')
-      #lines(seas$PPG[TIME.window], col='red')
-      #lines(block.weights.filter, col='green')
-      #lines(inv.block.weights.filter, col='blue')
+  observeEvent(input$ppg.restore.in,{
+    temp.DF<-brushedPoints(df=rv$PPG.proc2, input$select_cases, allRows = T)
+    rv$PPG.proc2$PPG[temp.DF$selected_==1]<-rv$PPG.proc$Time[temp.DF$selected_==1]
+    rv$PPG.proc2$Time[temp.DF$selected_==1]<-rv$PPG.proc$Time[temp.DF$selected_==1]
+    rv$PPG.proc2$Vals[temp.DF$selected_==1]<-'original'
+  })
+  
+  observeEvent(input$GP.in, {
+    if(!is.null(input$select_cases)){
+      browser()
+      options(mc.cores=parallel::detectCores())
+      rstan_options(auto_write = TRUE)
+      rv$GP.iter<-as.numeric(input$n.iter)
+      rv$GP.wrm<-as.numeric(input$n.wrm)
+      rv$delta<-as.numeric(input$adapt.delta)
+      rv$HR.min<-as.numeric(60/input$freq.select[2])
+      rv$HR.max<-as.numeric(60/input$freq.select[1])
+      sigma_HR<-(rv$HR.max-rv$HR.min)/4
+      mu_HR<-(rv$HR.max+rv$HR.min)/2
+      PPG.temp<-brushedPoints(df=rv$PPG.proc2, allRows = T)
+      #Specifying "Xp" values
+      TIME2<-PPG.temp$Time[PPG.temp$selected_==1]
       
-      #PPG.ts<-ts(seas$PPG[seas$Time>min.val & seas$Time<max.val])
-      PPG.adj<-range01(colMeans(DF, na.rm=T))
-      pred.dat<-cbind(PPG.adj, seas$Time[(low.lower+1):upper.upper])
-      colnames(pred.dat)<-c('PPG.adj', 'Time')
-      pred.dat<-as.data.frame(pred.dat)
-      rv$rf20<-pred.dat
+      #selecting Xp values & N2 Values
+      tot.Xp.vals<-length(TIME2)
+      sel.Xp.vals<-round(seq(1, tot.Xp.vals, length.out = 50))
+      sel.Xp.vals<-unique(sel.Xp.vals)
+      Xp<-TIME2[sel.Xp.vals]
+      N2<-length(Xp)
+      
+      #Selecting Y and N vals
+      min.TIME2<-min(TIME2)
+      max.TIME2<-max(TIME2)
+      Y.vals<-rbind(rv$PPG.proc2[rv$PPG.proc2$Time>min.TIME2-10 & rv$PPG.proc2$Time<min.TIME2,],
+                    rv$PPG.proc2[rv$PPG.proc2$Time>max.TIME2 & rv$PPG.proc2$Time<min.TIME2+10])
+      Y.vals<-na.omit(Y.vals)
+      tot.Y.vals<-length(Y.vals[,1])
+      sel.Y.vals<-round(seq(1, tot.Y.vals, length.out = 100))
+      Y<-Y.vals$PPG[sel.Y.vals]
+      X<-Y.vals$Time[sel.Y.vals]
+      N1<-length(X)
+      
+      #estimating respiration - using spectral density to obtain average
+      spec<-mvspec(rv$PPG.proc$PPG, spans = c(7,7), taper=.1, demean = T, log='no')
+      min.R<-10/60/DS()
+      max.R<-24/60/DS()
+      spec.trunc<-data.frame(freq=spec$freq[spec$freq>=min.R&spec$freq<=max.R],
+                             spec=spec$spec[spec$freq>=min.R&spec$freq<=max.R])
+      mu_R<-spec.trun$freq[spec.trunc$spec==max(spec.trunc$spec)]
+      mu_R<-mu_R*60*DS()
+      
+      #Data for stan model
+      dat<-list(N1=N1,
+                N2=N2,
+                X=X,
+                Xp=Xp,
+                Y=Y,
+                mu_HR=mu_HR,
+                simga_HR=sigma_HR,
+                R=mu_R
+                )
+      
+      pars.to.monitor<-c('Ypred',
+                         'HR')
+      
+      fit.stan<-stan(file='~\\IBI_VizEdit\\GP_main.stan',
+                     data = dat, 
+                     warmup = rv$GP.wrm,
+                     iter = rv$GP.iter,
+                     refresh=5,
+                     chains = 3,
+                     pars = pars.to.monitor,
+                     control = list(adapt_delta=rv$delta)
+                     )
+      
+      traceplot(fit.stan, pars='HR')
+      mcmc_areas(as.matrix(fit.stan), pars='HR')
+      HR.est<-extract(fit.stan, 'HR')
+  
+      y_pred<-extract(fit.stan, 'Ypred')
+      PPG.new<-colMeans(y_pred$YPred)
+      sampl.Hz<-length(Xp)/(max(Xp)-min(Xp))
+      PPG.upsampl<-resample(PPG.new, p=DS(), q=sampl.Hz)
+      rv$PPG.proc2$PPG[PPG.temp$selected_==1]<-PPG.upsampl
+      rv$PPG.proc2$Vals[PPG.tem$selected_==1]<-'GP impute'
+      GP.impute<-data.frame(Time1=min(TIME2),
+                            Time2=max(TIME2), 
+                            Time_tot=max(TIME2)-min(TIME2),
+                            Mean_HR_impute=mean(HR.est),
+                            SD_HR_impute=sd(HR.est))
+      rv$GP.impute.tab<-rbind(rv$GP.impute, GP.impute)
     }
   })
 
@@ -1784,6 +1655,17 @@ server <- function(input, output) {
                                                                  paste0(epoch.length[e], 's'),
                                                                  'Epochs.csv', sep = '_')))
       }
+      #------------------------------------------------------
+      #Imputation stats for PPG file
+      Impute.tab<-rv$GP.impute
+      tot.time<-max(rv$PPG.proc$Time)-min(rv$PPG.proc$Time)
+      if(length(Impute.tab[,1])>0){
+        tot.impute.time<-sum(Impute.tab$Time_tot)
+      }
+      else {
+        tot.impute.time<-0
+      }
+      per.impute.time<-tot.impute.time/tot.time
       
       #------------------------------------------------------
       rtffile <- RTF(paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
@@ -1805,6 +1687,12 @@ server <- function(input, output) {
       addTable(rtffile, task.DF)
       addParagraph(rtffile, '\n\nTable 6:\nPoint Editing Summary')
       addTable(rtffile, edit.pnts)
+      addParagraph(rtffile,'\n\nTable 7:\nGaussian Process Imputation Summary')
+      if(length(Impute.tab)>0){
+        addTable(rtffile, Impute.tab)
+      }
+      addParagraph(rtffile, paste('\nPercent of PPG file Imputed via GP:', 
+                                  paste0(per.impute.time, '%')))
       done(rtffile)
       write.table(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time),], 
                   paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
@@ -1926,7 +1814,17 @@ server <- function(input, output) {
                                                                  paste0(epoch.length[e], 's'),
                                                                  'Epochs.csv', sep = '_')))
       }
-      
+      #------------------------------------------------------
+      #Imputation stats for PPG file
+      Impute.tab<-rv$GP.impute
+      tot.time<-max(rv$PPG.proc$Time)-min(rv$PPG.proc$Time)
+      if(length(Impute.tab[,1])>0){
+        tot.impute.time<-sum(Impute.tab$Time_tot)
+      }
+      else {
+        tot.impute.time<-0
+      }
+      per.impute.time<-tot.impute.time/tot.time
       #------------------------------------------------------
       rtffile <- RTF(paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                            'Cases Processing Summary.rtf', sep = '_')))
@@ -1947,6 +1845,12 @@ server <- function(input, output) {
       addTable(rtffile, task.DF)
       addParagraph(rtffile, '\n\nTable 6:\nPoint Editing Summary')
       addTable(rtffile, edit.pnts)
+      addParagraph(rtffile,'\n\nTable 7:\nGaussian Process Imputation Summary')
+      if(length(Impute.tab)>0){
+        addTable(rtffile, Impute.tab)
+      }
+      addParagraph(rtffile, paste('\nPercent of PPG file Imputed via GP:', 
+                                  paste0(per.impute.time, '%')))
       done(rtffile)
       write.table(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time),], 
                   paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
