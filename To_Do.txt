@@ -1,8 +1,6 @@
 To Do List: 
 -Need to add the "messy" section button and be able to "split" output around bad sections
--Include a summary of the Gaussian Processes used to impute data
 -Include graphic checks to examine the relation between edits and variability
--Add an eraser function - as a pre-requisite for one form of the GP imputation technique. 
 -Debug recent fixes
 
 
