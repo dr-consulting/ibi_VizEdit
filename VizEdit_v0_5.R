@@ -312,7 +312,7 @@ ui <- shinyUI(
                tags$hr(),
                numericInput(inputId = 'n.iter',
                             label = 'GP iterations',
-                            value = 1000, 
+                            value = 750, 
                             min = 500,
                             max = 3000
                             ),
@@ -322,10 +322,10 @@ ui <- shinyUI(
                             min = 250,
                             max = 1500
                ),
-               tags$p('Warmup iterations should be 50% of total iterations'),
+               tags$p('Warmup iterations must be less than total iterations'),
                numericInput(inputId = 'adapt.delta',
                             label = 'Delta Adaptation',
-                            value = .80,
+                            value = .9,
                             min = .70,
                             max=.99),
                tags$p('min delta = .70, max delta = .99; higher values can lead to slower run times'),
@@ -354,7 +354,7 @@ ui <- shinyUI(
                           height = '600px',
                           click = "Peak_click2",
                           dblclick = "Delete2",
-                          brush = "select_cases",
+                          brush = "select_cases2",
                           hover = hoverOpts(id="plot_hover2", delay = 500)
                           )
                )
@@ -383,7 +383,8 @@ server <- function(input, output) {
     GP=NULL,
     select.on2=0,
     add.delete.on2=0,
-    start.time=NULL
+    start.time=NULL,
+    GP.impute.tab=NULL
   )
   
   #=====================================================================================
@@ -555,9 +556,6 @@ server <- function(input, output) {
           tmp<-data.frame(tmp2, time)
           colnames(tmp)<-c('PPG', 'Time')
           rv$PPG.proc <- tmp[tmp$Time>=min(rv$sub.time$Time) - 3 & tmp$Time<=max(rv$sub.time$Time) + 3,]
-          rv$PPG.proc2<-rv$PPG.proc #can be edited by GP interpolation
-          rv$PPG.proc2<-data.frame(rv$PPG.proc2, 
-                                   Vals=rep('original', length(PPG.proc2[,1])))
         }
       }
       else{
@@ -577,9 +575,6 @@ server <- function(input, output) {
           tmp<-data.frame(tmp2, time)
           colnames(tmp)<-c('PPG', 'Time')
           rv$PPG.proc <- tmp
-          rv$PPG.proc2<-rv$PPG.proc #can be edited by GP interpolation 
-          rv$PPG.proc2<-data.frame(rv$PPG.proc2, 
-                                   Vals=rep('original', length(PPG.proc2[,1])))
         }
       }
     }
@@ -743,6 +738,10 @@ server <- function(input, output) {
       colnames(IBI.file)<-c('IBI', 'Time')
       rv$IBI.raw<-as.data.frame(IBI.file)
       rv$PPG.proc$Time<-rv$PPG.proc$Time-min(rv$sub.time$Time)
+      rv$PPG.proc2<-rv$PPG.proc #can be edited by GP interpolation
+      rv$PPG.proc2<-data.frame(rv$PPG.proc2, 
+                               Vals=rep('original', length(rv$PPG.proc2[,1])),
+                               stringsAsFactors = F)
       rv$IBI.edit<-as.data.frame(IBI.file)
       rv$IBI.edit$Time<-rv$IBI.edit$Time-min(rv$sub.time$Time)
       rv$sub.time$Time<-rv$sub.time$Time-min(rv$sub.time$Time)
@@ -1177,7 +1176,7 @@ server <- function(input, output) {
     p.IBI<-ggplot()
     if(!is.null(rv$IBI.edit)){
       p.IBI<-ggplot(data = rv$IBI.edit, aes(x=Time, y=IBI))+
-        geom_line(aes(x=Time, y=PPG), data=rv$PPG.proc2[rv$PPG.proc$Vals=='original',], 
+        geom_line(aes(x=Time, y=PPG), data=rv$PPG.proc2, 
                   col='gray80')+
         geom_point(col="red")+
         geom_line(col="black")+
@@ -1192,15 +1191,15 @@ server <- function(input, output) {
       if(!is.null(input$zoom_brush)){
         p.IBI<-p.IBI+coord_cartesian(xlim = c(input$zoom_brush$xmin, input$zoom_brush$xmax), 
                                      ylim = c(0, max(rv$IBI.edit$IBI)+.05))
-        if(!is.null(input$select_cases)){
-          temp<-brushedPoints(rv$IBI.edit, input$select_cases)
+        if(!is.null(input$select_cases2)){
+          temp<-brushedPoints(rv$IBI.edit, input$select_cases2)
           p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=temp, col='#82FA58')
         }
       }
       if(!is.null(rv$pred.seas) & rv$adv.on==1){
         p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), data=rv$pred.seas, col='#82FA58')
       }
-      if(length(rv$PPG.proc2$Vals[rv$PPG.proc2$Vals=='GP impute'])>0){
+      if(length(rv$PPG.proc2$Vals[rv$PPG.proc2$Vals=='GP impute'])>0 & rv$adv.on==1){
         p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), 
                                data = rv$PPG.proc2[rv$PPG.proc2$Vals=='GP impute',], 
                                col='#58D3F7')
@@ -1276,11 +1275,9 @@ server <- function(input, output) {
       Time2<-Time-min(Time)
       IBI<-time.sum(Time2)
       rv$IBI.edit<-data.frame(IBI, Time) 
-      tot.edits<-cbind(rv$IBI.edit$IBI[rv$IBI.edit$Time==new.time],
-                       new.time,
-                       1)
-      tot.edits<-as.data.frame(tot.edits)
-      colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
+      tot.edits<-data.frame(IBI=rv$IBI.edit$IBI[rv$IBI.edit$Time==new.time],
+                            Time=new.time,
+                            Edit=1)
       rv$tot.edits<-rbind(rv$tot.edits, tot.edits)
     }
     rv$IBI.edit<-rv$IBI.edit
@@ -1288,7 +1285,7 @@ server <- function(input, output) {
   
   observeEvent(input$Peak_click2, {
     #browser()
-    if(!is.null(input$Peak_click2) & rv$add.delete.on==1){
+    if(!is.null(input$Peak_click2) & rv$add.delete.on2==1){
       temp.points<-nearPoints(df=rv$PPG.proc2, 
                               input$Peak_click2,
                               xvar='Time',
@@ -1300,11 +1297,9 @@ server <- function(input, output) {
       Time2<-Time-min(Time)
       IBI<-time.sum(Time2)
       rv$IBI.edit<-data.frame(IBI, Time) 
-      tot.edits<-cbind(rv$IBI.edit$IBI[rv$IBI.edit$Time==new.time],
-                       new.time,
-                       1)
-      tot.edits<-as.data.frame(tot.edits)
-      colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
+      tot.edits<-data.frame(IBI=rv$IBI.edit$IBI[rv$IBI.edit$Time==new.time],
+                            Time=new.time,
+                            Edit=1)
       rv$tot.edits<-rbind(rv$tot.edits, tot.edits)
     }
     rv$IBI.edit<-rv$IBI.edit
@@ -1329,7 +1324,9 @@ server <- function(input, output) {
         rv$tot.edits<-rv$tot.edits
       }
       else if(length(row$selected_==1)>0){
-        tot.edits<-c(rv$IBI.edit[row$selected_==1,],0)
+        tot.edits<-data.frame(IBI=rv$IBI.edit$IBI[row$selected_==1],
+                              Time=rv$IBI.edit$Time[row$selected_==1],
+                              Edit=0)
         tot.edits<-as.data.frame(tot.edits)
         colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
         rv$tot.edits<-rbind(rv$tot.edits, tot.edits) 
@@ -1357,9 +1354,9 @@ server <- function(input, output) {
         rv$tot.edits<-rv$tot.edits
       }
       else if(length(row$selected_==1)>0){
-        tot.edits<-c(rv$IBI.edit[row$selected_==1,],0)
-        tot.edits<-as.data.frame(tot.edits)
-        colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
+        tot.edits<-data.frame(IBI=rv$IBI.edit$IBI[row$selected_==1],
+                              Time=rv$IBI.edit$Time[row$selected_==1],
+                              Edit=0)
         rv$tot.edits<-rbind(rv$tot.edits, tot.edits) 
       }
     }
@@ -1412,7 +1409,7 @@ server <- function(input, output) {
       IBI.before<-as.vector(rv$IBI.edit$IBI[rv$IBI.edit$Time<min(average.temp$Time)])
       IBI.after<-as.vector(rv$IBI.edit$IBI[rv$IBI.edit$Time>max(average.temp$Time)])
       IBI.temp<-c(IBI.before, IBI.temp, IBI.after)
-      Time<-IBI.sum(IBI.temp)
+      Time<-IBI.sum(IBI.temp)-3 #needed to correct for 3 second "pre" window
       rv$IBI.edit<-data.frame(IBI=IBI.temp, Time=Time) 
       tot.edits<-data.frame(IBI=average.temp$IBI,
                             Time=average.temp$Time,
@@ -1427,16 +1424,16 @@ server <- function(input, output) {
     if(!is.null(input$select_cases) & rv$base.on==1){
       rv$denom<-round(input$divide.by, digits = 0)
       divide<-brushedPoints(rv$IBI.edit, input$select_cases, allRows = T)
-      divide.temp<-rv$IBI.edit[divide$selected_==1,]
-      IBI.temp<-rep(divde.temp$IBI/rv$denom, rv$denom)
+      divide.temp<-divide[divide$selected_==1,]
+      IBI.temp<-rep(divide.temp$IBI/rv$denom, rv$denom)
       IBI.before<-as.vector(rv$IBI.edit$IBI[rv$IBI.edit$Time<min(divide.temp$Time)])
       IBI.after<-as.vector(rv$IBI.edit$IBI[rv$IBI.edit$Time>max(divide.temp$Time)])
       IBI.temp<-c(IBI.before, IBI.temp, IBI.after)
-      Time<-IBI.sum(IBI.temp)
+      Time<-IBI.sum(IBI.temp)-3 #needed to correct for 3 second "pre" window
       rv$IBI.edit<-data.frame(IBI=IBI.temp, Time=Time) 
-      tot.edits<-c(divide.temp,4)
-      tot.edits<-as.data.frame(tot.edits)
-      colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
+      tot.edits<-data.frame(IBI=divide.temp$IBI, 
+                            Time=divide.temp$Time, 
+                            Edit=rep(4, length(divide.temp$IBI)))
       rv$tot.edits<-rbind(rv$tot.edits, tot.edits)  
     }
     rv$IBI.edit<-rv$IBI.edit
@@ -1448,75 +1445,94 @@ server <- function(input, output) {
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   observeEvent(input$ppg.erase.in,{
-    temp.DF<-brushedPoints(df=rv$PPG.proc2, input$select_cases, allRows = T)
-    rv$PPG.proc2$PPG[temp.DF$selected_==1]<-NA
-    rv$PPG.proc2$Vals[temp.DF$selected_==1]<-'removed'
+    #browser()
+    if(!is.null(input$select_cases2) & rv$adv.on==1){
+      time.min<-input$select_cases2$xmin
+      time.max<-input$select_cases2$xmax
+      rv$PPG.proc2$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-NA
+      rv$PPG.proc2$Vals[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-'removed'
+      #rv$PPG.proc2$Time[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-NA
+    }
+    else{
+      rv$PPG.proc2<-rv$PPG.proc2
+    }
   })
   
   observeEvent(input$ppg.restore.in,{
-    temp.DF<-brushedPoints(df=rv$PPG.proc2, input$select_cases, allRows = T)
-    rv$PPG.proc2$PPG[temp.DF$selected_==1]<-rv$PPG.proc$Time[temp.DF$selected_==1]
-    rv$PPG.proc2$Time[temp.DF$selected_==1]<-rv$PPG.proc$Time[temp.DF$selected_==1]
-    rv$PPG.proc2$Vals[temp.DF$selected_==1]<-'original'
+    if(!is.null(input$select_cases2) & rv$adv.on==1){
+      time.min<-input$select_cases2$xmin
+      time.max<-input$select_cases2$xmax
+      rv$PPG.proc2$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-rv$PPG.proc$PPG[rv$PPG.proc$Time>time.min & rv$PPG.proc$Time<time.max]
+      rv$PPG.proc2$Vals[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-'original'
+    }
+    else{
+      rv$PPG.proc2<-rv$PPG.proc2
+    }
   })
   
   observeEvent(input$GP.in, {
-    if(!is.null(input$select_cases)){
-      browser()
+    if(!is.null(input$select_cases2) & rv$adv.on==1){
+      #browser()
       options(mc.cores=parallel::detectCores())
       rstan_options(auto_write = TRUE)
       rv$GP.iter<-as.numeric(input$n.iter)
       rv$GP.wrm<-as.numeric(input$n.wrm)
       rv$delta<-as.numeric(input$adapt.delta)
-      rv$HR.min<-as.numeric(60/input$freq.select[2])
-      rv$HR.max<-as.numeric(60/input$freq.select[1])
-      sigma_HR<-(rv$HR.max-rv$HR.min)/4
-      mu_HR<-(rv$HR.max+rv$HR.min)/2
-      PPG.temp<-brushedPoints(df=rv$PPG.proc2, allRows = T)
+      rv$HP.max<-1/as.numeric(input$freq.select[1])
+      rv$HP.min<-1/as.numeric(input$freq.select[2])
+      sigma_HP<-(rv$HP.max-rv$HP.min)/4
+      mu_HP<-(rv$HP.max+rv$HP.min)/2
+      time.min<-input$select_cases2$xmin
+      time.max<-input$select_cases2$xmax
+      PPG.temp<-rv$PPG.proc2[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max,]
       #Specifying "Xp" values
-      TIME2<-PPG.temp$Time[PPG.temp$selected_==1]
+      TIME2<-PPG.temp$Time
       
       #selecting Xp values & N2 Values
-      tot.Xp.vals<-length(TIME2)
-      sel.Xp.vals<-round(seq(1, tot.Xp.vals, length.out = 50))
-      sel.Xp.vals<-unique(sel.Xp.vals)
-      Xp<-TIME2[sel.Xp.vals]
+      #tot.Xp.vals<-length(TIME2)
+      #sel.Xp.vals<-round(seq(1, tot.Xp.vals, length.out = 25))
+      #sel.Xp.vals<-unique(sel.Xp.vals)
+      Xp<-TIME2
       N2<-length(Xp)
       
       #Selecting Y and N vals
       min.TIME2<-min(TIME2)
       max.TIME2<-max(TIME2)
-      Y.vals<-rbind(rv$PPG.proc2[rv$PPG.proc2$Time>min.TIME2-10 & rv$PPG.proc2$Time<min.TIME2,],
-                    rv$PPG.proc2[rv$PPG.proc2$Time>max.TIME2 & rv$PPG.proc2$Time<min.TIME2+10])
+      Y.vals<-rbind(rv$PPG.proc2[rv$PPG.proc2$Time>min.TIME2-15 & rv$PPG.proc2$Time<min.TIME2,],
+                    rv$PPG.proc2[rv$PPG.proc2$Time>max.TIME2 & rv$PPG.proc2$Time<min.TIME2+15,])
       Y.vals<-na.omit(Y.vals)
       tot.Y.vals<-length(Y.vals[,1])
-      sel.Y.vals<-round(seq(1, tot.Y.vals, length.out = 100))
+      sel.Y.vals<-round(seq(1, tot.Y.vals, length.out = 75))
       Y<-Y.vals$PPG[sel.Y.vals]
       X<-Y.vals$Time[sel.Y.vals]
       N1<-length(X)
       
       #estimating respiration - using spectral density to obtain average
-      spec<-mvspec(rv$PPG.proc$PPG, spans = c(7,7), taper=.1, demean = T, log='no')
+      spec<-mvspec(rv$PPG.proc$PPG, 
+                   spans = c(7,7), 
+                   taper=.1, 
+                   demean = T, 
+                   log='no', 
+                   plot = F)
       min.R<-10/60/DS()
       max.R<-24/60/DS()
       spec.trunc<-data.frame(freq=spec$freq[spec$freq>=min.R&spec$freq<=max.R],
                              spec=spec$spec[spec$freq>=min.R&spec$freq<=max.R])
-      mu_R<-spec.trun$freq[spec.trunc$spec==max(spec.trunc$spec)]
-      mu_R<-mu_R*60*DS()
+      mu_R<-spec.trunc$freq[spec.trunc$spec==max(spec.trunc$spec)]
+      mu_R<-mu_R*DS()
       
       #Data for stan model
       dat<-list(N1=N1,
                 N2=N2,
-                X=X,
                 Xp=Xp,
+                X=X,
                 Y=Y,
-                mu_HR=mu_HR,
-                simga_HR=sigma_HR,
-                R=mu_R
+                mu_HR=mu_HP,
+                mu_R=mu_R,
+                sigma_HR=sigma_HP
                 )
       
-      pars.to.monitor<-c('Ypred',
-                         'HR')
+      pars.to.monitor<-c('HR','Ypred')
       
       fit.stan<-stan(file='~\\IBI_VizEdit\\GP_main.stan',
                      data = dat, 
@@ -1524,26 +1540,86 @@ server <- function(input, output) {
                      iter = rv$GP.iter,
                      refresh=5,
                      chains = 3,
+                     init = list(list(mu_HR=mu_HP),
+                                 list(mu_HR=mu_HP),
+                                 list(mu_HR=mu_HP)),
                      pars = pars.to.monitor,
                      control = list(adapt_delta=rv$delta)
                      )
       
       traceplot(fit.stan, pars='HR')
       mcmc_areas(as.matrix(fit.stan), pars='HR')
+      
+      #------------------------------------------------------------
+      #Taking most likely posterior value from each distribution
+      estimate_mode <- function(x) {
+        d <- density(x)
+        abs(d$x[which.max(d$y)])
+      }
+      #extracting values for prediction model: 
       HR.est<-extract(fit.stan, 'HR')
-  
+      mu_HR2<-estimate_mode(HR.est$HR)
+      #variances... 
+      #a1.est<-extract(fit.stan, 'a1')
+      #mu_a1<-estimate_mode(a1.est$a1)
+      #a2.est<-extract(fit.stan, 'a2')
+      #mu_a2<-estimate_mode(a2.est$a2)
+      #a3.est<-extract(fit.stan, 'a3')
+      #mu_a3<-estimate_mode(a3.est$a3)
+      #sigma.est<-extract(fit.stan, 'sigma_sq')
+      #mu_sigma.sq<-estimate_mode(sigma.est$sigma_sq)
+      #length scales 
+      #r1.est<-extract(fit.stan, 'r1')
+      #mu_r1<-estimate_mode(r1.est$r1)
+      #r2.est<-extract(fit.stan, 'r2')
+      #mu_r2<-estimate_mode(r2.est$r2)
+      #r3.est<-extract(fit.stan, 'r3')
+      #mu_r3<-estimate_mode(r3.est$r3)
+      #r4.est<-extract(fit.stan, 'r4')
+      #mu_r4<-estimate_mode(r4.est$r4)
+      #r5.est<-extract(fit.stan, 'r5')
+      #mu_r5<-estimate_mode(r5.est$r5)
+      
+      #Now setting up prediction model... 
+      #dat2<-list(N1=N1,
+      #          N2=N2,
+      #          X=X,
+      #          Xp=Xp,
+      #          Y=Y,
+      #          mu_HR=mu_HR2,
+      #          mu_R = mu_R,
+      #          a1=mu_a1,
+      #          a2=mu_a2,
+      #          a3=mu_a3,
+      #          sigma_sq=mu_sigma.sq,
+      #          r1=mu_r1,
+      #          r2=mu_r2,
+      #          r3=mu_r3,
+      #          r4=mu_r4,
+      #          r5=mu_r5
+      #          )
+      #------------------------------------------------------------
+      #Prediction model: 
+      #pars.to.monitor2<-'Ypred'
+      #pred.stan<-stan(file='~\\IBI_VizEdit\\GP_pred.stan',
+      #               data = dat2, 
+      #               warmup = 0,
+      #               iter = 500,
+      #               chains = 3,
+      #               pars = pars.to.monitor2,
+      #               algorithm = 'Fixed_param'
+      #               )
+      
       y_pred<-extract(fit.stan, 'Ypred')
-      PPG.new<-colMeans(y_pred$YPred)
-      sampl.Hz<-length(Xp)/(max(Xp)-min(Xp))
-      PPG.upsampl<-resample(PPG.new, p=DS(), q=sampl.Hz)
-      rv$PPG.proc2$PPG[PPG.temp$selected_==1]<-PPG.upsampl
-      rv$PPG.proc2$Vals[PPG.tem$selected_==1]<-'GP impute'
+      PPG.new<-colMeans(y_pred$Ypred)
+      rv$PPG.proc2$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-PPG.new
+      rv$PPG.proc2$Vals[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-'GP impute'
       GP.impute<-data.frame(Time1=min(TIME2),
                             Time2=max(TIME2), 
                             Time_tot=max(TIME2)-min(TIME2),
-                            Mean_HR_impute=mean(HR.est),
-                            SD_HR_impute=sd(HR.est))
-      rv$GP.impute.tab<-rbind(rv$GP.impute, GP.impute)
+                            MAP_HR_impute=estimate_mode(HR.est$HR)*60,
+                            SD_HR_impute=sd(HR.est$HR)*60)
+      rv$GP.impute.tab<-rbind(rv$GP.impute.tab, GP.impute)
     }
   })
 
@@ -1606,10 +1682,10 @@ server <- function(input, output) {
         task.hp<-c(task.hp, mean(rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]))
         task.sd<-c(task.sd, sd(rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]))
         tmp.IBI<-rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]
-        tot.IBI<-c(tot.IBI, length(tmp.IBI[,1]))
+        tot.IBI<-c(tot.IBI, length(tmp.IBI))
         task.edits<-c(task.edits, length(unique(tmp.edit[,2])))
-        tmp.IBI.raw<-rv$I--BI.raw[rv$IBI.raw$Time>tmp$Time[1] & rv$IBI.raw$Time<tmp$Time[2]]
-        tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2]]
+        tmp.IBI.raw<-rv$IBI.raw[rv$IBI.raw$Time>tmp$Time[1] & rv$IBI.raw$Time<tmp$Time[2],]
+        tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2],]
         write.table(tmp.IBI, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                Task.un[i],'IBI_edited.txt', sep = '_')))
         write.table(tmp.IBI.raw, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
@@ -1671,8 +1747,9 @@ server <- function(input, output) {
       rtffile <- RTF(paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                    'Cases Processing Summary.rtf', sep = '_')))
       addParagraph(rtffile, 'IBI VizEdit v0.5\nAuthor: Matthew G. Barstead\n(c) 2017')
-      addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(), '\n',
-                                  'Total Editing Time:', Sys.time()-rv$start.time))
+      addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
+                                  '\nTotal Editing Time:', round(Sys.time()-rv$start.time, digits = 2), 
+                                  's'))
       addParagraph(rtffile, paste('Edited by:', editor.id()))
       addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
       addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
@@ -1690,6 +1767,9 @@ server <- function(input, output) {
       addParagraph(rtffile,'\n\nTable 7:\nGaussian Process Imputation Summary')
       if(length(Impute.tab)>0){
         addTable(rtffile, Impute.tab)
+      }
+      else{
+        addParagraph(rtffile, 'No Gaussian process imputation used')
       }
       addParagraph(rtffile, paste('\nPercent of PPG file Imputed via GP:', 
                                   paste0(per.impute.time, '%')))
@@ -1765,10 +1845,10 @@ server <- function(input, output) {
         task.hp<-c(task.hp, mean(rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]))
         task.sd<-c(task.sd, sd(rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]))
         tmp.IBI<-rv$IBI.edit$IBI[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2]]
-        tot.IBI<-c(tot.IBI, length(tmp.IBI[,1]))
+        tot.IBI<-c(tot.IBI, length(tmp.IBI))
         task.edits<-c(task.edits, length(unique(tmp.edit[,2])))
-        tmp.IBI.raw<-rv$I--BI.raw[rv$IBI.raw$Time>tmp$Time[1] & rv$IBI.raw$Time<tmp$Time[2]]
-        tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2]]
+        tmp.IBI.raw<-rv$IBI.raw[rv$IBI.raw$Time>tmp$Time[1] & rv$IBI.raw$Time<tmp$Time[2],]
+        tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2],]
         write.table(tmp.IBI, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                   Task.un[i],'IBI_edited.txt', sep = '_')))
         write.table(tmp.IBI.raw, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
@@ -1825,12 +1905,14 @@ server <- function(input, output) {
         tot.impute.time<-0
       }
       per.impute.time<-tot.impute.time/tot.time
+      
       #------------------------------------------------------
       rtffile <- RTF(paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                            'Cases Processing Summary.rtf', sep = '_')))
       addParagraph(rtffile, 'IBI VizEdit v0.5\nAuthor: Matthew G. Barstead\n(c) 2017')
-      addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(), '\n',
-                                  'Total Editing Time:', Sys.time()-rv$start.time))
+      addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
+                                  '\nTotal Editing Time:', round(Sys.time()-rv$start.time, digits = 2), 
+                                  's'))
       addParagraph(rtffile, paste('Edited by:', editor.id()))
       addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
       addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
@@ -1849,6 +1931,9 @@ server <- function(input, output) {
       if(length(Impute.tab)>0){
         addTable(rtffile, Impute.tab)
       }
+      else{
+        addParagraph(rtffile, 'No Gaussian process imputation used')
+      }
       addParagraph(rtffile, paste('\nPercent of PPG file Imputed via GP:', 
                                   paste0(per.impute.time, '%')))
       done(rtffile)
@@ -1865,6 +1950,7 @@ server <- function(input, output) {
       write.table(rv$PPG.proc, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), paste0(DS(),'Hz'), 
                                                           'PPG.txt', sep = '_')), 
                   row.names = F, quote = F, sep='\t')
+      #This is where I need to split output by Segment
       stopApp()
     }
   })

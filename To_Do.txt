@@ -1,6 +1,0 @@
-To Do List: 
--Need to add the "messy" section button and be able to "split" output around bad sections
--Include graphic checks to examine the relation between edits and variability
--Debug recent fixes
-
-
