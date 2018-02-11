@@ -1473,6 +1473,7 @@ server <- function(input, output) {
   observeEvent(input$GP.in, {
     if(!is.null(input$select_cases2) & rv$adv.on==1){
       #browser()
+      time.temp1<-Sys.time()
       options(mc.cores=parallel::detectCores())
       rstan_options(auto_write = TRUE)
       rv$GP.iter<-as.numeric(input$n.iter)
@@ -1498,11 +1499,11 @@ server <- function(input, output) {
       #Selecting Y and N vals
       min.TIME2<-min(TIME2)
       max.TIME2<-max(TIME2)
-      Y.vals<-rbind(rv$PPG.proc2[rv$PPG.proc2$Time>min.TIME2-15 & rv$PPG.proc2$Time<min.TIME2,],
-                    rv$PPG.proc2[rv$PPG.proc2$Time>max.TIME2 & rv$PPG.proc2$Time<min.TIME2+15,])
+      Y.vals<-rbind(rv$PPG.proc2[rv$PPG.proc2$Time>min.TIME2-5 & rv$PPG.proc2$Time<min.TIME2,],
+                    rv$PPG.proc2[rv$PPG.proc2$Time>max.TIME2 & rv$PPG.proc2$Time<min.TIME2+5,])
       Y.vals<-na.omit(Y.vals)
       tot.Y.vals<-length(Y.vals[,1])
-      sel.Y.vals<-round(seq(1, tot.Y.vals, length.out = 75))
+      sel.Y.vals<-round(seq(1, tot.Y.vals, length.out = 50))
       Y<-Y.vals$PPG[sel.Y.vals]
       X<-Y.vals$Time[sel.Y.vals]
       N1<-length(X)
@@ -1556,69 +1557,26 @@ server <- function(input, output) {
         d <- density(x)
         abs(d$x[which.max(d$y)])
       }
-      #extracting values for prediction model: 
+      #extracting values from the model: 
       HR.est<-extract(fit.stan, 'HR')
       mu_HR2<-estimate_mode(HR.est$HR)
-      #variances... 
-      #a1.est<-extract(fit.stan, 'a1')
-      #mu_a1<-estimate_mode(a1.est$a1)
-      #a2.est<-extract(fit.stan, 'a2')
-      #mu_a2<-estimate_mode(a2.est$a2)
-      #a3.est<-extract(fit.stan, 'a3')
-      #mu_a3<-estimate_mode(a3.est$a3)
-      #sigma.est<-extract(fit.stan, 'sigma_sq')
-      #mu_sigma.sq<-estimate_mode(sigma.est$sigma_sq)
-      #length scales 
-      #r1.est<-extract(fit.stan, 'r1')
-      #mu_r1<-estimate_mode(r1.est$r1)
-      #r2.est<-extract(fit.stan, 'r2')
-      #mu_r2<-estimate_mode(r2.est$r2)
-      #r3.est<-extract(fit.stan, 'r3')
-      #mu_r3<-estimate_mode(r3.est$r3)
-      #r4.est<-extract(fit.stan, 'r4')
-      #mu_r4<-estimate_mode(r4.est$r4)
-      #r5.est<-extract(fit.stan, 'r5')
-      #mu_r5<-estimate_mode(r5.est$r5)
-      
-      #Now setting up prediction model... 
-      #dat2<-list(N1=N1,
-      #          N2=N2,
-      #          X=X,
-      #          Xp=Xp,
-      #          Y=Y,
-      #          mu_HR=mu_HR2,
-      #          mu_R = mu_R,
-      #          a1=mu_a1,
-      #          a2=mu_a2,
-      #          a3=mu_a3,
-      #          sigma_sq=mu_sigma.sq,
-      #          r1=mu_r1,
-      #          r2=mu_r2,
-      #          r3=mu_r3,
-      #          r4=mu_r4,
-      #          r5=mu_r5
-      #          )
-      #------------------------------------------------------------
-      #Prediction model: 
-      #pars.to.monitor2<-'Ypred'
-      #pred.stan<-stan(file='~\\IBI_VizEdit\\GP_pred.stan',
-      #               data = dat2, 
-      #               warmup = 0,
-      #               iter = 500,
-      #               chains = 3,
-      #               pars = pars.to.monitor2,
-      #               algorithm = 'Fixed_param'
-      #               )
-      
+
       y_pred<-extract(fit.stan, 'Ypred')
       PPG.new<-colMeans(y_pred$Ypred)
       rv$PPG.proc2$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-PPG.new
       rv$PPG.proc2$Vals[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-'GP impute'
+      run_time<-Sys.time()-time.temp1
+      units<-run_time<-'mins'
       GP.impute<-data.frame(Time1=min(TIME2),
                             Time2=max(TIME2), 
                             Time_tot=max(TIME2)-min(TIME2),
                             MAP_HR_impute=estimate_mode(HR.est$HR)*60,
-                            SD_HR_impute=sd(HR.est$HR)*60)
+                            run_time=run_time)
+      colnames(GP.impute)<-c('Imputation Start',
+                             'Imputation End',
+                             'Total Time Imputed (s)',
+                             'MAP Imputed HR (BPM)',
+                             'Total Run Time')
       rv$GP.impute.tab<-rbind(rv$GP.impute.tab, GP.impute)
     }
   })
@@ -1642,11 +1600,11 @@ server <- function(input, output) {
       #--
       edits.cnt<-unique(rv$tot.edits[,1:2])
       edits<-length(unique(edits.cnt[,1]))
-      orig.IBI<-length(rv$IBI.raw[rv$IBI.raw$Time>=min(rv$sub.time$Time) & rv$IBI.raw$Time<=max(rv$sub.time$Time),1])
-      fin.IBI<-length(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time),1])
+      orig.IBI<-length(rv$IBI.raw$IBI[rv$IBI.raw$Time>=min(rv$sub.time$Time) & rv$IBI.raw$Time<=max(rv$sub.time$Time)])
+      fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time)])
       p.new.edits<-edits/fin.IBI
       edit.summary<-c(edits, orig.IBI, fin.IBI, round(p.new.edits,4))
-      values<-c('Total Edits','Total Original IBIs','Total Edited IBIs','Proportion of Edits')
+      values<-c('Total Unique Edits','Total Original IBIs','Total Final IBIs','Proportion of Edits')
       edit.summary<-cbind(values, edit.summary)
       colnames(edit.summary)<-c('Measure', 'Value')
       #--
@@ -1733,7 +1691,7 @@ server <- function(input, output) {
       }
       #------------------------------------------------------
       #Imputation stats for PPG file
-      Impute.tab<-rv$GP.impute
+      Impute.tab<-rv$GP.impute.tab
       tot.time<-max(rv$PPG.proc$Time)-min(rv$PPG.proc$Time)
       if(length(Impute.tab[,1])>0){
         tot.impute.time<-sum(Impute.tab$Time_tot)
@@ -1741,15 +1699,19 @@ server <- function(input, output) {
       else {
         tot.impute.time<-0
       }
-      per.impute.time<-tot.impute.time/tot.time
+      per.impute.time<-round(tot.impute.time/tot.time, digits=2)
       
       #------------------------------------------------------
+      time.end<-Sys.time()
+      edit.time<-time.end-rv$start.time
+      units(edit.time)<-'mins'
       rtffile <- RTF(paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                    'Cases Processing Summary.rtf', sep = '_')))
-      addParagraph(rtffile, 'IBI VizEdit v0.5\nAuthor: Matthew G. Barstead\n(c) 2017')
+      addParagraph(rtffile, '\\bIBI VizEdit v0.5\nAuthor: Matthew G. Barstead\n(c) 2017\\b0')
+      addParagraph(rtffile, '---------------------')
       addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
-                                  '\nTotal Editing Time:', round(Sys.time()-rv$start.time, digits = 2), 
-                                  's'))
+                                  '\nTotal Editing Time:', round(edit.time, digits = 2), 
+                                  'mins'))
       addParagraph(rtffile, paste('Edited by:', editor.id()))
       addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
       addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
@@ -1805,11 +1767,11 @@ server <- function(input, output) {
       #--
       edits.cnt<-unique(rv$tot.edits[,1:2])
       edits<-length(unique(edits.cnt[,1]))
-      orig.IBI<-length(rv$IBI.raw[rv$IBI.raw$Time>=min(rv$sub.time$Time) & rv$IBI.raw$Time<=max(rv$sub.time$Time),1])
-      fin.IBI<-length(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time),1])
+      orig.IBI<-length(rv$IBI.raw$IBI[rv$IBI.raw$Time>=min(rv$sub.time$Time) & rv$IBI.raw$Time<=max(rv$sub.time$Time)])
+      fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time)])
       p.new.edits<-edits/fin.IBI
       edit.summary<-c(edits, orig.IBI, fin.IBI, round(p.new.edits,4))
-      values<-c('Total Edits','Total Original IBIs','Total Edited IBIs','Proportion of Edits')
+      values<-c('Total Unique Edits','Total Original IBIs','Total Final IBIs','Proportion of Edits')
       edit.summary<-cbind(values, edit.summary)
       colnames(edit.summary)<-c('Measure', 'Value')
       #--
@@ -1896,7 +1858,7 @@ server <- function(input, output) {
       }
       #------------------------------------------------------
       #Imputation stats for PPG file
-      Impute.tab<-rv$GP.impute
+      Impute.tab<-rv$GP.impute.tab
       tot.time<-max(rv$PPG.proc$Time)-min(rv$PPG.proc$Time)
       if(length(Impute.tab[,1])>0){
         tot.impute.time<-sum(Impute.tab$Time_tot)
@@ -1904,15 +1866,19 @@ server <- function(input, output) {
       else {
         tot.impute.time<-0
       }
-      per.impute.time<-tot.impute.time/tot.time
+      per.impute.time<-round(tot.impute.time/tot.time, digits = 2)
       
       #------------------------------------------------------
+      time.end<-Sys.time()
+      edit.time<-time.end-rv$start.time
+      units(edit.time)<-'mins'
       rtffile <- RTF(paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                            'Cases Processing Summary.rtf', sep = '_')))
-      addParagraph(rtffile, 'IBI VizEdit v0.5\nAuthor: Matthew G. Barstead\n(c) 2017')
+      addParagraph(rtffile, '\\bIBI VizEdit v0.5\nAuthor: Matthew G. Barstead\n(c) 2017\\b0')
+      addParagraph(rtffile, '---------------------')
       addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
-                                  '\nTotal Editing Time:', round(Sys.time()-rv$start.time, digits = 2), 
-                                  's'))
+                                  '\nTotal Editing Time:', round(edit, digits = 2), 
+                                  'mins'))
       addParagraph(rtffile, paste('Edited by:', editor.id()))
       addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
       addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
