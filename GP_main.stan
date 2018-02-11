@@ -106,7 +106,7 @@ data {
 	vector[N2] Xp;
 	real<lower=0> mu_HR;
 	real<lower=0> sigma_HR;
-	real<lower=0> R;
+	real<lower=0> mu_R;
 }
 
 transformed data { 
@@ -124,7 +124,6 @@ parameters {
 	real<lower=0> r4;
 	real<lower=0> r5;
 	real<lower=0> HR;
-	//real<lower=0> R;
 	real<lower=0> sigma_sq;
 }
 
@@ -133,26 +132,26 @@ model{
 	matrix[N1,N1] L_S;
 	
 	//using GP function from above 
-	Sigma = main_GP(N1, X, N1, X, a1, a2, a3, r1, r2, r3, r4, r5, HR, R);
+	Sigma = main_GP(N1, X, N1, X, a1, a2, a3, r1, r2, r3, r4, r5, HR, mu_R);
 	for(n in 1:N1) Sigma[n,n] += sigma_sq;
 	
 	L_S = cholesky_decompose(Sigma);
 	Y ~ multi_normal_cholesky(mu, L_S);
 	
 	//priors for parameters
-	a1 ~ normal(0,2);
-	a2 ~ normal(0,2);
-	a3 ~ normal(0,2);
+	a1 ~ normal(0,1);
+	a2 ~ normal(0,1);
+	a3 ~ normal(0,1);
 	//incorporate minimum and maximum distances - use invgamma
-	r1 ~ inv_gamma(5,5);
-	r2 ~ inv_gamma(5,5);
-	r3 ~ inv_gamma(5,5);
-	r4 ~ inv_gamma(5,5);
-	r5 ~ inv_gamma(5,5);
+	r1 ~ inv_gamma(4,4);
+	r2 ~ inv_gamma(4,4);
+	r3 ~ inv_gamma(4,4);
+	r4 ~ inv_gamma(4,4);
+	r5 ~ inv_gamma(4,4);
 	sigma_sq ~ normal(0,1);
 	HR ~ normal(mu_HR,sigma_HR);
 }
 
 generated quantities {
-	vector[N2] Ypred = post_pred_rng(a1, a2, a3, r1, r2, r3, r4, r5, HR, R, sigma_sq, N1, X, N2, Xp, Y);
+	vector[N2] Ypred = post_pred_rng(a1, a2, a3, r1, r2, r3, r4, r5, HR, mu_R, sigma_sq, N1, X, N2, Xp, Y);
 }

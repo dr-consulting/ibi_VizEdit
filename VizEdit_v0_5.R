@@ -236,6 +236,7 @@ ui <- shinyUI(
     tabPanel('Basic Editing Panel',
        fluidRow(
          column(3,
+                verbatimTextOutput("hover_info"),
                 tags$hr(),
                 tags$p('Toggle Base Functions:'),
                 uiOutput(outputId = 'base.on'
@@ -258,25 +259,27 @@ ui <- shinyUI(
                              value = 2
                              ),
                 tags$hr(),
-                verbatimTextOutput("hover_info"),
-                tags$hr(),
-                tags$p('Editing Tools:'),
                 uiOutput(outputId = 'add.delete.on', 
                          inline = T
                          ),
+                tags$hr(),
                 uiOutput(outputId = 'select.on', 
                          inline = T
                          )
+                #uiOutput(outputId = 'sel_1.on',
+                #         inline = T
+                #         )
                 ),
          column(9,
                 plotOutput(outputId = "IBI",
-                           height = '450px',
+                           height = '600px',
                            click = "Peak_click",
                            dblclick = "Delete",
-                           brush = "select_cases",
+                           brush = brushOpts(id="select_cases", delay = 750),
                            hover = hoverOpts(id="plot_hover", delay = 500)
                            )
                 ),
+         column(3),
          column(9,
                 plotOutput(outputId = "PPG_overall",
                            height = '150px',
@@ -289,20 +292,20 @@ ui <- shinyUI(
     tabPanel('Advanced Editing Panel',
       fluidRow(
         column(3,
+               verbatimTextOutput(outputId = "hover_info2"
+                                  ),
                tags$hr(),
                tags$p('Toggle Advanced Functions:'),
                uiOutput(outputId = 'adv.on', 
                         inline = T
                         ),
-               tags$br(),
-               tags$br(),
+               tags$p('Select Function:'),
                uiOutput(outputId = 'ppg.erase', 
                         inline = T
                         ),
                uiOutput(outputId = 'ppg.restore', 
                         inline = T
-               ),
-               tags$hr(),
+                        ),
                uiOutput(outputId = 'seas.on', 
                         inline = T
                         ),
@@ -338,23 +341,22 @@ ui <- shinyUI(
                            post = 'IBI'
                            ),
                tags$hr(),
-               verbatimTextOutput(outputId = "hover_info2"
-                                  ),
-               tags$hr(),
-               tags$p('Editing Tools:'),
                uiOutput(outputId = 'add.delete.on2', 
                         inline = T
                         ),
                uiOutput(outputId = 'select.on2', 
                         inline = T
                         )
+               #uiOutput(outputId = 'sel_2.on',
+              #          inline=T
+              #          )
                ),
         column(9,
                plotOutput(outputId = "IBI2",
-                          height = '600px',
+                          height = '750px',
                           click = "Peak_click2",
                           dblclick = "Delete2",
-                          brush = "select_cases2",
+                          brush = brushOpts(id="select_cases2", delay=750),
                           hover = hoverOpts(id="plot_hover2", delay = 500)
                           )
                )
@@ -380,11 +382,11 @@ server <- function(input, output) {
     pred.seas=NULL,
     select.on=0,
     add.delete.on=0,
-    GP=NULL,
     select.on2=0,
     add.delete.on2=0,
     start.time=NULL,
-    GP.impute.tab=NULL
+    GP.impute.tab=NULL, 
+    IBI.temp=NULL
   )
   
   #=====================================================================================
@@ -738,10 +740,12 @@ server <- function(input, output) {
       colnames(IBI.file)<-c('IBI', 'Time')
       rv$IBI.raw<-as.data.frame(IBI.file)
       rv$PPG.proc$Time<-rv$PPG.proc$Time-min(rv$sub.time$Time)
-      rv$PPG.proc2<-rv$PPG.proc #can be edited by GP interpolation
+      rv$PPG.proc2<-rv$PPG.proc #allows for removal of "bad" data
       rv$PPG.proc2<-data.frame(rv$PPG.proc2, 
                                Vals=rep('original', length(rv$PPG.proc2[,1])),
                                stringsAsFactors = F)
+      rv$PPG.GP<-data.frame(PPG=rep(NA, length(rv$PPG.proc2[,1])),
+                            Time=rep(NA, length(rv$PPG.proc2[,1])))
       rv$IBI.edit<-as.data.frame(IBI.file)
       rv$IBI.edit$Time<-rv$IBI.edit$Time-min(rv$sub.time$Time)
       rv$sub.time$Time<-rv$sub.time$Time-min(rv$sub.time$Time)
@@ -816,6 +820,15 @@ server <- function(input, output) {
     }
   })
   
+  #observeEvent(input$sel_1.in, {
+  #  if(!is.null(input$select.in)){
+  #    rv$IBI.temp<-brushedPoints(df=rv$IBI.edit, brush = input$select_cases)
+  #  }
+  #  else{
+  #    rv$IBI.temp<-NULL
+  #  }
+  #})
+  
   observeEvent(input$select.in2, {
     if(!is.null(input$select.in2)){
       if(rv$select.on2==0 & rv$add.delete.on2==0){
@@ -832,6 +845,15 @@ server <- function(input, output) {
       }
     }
   })
+  
+  #observeEvent(input$sel_2.in, {
+  #  if(!is.null(input$select.in2)){
+  #    rv$PPG.temp<-brushedPoints(df=rv$PPG.proc2, brush = input$select_cases2)
+  #  }
+  #  else{
+  #    rv$PPG.temp<-NULL
+  #  }
+  #})
   
   observeEvent(input$add.delete.in, {
     if(!is.null(input$add.delete.in)){
@@ -1072,6 +1094,25 @@ server <- function(input, output) {
     }
   })
   
+  #output$sel_1.on<-renderUI({
+  #  if(rv$select.on==0){
+  #    tags$button(id = 'sel_1.in',
+  #                type = "button",
+  #                class = "btn action-button",
+  #                style="color: #000000; background-color: #D8D8D8; border-color: #FFFFFF",
+  #                'Submit'
+  #    )
+  #  }
+  #  else if(rv$select.on==1){
+  #    tags$button(id = 'sel_1.in',
+  #                type = "button",
+  #                class = "btn action-button",
+  #                style="color: #000000; background-color: #82FA58; border-color: #FFFFFF",
+  #                'Submit'
+  #    )
+  #  }
+  #})
+  
   output$select.on2<-renderUI({
     if(rv$select.on2==0){
       tags$button(id = 'select.in2',
@@ -1090,6 +1131,25 @@ server <- function(input, output) {
       )
     }
   })
+  
+  #output$sel_2.on<-renderUI({
+  #  if(rv$select.on2==0){
+  #    tags$button(id = 'sel_2.in',
+  #                type = "button",
+  #                class = "btn action-button",
+  #                style="color: #000000; background-color: #D8D8D8; border-color: #FFFFFF",
+  #                'Submit'
+  #    )
+  #  }
+  #  else if(rv$select.on2==1){
+  #    tags$button(id = 'sel_2.in',
+  #                type = "button",
+  #                class = "btn action-button",
+  #                style="color: #000000; background-color: #82FA58; border-color: #FFFFFF",
+  #                'Submit'
+  #    )
+  #  }
+  #})
   
   output$add.delete.on<-renderUI({
     if(rv$add.delete.on==0){
@@ -1137,8 +1197,12 @@ server <- function(input, output) {
   
   output$IBI <- renderPlot({
     #browser()
-    p.IBI<-ggplot()
-    if(!is.null(rv$IBI.edit)){
+    if(is.null(rv$IBI.edit)){
+      temp.df<-data.frame(x=c(-1,0,1), y=c(-1,0,1))
+      p.IBI<-ggplot(aes(x=x, y=y), data=temp.df)+
+        annotate('text', x=0, y=0, label='No Processed Data Provided')
+    }
+    else{
       p.IBI<-ggplot(data = rv$IBI.edit, aes(x=Time, y=IBI))+
         geom_line(aes(x=Time, y=PPG), data=rv$PPG.proc, col='gray80')+
         geom_point(col="red")+
@@ -1155,14 +1219,11 @@ server <- function(input, output) {
         p.IBI<-p.IBI+coord_cartesian(xlim = c(input$zoom_brush$xmin, input$zoom_brush$xmax), 
                                      ylim = c(0, max(rv$IBI.edit$IBI)+.05))
         if(!is.null(input$select_cases)){
-          temp<-brushedPoints(rv$IBI.edit, input$select_cases)
-          p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=temp, col='#82FA58')
+          IBI.temp<-brushedPoints(df=rv$IBI.edit, input$select_cases)
+          p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
         }
       }
-      if(!is.null(rv$pred.seas) & rv$adv.on==1){
-        p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), data=rv$pred.seas, col='#82FA58')
-      }
-      if(!is.null(rv$GP) & rv$adv.on==1){
+      if(!is.null(rv$PPG.GP) & length(na.omit(rv$PPG.GP[,1]))>0){
         p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), 
                                data = rv$PPG.proc2[rv$PPG.proc2$Vals=='GP impute',],
                                col='#58D3F7')
@@ -1199,9 +1260,9 @@ server <- function(input, output) {
       if(!is.null(rv$pred.seas) & rv$adv.on==1){
         p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), data=rv$pred.seas, col='#82FA58')
       }
-      if(length(rv$PPG.proc2$Vals[rv$PPG.proc2$Vals=='GP impute'])>0 & rv$adv.on==1){
+      if(!is.null(rv$PPG.GP) & length(na.omit(rv$PPG.GP[,1]))>0){
         p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), 
-                               data = rv$PPG.proc2[rv$PPG.proc2$Vals=='GP impute',], 
+                               data = rv$PPG.GP,
                                col='#58D3F7')
       }
     }
@@ -1211,9 +1272,13 @@ server <- function(input, output) {
     
   output$PPG_overall<-renderPlot({
     #browser()
-    p.PPG2<-ggplot()
-    if(!is.null(rv$IBI.edit)){
-      p.PPG2<-p.PPG2+
+    if(is.null(rv$PPG.proc)){
+      temp.df<-data.frame(x=c(-1,0,1), y=c(-1,0,1))
+      p.PPG2<-ggplot(aes(x=x, y=y), data=temp.df)+
+        annotate('text', x=0, y=0, label='No Data Provided')
+    }
+    else{
+      p.PPG2<-ggplot()+
         geom_line(aes(x=Time, y=PPG), data=rv$PPG.proc, color='black')+
         ylab('Volts')+xlab('Time(s)')  
     }
@@ -1578,6 +1643,8 @@ server <- function(input, output) {
                              'MAP Imputed HR (BPM)',
                              'Total Run Time')
       rv$GP.impute.tab<-rbind(rv$GP.impute.tab, GP.impute)
+      rv$PPG.GP$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-PPG.new
+      rv$PPG.GP$Time[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-Xp
     }
   })
 
@@ -1705,10 +1772,10 @@ server <- function(input, output) {
       time.end<-Sys.time()
       edit.time<-time.end-rv$start.time
       units(edit.time)<-'mins'
-      rtffile <- RTF(paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+      rtffile <- RTF(paste0(sub.dir, paste(sub.id(), study.id(), time.id(),
                                                    'Cases Processing Summary.rtf', sep = '_')))
       addParagraph(rtffile, '\\bIBI VizEdit v0.5\nAuthor: Matthew G. Barstead\n(c) 2017\\b0')
-      addParagraph(rtffile, '---------------------')
+      addParagraph(rtffile, '--------------------------------------------------------------')
       addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
                                   '\nTotal Editing Time:', round(edit.time, digits = 2), 
                                   'mins'))
@@ -1872,12 +1939,12 @@ server <- function(input, output) {
       time.end<-Sys.time()
       edit.time<-time.end-rv$start.time
       units(edit.time)<-'mins'
-      rtffile <- RTF(paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+      rtffile <- RTF(paste0(sub.dir, paste(sub.id(), study.id(), time.id(),
                                            'Cases Processing Summary.rtf', sep = '_')))
       addParagraph(rtffile, '\\bIBI VizEdit v0.5\nAuthor: Matthew G. Barstead\n(c) 2017\\b0')
-      addParagraph(rtffile, '---------------------')
+      addParagraph(rtffile, '--------------------------------------------------------------')
       addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
-                                  '\nTotal Editing Time:', round(edit, digits = 2), 
+                                  '\nTotal Editing Time:', round(edit.time, digits = 2), 
                                   'mins'))
       addParagraph(rtffile, paste('Edited by:', editor.id()))
       addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
