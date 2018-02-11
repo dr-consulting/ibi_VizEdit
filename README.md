@@ -73,9 +73,9 @@ Once you have finished editing your document and you have selected the "Save" bu
 
 2. `ID#_Optional(ID)_Timepoint_Hz_PPG.txt`: The downsampled file of the original signal. 
 3. `ID#_Optional(ID)_Timepoint_raw_IBI.txt`: The unedited version of the original IBI file as produced by the peak detection algorithm. 
-4.  `ID#_Optional(ID)_Timepoint_Xs_Epochs.csv`: A time series file with summary statistics computed for heart period (HP), root mean square of successive differences (rmssd), and standard deviation (sd) by user-specified epoch length. If the researcher selects multiple epoch lengths when setting up the editing session, multiple separate files will be included in the output. 
+4. `ID#_Optional(ID)_Timepoint_Xs_Epochs.csv`: A time series file with summary statistics computed for heart period (HP), root mean square of successive differences (rmssd), and standard deviation (sd) by user-specified epoch length. If the researcher selects multiple epoch lengths when setting up the editing session, multiple separate files will be included in the output. 
 5. `ID#_Optional(ID)_Timepoint_edited_IBI.txt`: The complete edited file. Edited IBI files are also output by by task. 
-6.  `ID#_Optional(ID)_Timepoint_edited_Task.csv`: Summary values (e.g., HP, rmssd, and sd) separated out by task/condition.  
+6. `ID#_Optional(ID)_Timepoint_edited_Task.csv`: Summary values (e.g., HP, rmssd, and sd) separated out by task/condition.  
 
 ## Advice on Editing Choices
 
@@ -88,4 +88,33 @@ To ensure responsible and effective use of the program you should ensure that:
 
 ## Stan and `rstan` in IBI VizEdit
 
-More details on this coming... 
+Stan is a program external to R that allows researchers to easily and quickly implement a variety of Bayesian models.  As opposed to other Bayesian modeling software packages such as JAGS or BUGS, Stan runs its models in compiled C++.  This means that the first time a model is run and (requiring the relevant Stan program is compiled) can be a bit slower than subsequent runs. The increased speed in running a compiled program more than makes up for this minor inconvenience. 
+
+Stan has an active [developer community on GitHub](https://github.com/stan-dev), and more information can be found at [mc-stan.org](http://mc-stan.org/). Its incorporation into IBI VizEdit does require some additional setup, however. Detailed instructions for setting up Stan can be found [here](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows). Be sure to follow the instructions precisely in order to guarantee a clean setup. 
+
+As a reminder, the current version of IBI VizEdit is only supported on Windows 7/8/10. 
+
+## Gaussian Process Modeling
+
+A key novel feature incorporated into IBI VizEdit is the use of Gaussian process models for imputing PPG data in regions where the signal has become corrupted by motion artefact or some other similar source of noise. 
+
+![](C:\Users\Mbars\Documents\GitHub\IBI_VizEdit\Supporting_Documents\Artefact_GP.PNG)
+
+The result of running the program, which admittedly takes up to 5 minutes or so on a 7th generation i7 processor with 16 GB of RAM (and more importantly a maximum processing speed of 3.50 GHz). 
+
+Using the default settings for Gaussian process imputation in IBI VizEdit, on the section of messy PPG data depicted above results in the following estimated waveform: 
+
+*[TO BE ADDED]*
+
+Gaussian process models utilize different covariance functions to model the covariance between timepoints in a univariate time series. More details on the specific features of the covariance functions incorporated in IBI VizEdit's Bayesian GP feature can be found in the manual (which is not finished yet... but then again neither is the program)
+
+Briefly, three different covariance functions are included: 
+
+1. A squared exponential covariance function (a common covariance function - to the point that the Stan Development Team has incorporated a specific function for it in their base code). 
+2. A quasi-periodic covariance function based on the individual's heart rate before and after the corrupted section of data. 
+3. A periodic covariance function again based on proximal heart rate, but with the added feature that the heart rate can vary as a function of the participants' average respiration rate. 
+
+Details on the specific formula, code and rationale for these functions can be found in the forthcoming IBI VizEdit manual. 
+
+
+
