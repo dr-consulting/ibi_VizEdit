@@ -43,7 +43,7 @@ pacman::p_load(shiny,
 ui <- shinyUI(
   fluidPage(theme = shinytheme('united'),
   titlePanel(
-    'IBI VizEdit v0.5'
+    'IBI VizEdit v1.0.0'
     ),
   tabsetPanel(
     tabPanel('Data Entry',
@@ -745,7 +745,7 @@ server <- function(input, output) {
                                Vals=rep('original', length(rv$PPG.proc2[,1])),
                                stringsAsFactors = F)
       rv$PPG.GP<-data.frame(PPG=rep(NA, length(rv$PPG.proc2[,1])),
-                            Time=rep(NA, length(rv$PPG.proc2[,1])))
+                            Time=rv$PPG.proc2$Time)
       rv$IBI.edit<-as.data.frame(IBI.file)
       rv$IBI.edit$Time<-rv$IBI.edit$Time-min(rv$sub.time$Time)
       rv$sub.time$Time<-rv$sub.time$Time-min(rv$sub.time$Time)
@@ -1225,7 +1225,7 @@ server <- function(input, output) {
       }
       if(!is.null(rv$PPG.GP) & length(na.omit(rv$PPG.GP[,1]))>0){
         p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), 
-                               data = rv$PPG.proc2[rv$PPG.proc2$Vals=='GP impute',],
+                               data = rv$PPG.GP,
                                col='#58D3F7')
       }
     }
@@ -1529,6 +1529,7 @@ server <- function(input, output) {
       time.max<-input$select_cases2$xmax
       rv$PPG.proc2$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-rv$PPG.proc$PPG[rv$PPG.proc$Time>time.min & rv$PPG.proc$Time<time.max]
       rv$PPG.proc2$Vals[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-'original'
+      rv$PPG.GP$PPG[rv$PPG.GP$Time>time.min & rv$PPG.GP$Time<time.max]<-NA
     }
     else{
       rv$PPG.proc2<-rv$PPG.proc2
@@ -1615,7 +1616,7 @@ server <- function(input, output) {
       
       traceplot(fit.stan, pars='HR')
       mcmc_areas(as.matrix(fit.stan), pars='HR')
-      
+      browser()
       #------------------------------------------------------------
       #Taking most likely posterior value from each distribution
       estimate_mode <- function(x) {
@@ -1631,7 +1632,7 @@ server <- function(input, output) {
       rv$PPG.proc2$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-PPG.new
       rv$PPG.proc2$Vals[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-'GP impute'
       run_time<-Sys.time()-time.temp1
-      units<-run_time<-'mins'
+      units(run_time)<-'mins'
       GP.impute<-data.frame(Time1=min(TIME2),
                             Time2=max(TIME2), 
                             Time_tot=max(TIME2)-min(TIME2),
@@ -1644,7 +1645,6 @@ server <- function(input, output) {
                              'Total Run Time')
       rv$GP.impute.tab<-rbind(rv$GP.impute.tab, GP.impute)
       rv$PPG.GP$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-PPG.new
-      rv$PPG.GP$Time[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-Xp
     }
   })
 
@@ -1774,7 +1774,7 @@ server <- function(input, output) {
       units(edit.time)<-'mins'
       rtffile <- RTF(paste0(sub.dir, paste(sub.id(), study.id(), time.id(),
                                                    'Cases Processing Summary.rtf', sep = '_')))
-      addParagraph(rtffile, '\\bIBI VizEdit v0.5\nAuthor: Matthew G. Barstead\n(c) 2017\\b0')
+      addParagraph(rtffile, '\bIBI VizEdit v1.0.0\nAuthor: Matthew G. Barstead\n(c) 2017\b0')
       addParagraph(rtffile, '--------------------------------------------------------------')
       addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
                                   '\nTotal Editing Time:', round(edit.time, digits = 2), 
@@ -1941,7 +1941,7 @@ server <- function(input, output) {
       units(edit.time)<-'mins'
       rtffile <- RTF(paste0(sub.dir, paste(sub.id(), study.id(), time.id(),
                                            'Cases Processing Summary.rtf', sep = '_')))
-      addParagraph(rtffile, '\\bIBI VizEdit v0.5\nAuthor: Matthew G. Barstead\n(c) 2017\\b0')
+      addParagraph(rtffile, '\bIBI VizEdit v1.0.0\nAuthor: Matthew G. Barstead\n(c) 2017\b0')
       addParagraph(rtffile, '--------------------------------------------------------------')
       addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
                                   '\nTotal Editing Time:', round(edit.time, digits = 2), 
