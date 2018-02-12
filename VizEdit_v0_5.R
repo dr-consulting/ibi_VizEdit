@@ -238,6 +238,16 @@ ui <- shinyUI(
          column(3,
                 verbatimTextOutput("hover_info"),
                 tags$hr(),
+                numericInput(inputId = 'ppg.scale',
+                             label = 'PPG Zoom Factor:',
+                             min=1, 
+                             max=5,
+                             value=1.5
+                             ),
+                actionButton(inputId = 'submit.zoom',
+                             label = 'Zoom',
+                             color = '#58D3F7'),
+                tags$hr(),
                 tags$p('Toggle Base Functions:'),
                 uiOutput(outputId = 'base.on'
                          ),
@@ -254,8 +264,8 @@ ui <- shinyUI(
                          ),
                 numericInput(inputId = 'divide.by',
                              label = 'Divide by:', 
-                             min = 2, 
-                             max = 5, 
+                             min = 4, 
+                             max = 10, 
                              value = 2
                              ),
                 tags$hr(),
@@ -489,7 +499,7 @@ server <- function(input, output) {
   #-------------------------------------------------------------------------------------
   View.min<-reactive(as.numeric(input$Viewer[1]))
   View.max<-reactive(as.numeric(input$Viewer[2]))
-  
+  PPG.zoom<-reactive(as.numeric(input$ppg.scale))
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   #Hitting Load Button results in: 
@@ -740,6 +750,7 @@ server <- function(input, output) {
       colnames(IBI.file)<-c('IBI', 'Time')
       rv$IBI.raw<-as.data.frame(IBI.file)
       rv$PPG.proc$Time<-rv$PPG.proc$Time-min(rv$sub.time$Time)
+      rv$PPG.proc$PPG<-rv$PPG.proc$PPG*PPG.zoom()-mean(rv$PPG.proc$PPG*PPG.zoom())+mean(rv$IBI.raw$IBI)
       rv$PPG.proc2<-rv$PPG.proc #allows for removal of "bad" data
       rv$PPG.proc2<-data.frame(rv$PPG.proc2, 
                                Vals=rep('original', length(rv$PPG.proc2[,1])),
@@ -762,6 +773,12 @@ server <- function(input, output) {
   #Reactive Values for on/off buttons on Editing Panel 
   #=====================================================================================
   #-------------------------------------------------------------------------------------
+  observeEvent(input$submit.zoom, {
+    rv$PPG.proc$PPG<-rv$PPG.proc$PPG*PPG.zoom()-mean(rv$PPG.proc$PPG*PPG.zoom())+mean(rv$IBI.edit$IBI)
+    rv$PPG.proc2$PPG<-rv$PPG.proc2$PPG*PPG.zoom()-mean(rv$PPG.proc2$PPG*PPG.zoom(), na.rm=T)+mean(rv$IBI.edit$IBI)
+    rv$PPG.GP$PPG<-rv$PPG.GP$PPG*PPG.zoom()-mean(rv$PPG.GP$PPG*PPG.zoom(), na.rm=T)+mean(rv$IBI.edit$IBI)
+  })
+  
   observeEvent(input$base.in, {
     #browser()
     if(!is.null(input$base.in)){
@@ -1616,7 +1633,7 @@ server <- function(input, output) {
       
       traceplot(fit.stan, pars='HR')
       mcmc_areas(as.matrix(fit.stan), pars='HR')
-      browser()
+      #browser()
       #------------------------------------------------------------
       #Taking most likely posterior value from each distribution
       estimate_mode <- function(x) {
@@ -1636,8 +1653,8 @@ server <- function(input, output) {
       GP.impute<-data.frame(Time1=min(TIME2),
                             Time2=max(TIME2), 
                             Time_tot=max(TIME2)-min(TIME2),
-                            MAP_HR_impute=estimate_mode(HR.est$HR)*60,
-                            run_time=run_time)
+                            MAP_HR_impute=round(estimate_mode(HR.est$HR)*60, digits = 2),
+                            run_time=round(run_time))
       colnames(GP.impute)<-c('Imputation Start',
                              'Imputation End',
                              'Total Time Imputed (s)',
@@ -1766,7 +1783,7 @@ server <- function(input, output) {
       else {
         tot.impute.time<-0
       }
-      per.impute.time<-round(tot.impute.time/tot.time, digits=2)
+      per.impute.time<-round(tot.impute.time/tot.time, digits=5)
       
       #------------------------------------------------------
       time.end<-Sys.time()
@@ -1774,7 +1791,7 @@ server <- function(input, output) {
       units(edit.time)<-'mins'
       rtffile <- RTF(paste0(sub.dir, paste(sub.id(), study.id(), time.id(),
                                                    'Cases Processing Summary.rtf', sep = '_')))
-      addParagraph(rtffile, '\bIBI VizEdit v1.0.0\nAuthor: Matthew G. Barstead\n(c) 2017\b0')
+      addParagraph(rtffile, 'IBI VizEdit v1.0.0\nAuthor: Matthew G. Barstead\n(c) 2017')
       addParagraph(rtffile, '--------------------------------------------------------------')
       addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
                                   '\nTotal Editing Time:', round(edit.time, digits = 2), 
@@ -1941,7 +1958,7 @@ server <- function(input, output) {
       units(edit.time)<-'mins'
       rtffile <- RTF(paste0(sub.dir, paste(sub.id(), study.id(), time.id(),
                                            'Cases Processing Summary.rtf', sep = '_')))
-      addParagraph(rtffile, '\bIBI VizEdit v1.0.0\nAuthor: Matthew G. Barstead\n(c) 2017\b0')
+      addParagraph(rtffile, 'IBI VizEdit v1.0.0\nAuthor: Matthew G. Barstead\n(c) 2017')
       addParagraph(rtffile, '--------------------------------------------------------------')
       addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
                                   '\nTotal Editing Time:', round(edit.time, digits = 2), 
