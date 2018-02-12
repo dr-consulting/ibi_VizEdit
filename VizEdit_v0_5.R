@@ -1618,7 +1618,7 @@ server <- function(input, output) {
       
       pars.to.monitor<-c('HR','Ypred')
       
-      fit.stan<-stan(file='~\\IBI_VizEdit\\GP_main.stan',
+      fit.stan<-stan(file='~\\IBI_VizEdit_stan\\GP_main.stan',
                      data = dat, 
                      warmup = rv$GP.wrm,
                      iter = rv$GP.iter,
