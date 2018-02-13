@@ -774,9 +774,12 @@ server <- function(input, output) {
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   observeEvent(input$submit.zoom, {
-    rv$PPG.proc$PPG<-rv$PPG.proc$PPG*PPG.zoom()-mean(rv$PPG.proc$PPG*PPG.zoom())+mean(rv$IBI.edit$IBI)
-    rv$PPG.proc2$PPG<-rv$PPG.proc2$PPG*PPG.zoom()-mean(rv$PPG.proc2$PPG*PPG.zoom(), na.rm=T)+mean(rv$IBI.edit$IBI)
-    rv$PPG.GP$PPG<-rv$PPG.GP$PPG*PPG.zoom()-mean(rv$PPG.GP$PPG*PPG.zoom(), na.rm=T)+mean(rv$IBI.edit$IBI)
+    rv$mean.proc<-mean(rv$PPG.proc$PPG, na.rm = T)
+    rv$PPG.proc$PPG<-(rv$PPG.proc$PPG-rv$mean.proc)*PPG.zoom()+mean(rv$IBI.edit$IBI)
+    rv$mean.proc2<-mean(rv$PPG.proc2$PPG, na.rm = T)
+    rv$PPG.proc2$PPG<-(rv$PPG.proc2$PPG-rv$mean.proc2)*PPG.zoom()+mean(rv$IBI.edit$IBI)
+    rv$mean.GP<-mean(rv$PPG.GP$PPG, na.rm = T)
+    rv$PPG.GP$PPG<-(rv$PPG.proc2$PPG-rv$mean.GP)*PPG.zoom()+mean(rv$IBI.edit$IBI)
   })
   
   observeEvent(input$base.in, {
@@ -837,15 +840,6 @@ server <- function(input, output) {
     }
   })
   
-  #observeEvent(input$sel_1.in, {
-  #  if(!is.null(input$select.in)){
-  #    rv$IBI.temp<-brushedPoints(df=rv$IBI.edit, brush = input$select_cases)
-  #  }
-  #  else{
-  #    rv$IBI.temp<-NULL
-  #  }
-  #})
-  
   observeEvent(input$select.in2, {
     if(!is.null(input$select.in2)){
       if(rv$select.on2==0 & rv$add.delete.on2==0){
@@ -862,15 +856,6 @@ server <- function(input, output) {
       }
     }
   })
-  
-  #observeEvent(input$sel_2.in, {
-  #  if(!is.null(input$select.in2)){
-  #    rv$PPG.temp<-brushedPoints(df=rv$PPG.proc2, brush = input$select_cases2)
-  #  }
-  #  else{
-  #    rv$PPG.temp<-NULL
-  #  }
-  #})
   
   observeEvent(input$add.delete.in, {
     if(!is.null(input$add.delete.in)){
@@ -1110,26 +1095,7 @@ server <- function(input, output) {
       )
     }
   })
-  
-  #output$sel_1.on<-renderUI({
-  #  if(rv$select.on==0){
-  #    tags$button(id = 'sel_1.in',
-  #                type = "button",
-  #                class = "btn action-button",
-  #                style="color: #000000; background-color: #D8D8D8; border-color: #FFFFFF",
-  #                'Submit'
-  #    )
-  #  }
-  #  else if(rv$select.on==1){
-  #    tags$button(id = 'sel_1.in',
-  #                type = "button",
-  #                class = "btn action-button",
-  #                style="color: #000000; background-color: #82FA58; border-color: #FFFFFF",
-  #                'Submit'
-  #    )
-  #  }
-  #})
-  
+
   output$select.on2<-renderUI({
     if(rv$select.on2==0){
       tags$button(id = 'select.in2',
@@ -1148,25 +1114,6 @@ server <- function(input, output) {
       )
     }
   })
-  
-  #output$sel_2.on<-renderUI({
-  #  if(rv$select.on2==0){
-  #    tags$button(id = 'sel_2.in',
-  #                type = "button",
-  #                class = "btn action-button",
-  #                style="color: #000000; background-color: #D8D8D8; border-color: #FFFFFF",
-  #                'Submit'
-  #    )
-  #  }
-  #  else if(rv$select.on2==1){
-  #    tags$button(id = 'sel_2.in',
-  #                type = "button",
-  #                class = "btn action-button",
-  #                style="color: #000000; background-color: #82FA58; border-color: #FFFFFF",
-  #                'Submit'
-  #    )
-  #  }
-  #})
   
   output$add.delete.on<-renderUI({
     if(rv$add.delete.on==0){
@@ -1273,9 +1220,6 @@ server <- function(input, output) {
           temp<-brushedPoints(rv$IBI.edit, input$select_cases2)
           p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=temp, col='#82FA58')
         }
-      }
-      if(!is.null(rv$pred.seas) & rv$adv.on==1){
-        p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), data=rv$pred.seas, col='#82FA58')
       }
       if(!is.null(rv$PPG.GP) & length(na.omit(rv$PPG.GP[,1]))>0){
         p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), 
