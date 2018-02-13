@@ -6,10 +6,10 @@
 # [insert weblink]
 #
 # Details about the processing steps are detailed at the link below: 
-# [insert weblink]
+# https://github.com/matgbar/IBI_VizEdit
 #
 # Please cite the use of IBI VizEdit according to standard practices in your field when publishing
-# (see output for citation details)
+# Barstead, M. G. (2018). IBI VizEdit v.1.0: An RShiny Application [Computer software]. University of Maryland.
 #
 # General questions? Contact the developer Matthew G. Barstead 
 # Contact: barstead@umd.edu
@@ -127,14 +127,14 @@ ui <- shinyUI(
                numericInput(inputId='peak.iter',
                             label = 'Peak Detection Iterations',
                             min = 10, 
-                            max = 50, 
-                            value = 25
+                            max = 200, 
+                            value = 100
                             ),
                tags$div(checkboxGroupInput(inputId='epoch.in',
                                            label = 'Output Epoch Options:',
                                            choiceNames = c('10s', '15s', '20s', '30s', '45s'),
                                            choiceValues = c('10', '15', '20', '30', '45'), 
-                                           selected = c('15'),
+                                           selected = c('10', '15', '20', '30', '45'),
                                            inline = F)
                         )
                )
@@ -562,11 +562,14 @@ server <- function(input, output) {
         }
         else{
           tmp<-as.numeric(PPG.file[,col.num()])
+          PPG.1000<-resample(tmp, p=1000, q=Hz())
+          time.1000<-0:(length(PPG.1000)-1)/1000
+          rv$PPG.1000<-data.frame(PPG=PPG.1000, Time=time.1000)
+          rv$PPG.1000<-rv$PPG.1000[rv$PPG.1000$Time>=min(rv$sub.time$Time) - 3 & rv$PPG.1000$Time<=max(rv$sub.time$Time) + 3,]
           tmp2<-resample(tmp, p=DS(), q=Hz())
           tmp2<-range01(tmp2)
           time<-0:(length(tmp2)-1)/DS()
-          tmp<-data.frame(tmp2, time)
-          colnames(tmp)<-c('PPG', 'Time')
+          tmp<-data.frame(PPG=tmp2, Time=time)
           rv$PPG.proc <- tmp[tmp$Time>=min(rv$sub.time$Time) - 3 & tmp$Time<=max(rv$sub.time$Time) + 3,]
         }
       }
@@ -581,12 +584,13 @@ server <- function(input, output) {
         }
         else{
           tmp<-as.numeric(PPG.file[,col.num()])
+          PPG.1000<-resample(tmp, p=1000, q=Hz())
+          time.1000<-0:(length(PPG.1000)-1)/1000
+          rv$PPG.1000<-data.frame(PPG=PPG.1000, Time=time.1000)
           tmp2<-resample(tmp, p=DS(), q=Hz())
           tmp2<-range01(tmp2)
           time<-0:(length(tmp2)-1)/DS()
-          tmp<-data.frame(tmp2, time)
-          colnames(tmp)<-c('PPG', 'Time')
-          rv$PPG.proc <- tmp
+          rv$PPG.proc <-data.frame(PPG=tmp2, Time=time)
         }
       }
     }
@@ -628,40 +632,17 @@ server <- function(input, output) {
   
   #===========================================================================
   #Function 1 - Finding Peakings Using Specified bandwidth: 
-  findpeaks <- function(vec,bw=1,x.coo=c(1:length(vec))){
-    pos.x.max <- NULL
-    pos.y.max <- NULL
-    pos.x.min <- NULL
-    pos.y.min <- NULL 	
-    for(i in 1:(length(vec)-1)){ 		
-      if((i+1+bw)>length(vec)){
-        sup.stop <- length(vec)
-      }
-      else{
-        sup.stop <- i+1+bw
-      }
-      if((i-bw)<1){
-        inf.stop <- 1
-      }
-      else{
-        inf.stop <- i-bw
-      }
-      subset.sup <- vec[(i+1):sup.stop]
-      subset.inf <- vec[inf.stop:(i-1)]
-      is.max   <- sum(subset.inf > vec[i]) == 0
-      is.nomin <- sum(subset.sup > vec[i]) == 0
-      no.max   <- sum(subset.inf > vec[i]) == length(subset.inf)
-      no.nomin <- sum(subset.sup > vec[i]) == length(subset.sup)
-      if(is.max & is.nomin){
-        pos.x.max <- c(pos.x.max,x.coo[i])
-        pos.y.max <- c(pos.y.max,vec[i])
-      }
-      if(no.max & no.nomin){
-        pos.x.min <- c(pos.x.min,x.coo[i])
-        pos.y.min <- c(pos.y.min,vec[i])
-      }
-    }
-    return(data.frame(pos.x.max,pos.y.max))
+  findpeaks <- function (x, m = 3){
+    shape <- diff(sign(diff(x, na.pad = FALSE)))
+    pks <- sapply(which(shape < 0), FUN = function(i){
+      z <- i - m + 1
+      z <- ifelse(z > 0, z, 1)
+      w <- i + m + 1
+      w <- ifelse(w < length(x), w, length(x))
+      if(all(x[c(z : i, (i + 2) : w)] <= x[i + 1])) return(i + 1) else return(numeric(0))
+    })
+    pks <- unlist(pks)
+    pks
   }
   #===========================================================================
   #Function 2 - Summing IBIs from Raw PPG file: 
@@ -689,7 +670,7 @@ server <- function(input, output) {
     x.smooth<-na.omit(x.smooth)
     TIME<-0:(length(x.smooth)-1)
     x.smooth<-x.smooth-predict(lm(x.smooth~TIME))
-    s<-round(seq(ds/6, ds/1.5, length.out=peak.iter()), digits = 0)
+    s<-2:peak.iter()
     Z<-data.frame(rep(NA, length(s)), 
                   rep(NA, length(s)), 
                   rep(NA, length(s)), 
@@ -698,8 +679,7 @@ server <- function(input, output) {
                   rep(NA, length(s)))
     withProgress(message = 'Finding Peaks', value = 0,{
       for(i in 1:length(s)){
-        IBI<-findpeaks(vec=x.smooth, bw=s[i])
-        IBI<-IBI[,1]
+        IBI<-findpeaks(x.smooth, s[i])
         time<-time.sum(IBI)/ds
         Z[i,1]<-s[i]
         Z[i,2]<-sd(time)
@@ -712,8 +692,8 @@ server <- function(input, output) {
     })
     colnames(Z)<-c('BW', 'SD', 'Range', 'RMSSD', 'AC', 'BW(s)')
     Z<-Z[order(Z$RMSSD, decreasing = F),]
-    IBI.fin<-findpeaks(vec=x.smooth, bw=Z[1,1])-1
-    IBI.fin<-IBI.fin[,1]/ds
+    IBI.fin<-findpeaks(x.smooth, m=Z[1,1])-1
+    IBI.fin<-IBI.fin/ds
     IBI.done<-time.sum(IBI.fin)
     IBI.comp<-list(IBI.done, Z)
     names(IBI.comp)<-c('IBI.done', 'Z')
@@ -738,25 +718,24 @@ server <- function(input, output) {
     #PPG data import, processing and saving
     if(!is.null(input$submit.file)){
       #browser()
-      PPG.cln<-rv$PPG.proc
+      PPG.cln<-rv$PPG.1000
       #-----------------------------------------------------------
       #IBI data processing and saving
       ds<-DS()
       Hz<-Hz()
-      IBI.list<-iter.IBI(PPG.cln$PPG, ds=ds)
+      IBI.list<-iter.IBI(PPG.cln$PPG, ds=1000)
       IBI<-IBI.list$IBI.done
       IBI.time<-sum.rev(IBI)
       IBI.file<-cbind(IBI, IBI.time+min(PPG.cln$Time))
       colnames(IBI.file)<-c('IBI', 'Time')
       rv$IBI.raw<-as.data.frame(IBI.file)
       rv$PPG.proc$Time<-rv$PPG.proc$Time-min(rv$sub.time$Time)
-      rv$PPG.proc$PPG<-rv$PPG.proc$PPG*PPG.zoom()-mean(rv$PPG.proc$PPG*PPG.zoom())+mean(rv$IBI.raw$IBI)
-      rv$PPG.proc2<-rv$PPG.proc #allows for removal of "bad" data
-      rv$PPG.proc2<-data.frame(rv$PPG.proc2, 
-                               Vals=rep('original', length(rv$PPG.proc2[,1])),
+      rv$PPG.1000$Time<-rv$PPG.1000$Time-min(rv$sub.time$Time)
+      rv$PPG.proc2<-data.frame(rv$PPG.1000, 
+                               Vals=rep('original', length(rv$PPG.1000[,1])),
                                stringsAsFactors = F)
-      rv$PPG.GP<-data.frame(PPG=rep(NA, length(rv$PPG.proc2[,1])),
-                            Time=rv$PPG.proc2$Time)
+      rv$PPG.GP<-data.frame(PPG=rep(NA, length(rv$PPG.1000[,1])),
+                            Time=rv$PPG.1000$Time)
       rv$IBI.edit<-as.data.frame(IBI.file)
       rv$IBI.edit$Time<-rv$IBI.edit$Time-min(rv$sub.time$Time)
       rv$sub.time$Time<-rv$sub.time$Time-min(rv$sub.time$Time)
@@ -779,7 +758,7 @@ server <- function(input, output) {
     rv$mean.proc2<-mean(rv$PPG.proc2$PPG, na.rm = T)
     rv$PPG.proc2$PPG<-(rv$PPG.proc2$PPG-rv$mean.proc2)*PPG.zoom()+mean(rv$IBI.edit$IBI)
     rv$mean.GP<-mean(rv$PPG.GP$PPG, na.rm = T)
-    rv$PPG.GP$PPG<-(rv$PPG.proc2$PPG-rv$mean.GP)*PPG.zoom()+mean(rv$IBI.edit$IBI)
+    rv$PPG.GP$PPG<-(rv$PPG.GP$PPG-rv$mean.GP)*PPG.zoom()+mean(rv$IBI.edit$IBI)
   })
   
   observeEvent(input$base.in, {
@@ -1166,71 +1145,127 @@ server <- function(input, output) {
       p.IBI<-ggplot(aes(x=x, y=y), data=temp.df)+
         annotate('text', x=0, y=0, label='No Processed Data Provided')
     }
-    else{
+    else if(is.null(input$zoom_brush)){
       p.IBI<-ggplot(data = rv$IBI.edit, aes(x=Time, y=IBI))+
-        geom_line(aes(x=Time, y=PPG), data=rv$PPG.proc, col='gray80')+
         geom_point(col="red")+
         geom_line(col="black")+
-        geom_vline(aes(xintercept=Time), data=rv$IBI.edit, color = 'red', lty='dashed', alpha=.25)+
         xlab('Time(s)')+
         ylab('IBI(s)')
+        
       if(!is.null(rv$sub.time)){
         p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=rv$sub.time, show.legend = F)+
-          geom_text(aes(x=Time, label=Label, color=Task, y=min(rv$PPG.proc$PPG)), data = rv$sub.time, show.legend = F,
+          geom_text(aes(x=Time, label=Label, color=Task, y=.25), data = rv$sub.time, show.legend = F,
                     angle = 60, hjust=0)
-      }
-      if(!is.null(input$zoom_brush)){
-        p.IBI<-p.IBI+coord_cartesian(xlim = c(input$zoom_brush$xmin, input$zoom_brush$xmax), 
-                                     ylim = c(0, max(rv$IBI.edit$IBI)+.05))
-        if(!is.null(input$select_cases)){
-          IBI.temp<-brushedPoints(df=rv$IBI.edit, input$select_cases)
-          p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
-        }
-      }
-      if(!is.null(rv$PPG.GP) & length(na.omit(rv$PPG.GP[,1]))>0){
-        p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), 
-                               data = rv$PPG.GP,
-                               col='#58D3F7')
       }
     }
-    p.IBI
-  })
-
-  output$IBI2 <- renderPlot({
-    #browser()
-    p.IBI<-ggplot()
-    if(!is.null(rv$IBI.edit)){
-      p.IBI<-ggplot(data = rv$IBI.edit, aes(x=Time, y=IBI))+
-        geom_line(aes(x=Time, y=PPG), data=rv$PPG.proc2, 
-                  col='gray80')+
+      
+    else if(!is.null(input$zoom_brush)){
+      time.min<-as.numeric(input$zoom_brush$xmin)
+      time.max<-as.numeric(input$zoom_brush$xmax)
+      IBI.tmp<-rv$IBI.edit[rv$IBI.edit$Time>=time.min & rv$IBI.edit$Time<=time.max,]
+      PPG.tmp<-rv$PPG.proc[rv$PPG.proc$Time>=time.min & rv$PPG.proc$Time<=time.max,]
+      
+      p.IBI<-ggplot(data = IBI.tmp, aes(x=Time, y=IBI))+
         geom_point(col="red")+
         geom_line(col="black")+
-        geom_vline(aes(xintercept=Time), data=rv$IBI.edit, color = 'red', lty='dashed', alpha=.25)+
         xlab('Time(s)')+
-        ylab('IBI(s)')
+        ylab('IBI(s)')+
+        geom_vline(aes(xintercept=Time), data=IBI.tmp, color = 'red', lty='dashed', alpha=.25)+
+        geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray80')
+          
       if(!is.null(rv$sub.time)){
-        p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=rv$sub.time, show.legend = F)+
-          geom_text(aes(x=Time, label=Label, color=Task, y=min(rv$PPG.proc2$PPG)), data = rv$sub.time, show.legend = F,
-                    angle = 60, hjust=0)
-      }
-      if(!is.null(input$zoom_brush)){
-        p.IBI<-p.IBI+coord_cartesian(xlim = c(input$zoom_brush$xmin, input$zoom_brush$xmax), 
-                                     ylim = c(0, max(rv$IBI.edit$IBI)+.05))
-        if(!is.null(input$select_cases2)){
-          temp<-brushedPoints(rv$IBI.edit, input$select_cases2)
-          p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=temp, col='#82FA58')
+        sub.time.tmp<-rv$sub.time[rv$sub.time$Time>=time.min & rv$sub.time$Time<=time.max,]
+        if(nrow(sub.time.tmp)>0){
+          p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=sub.time.tmp, show.legend = F)+
+            geom_text(aes(x=Time, label=Label, color=Task, y=.25), data = sub.time.tmp, show.legend = F,
+                      angle = 60, hjust=0)
         }
       }
+        
+      if(!is.null(input$select_cases)){
+        IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases)
+        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
+      }
+        
       if(!is.null(rv$PPG.GP) & length(na.omit(rv$PPG.GP[,1]))>0){
-        p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), 
-                               data = rv$PPG.GP,
-                               col='#58D3F7')
+        PPG.GP.tmp<-rv$PPG.GP[rv$PPG.GP$Time>=time.min & rv$PPG.GP$Time<=time.max,]
+        if(length(na.omit(PPG.GP.tmp$PPG))>0){
+          p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), 
+                                 data = PPG.GP.tmp,
+                                 col='#58D3F7')
+        }
+        else{
+          p.IBI<-p.IBI
+        }
       }
     }
     p.IBI
   })
   
+  output$IBI2 <- renderPlot({
+    browser()
+    if(is.null(rv$IBI.edit)){
+      temp.df<-data.frame(x=c(-1,0,1), y=c(-1,0,1))
+      p.IBI<-ggplot(aes(x=x, y=y), data=temp.df)+
+        annotate('text', x=0, y=0, label='No Processed Data Provided')
+    }
+    else if(is.null(input$zoom_brush)){
+      p.IBI<-ggplot(data = rv$IBI.edit, aes(x=Time, y=IBI))+
+        geom_point(col="red")+
+        geom_line(col="black")+
+        xlab('Time(s)')+
+        ylab('IBI(s)')
+      
+      if(!is.null(rv$sub.time)){
+        p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=rv$sub.time, show.legend = F)+
+          geom_text(aes(x=Time, label=Label, color=Task, y=.25), data = rv$sub.time, show.legend = F,
+                    angle = 60, hjust=0)
+      }
+    }
     
+    else if(!is.null(input$zoom_brush)){
+      time.min<-as.numeric(input$zoom_brush$xmin)
+      time.max<-as.numeric(input$zoom_brush$xmax)
+      IBI.tmp<-rv$IBI.edit[rv$IBI.edit$Time>=time.min & rv$IBI.edit$Time<=time.max,]
+      PPG.tmp<-rv$PPG.proc2[rv$PPG.proc2$Time>=time.min & rv$PPG.proc2$Time<=time.max,]
+      
+      p.IBI<-ggplot(data = IBI.tmp, aes(x=Time, y=IBI))+
+        geom_point(col="red")+
+        geom_line(col="black")+
+        xlab('Time(s)')+
+        ylab('IBI(s)')+
+        geom_vline(aes(xintercept=Time), data=IBI.tmp, color = 'red', lty='dashed', alpha=.25)+
+        geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray80')
+      
+      if(!is.null(rv$sub.time)){
+        sub.time.tmp<-rv$sub.time[rv$sub.time$Time>=time.min & rv$sub.time$Time<=time.max,]
+        if(nrow(sub.time.tmp)>0){
+          p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=sub.time.tmp, show.legend = F)+
+            geom_text(aes(x=Time, label=Label, color=Task, y=.25), data = sub.time.tmp, show.legend = F,
+                      angle = 60, hjust=0)
+        }
+      }
+      
+      if(!is.null(input$select_cases2)){
+        IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases2)
+        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
+      }
+      
+      if(!is.null(rv$PPG.GP) & length(na.omit(rv$PPG.GP[,1]))>0){
+        PPG.GP.tmp<-rv$PPG.GP[rv$PPG.GP$Time>=time.min & rv$PPG.GP$Time<=time.max,]
+        if(length(na.omit(PPG.GP.tmp$PPG))>0){
+          p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), 
+                                 data = PPG.GP.tmp,
+                                 col='#58D3F7')
+        }
+        else{
+          p.IBI<-p.IBI
+        }
+      }
+    }
+    p.IBI
+  })
+  
   output$PPG_overall<-renderPlot({
     #browser()
     if(is.null(rv$PPG.proc)){
@@ -1471,7 +1506,7 @@ server <- function(input, output) {
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   observeEvent(input$ppg.erase.in,{
-    #browser()
+    browser()
     if(!is.null(input$select_cases2) & rv$adv.on==1){
       time.min<-input$select_cases2$xmin
       time.max<-input$select_cases2$xmax
@@ -1485,6 +1520,7 @@ server <- function(input, output) {
   })
   
   observeEvent(input$ppg.restore.in,{
+    browser()
     if(!is.null(input$select_cases2) & rv$adv.on==1){
       time.min<-input$select_cases2$xmin
       time.max<-input$select_cases2$xmax
@@ -1499,7 +1535,7 @@ server <- function(input, output) {
   
   observeEvent(input$GP.in, {
     if(!is.null(input$select_cases2) & rv$adv.on==1){
-      #browser()
+      browser()
       time.temp1<-Sys.time()
       options(mc.cores=parallel::detectCores())
       rstan_options(auto_write = TRUE)
@@ -1672,11 +1708,11 @@ server <- function(input, output) {
         task.edits<-c(task.edits, length(unique(tmp.edit[,2])))
         tmp.IBI.raw<-rv$IBI.raw[rv$IBI.raw$Time>tmp$Time[1] & rv$IBI.raw$Time<tmp$Time[2],]
         tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2],]
-        write.table(tmp.IBI, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+        write.table(tmp.IBI, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                Task.un[i],'IBI_edited.txt', sep = '_')))
-        write.table(tmp.IBI.raw, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+        write.table(tmp.IBI.raw, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                   Task.un[i],'IBI_raw.txt', sep = '_')))
-        write.table(tmp.PPG, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+        write.table(tmp.PPG, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                       Task.un[i], DS(), 'Hz',
                                                                       'PPG.txt', sep = '_')))
       }
@@ -1764,7 +1800,7 @@ server <- function(input, output) {
       addParagraph(rtffile, paste('\nPercent of PPG file Imputed via GP:', 
                                   paste0(per.impute.time, '%')))
       done(rtffile)
-      write.table(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time),], 
+      write.table(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time),],
                   paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
                                                              'edited',
                                                              'IBI.txt', sep = '_')), 
@@ -1839,11 +1875,11 @@ server <- function(input, output) {
         task.edits<-c(task.edits, length(unique(tmp.edit[,2])))
         tmp.IBI.raw<-rv$IBI.raw[rv$IBI.raw$Time>tmp$Time[1] & rv$IBI.raw$Time<tmp$Time[2],]
         tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2],]
-        write.table(tmp.IBI, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+        write.table(tmp.IBI, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                   Task.un[i],'IBI_edited.txt', sep = '_')))
-        write.table(tmp.IBI.raw, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+        write.table(tmp.IBI.raw, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                       Task.un[i],'IBI_raw.txt', sep = '_')))
-        write.table(tmp.PPG, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+        write.table(tmp.PPG, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                   Task.un[i], DS(), 'Hz',
                                                                   'PPG.txt', sep = '_')))
       }
