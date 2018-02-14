@@ -731,11 +731,13 @@ server <- function(input, output) {
       rv$IBI.raw<-as.data.frame(IBI.file)
       rv$PPG.proc$Time<-rv$PPG.proc$Time-min(rv$sub.time$Time)
       rv$PPG.1000$Time<-rv$PPG.1000$Time-min(rv$sub.time$Time)
-      rv$PPG.proc2<-data.frame(rv$PPG.1000, 
-                               Vals=rep('original', length(rv$PPG.1000[,1])),
-                               stringsAsFactors = F)
-      rv$PPG.GP<-data.frame(PPG=rep(NA, length(rv$PPG.1000[,1])),
-                            Time=rv$PPG.1000$Time)
+      sel.vals<-seq(1, length(rv$PPG.1000$Time), by=10)
+      rv$PPG.proc2<-rv$PPG.1000[sel.vals,]
+      rv$PPG.proc2$Vals<-rep('original', length(rv$PPG.proc2[,1]))
+      rv$PPG.100<-rv$PPG.proc2
+      rv$PPG.GP<-data.frame(PPG=rep(NA, length(rv$PPG.proc2$PPG)),
+                            Time=rv$PPG.proc2$Time)
+      
       rv$IBI.edit<-as.data.frame(IBI.file)
       rv$IBI.edit$Time<-rv$IBI.edit$Time-min(rv$sub.time$Time)
       rv$sub.time$Time<-rv$sub.time$Time-min(rv$sub.time$Time)
@@ -753,12 +755,12 @@ server <- function(input, output) {
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   observeEvent(input$submit.zoom, {
-    rv$mean.proc<-mean(rv$PPG.proc$PPG, na.rm = T)
-    rv$PPG.proc$PPG<-(rv$PPG.proc$PPG-rv$mean.proc)*PPG.zoom()+mean(rv$IBI.edit$IBI)
-    rv$mean.proc2<-mean(rv$PPG.proc2$PPG, na.rm = T)
-    rv$PPG.proc2$PPG<-(rv$PPG.proc2$PPG-rv$mean.proc2)*PPG.zoom()+mean(rv$IBI.edit$IBI)
-    rv$mean.GP<-mean(rv$PPG.GP$PPG, na.rm = T)
-    rv$PPG.GP$PPG<-(rv$PPG.GP$PPG-rv$mean.GP)*PPG.zoom()+mean(rv$IBI.edit$IBI)
+    rv$mean.PPG1000<-mean(rv$PPG.1000$PPG, na.rm = T)
+    rv$PPG.1000$PPG<-(rv$PPG.1000$PPG-rv$mean.PPG1000)*PPG.zoom()+mean(rv$IBI.edit$IBI)
+    rv$PPG.proc$PPG<-(rv$PPG.proc$PPG-rv$mean.PPG1000)*PPG.zoom()+mean(rv$IBI.edit$IBI)
+    rv$PPG.proc2$PPG<-(rv$PPG.proc2$PPG-rv$mean.PPG1000)*PPG.zoom()+mean(rv$IBI.edit$IBI)
+    rv$PPG.100$PPG<-(rv$PPG.100$PPG-rv$mean.PPG1000)*PPG.zoom()+mean(rv$IBI.edit$IBI)
+    rv$PPG.GP$PPG<-(rv$PPG.GP$PPG-rv$mean.PPG1000)*PPG.zoom()+mean(rv$IBI.edit$IBI)
   })
   
   observeEvent(input$base.in, {
@@ -1163,7 +1165,7 @@ server <- function(input, output) {
       time.min<-as.numeric(input$zoom_brush$xmin)
       time.max<-as.numeric(input$zoom_brush$xmax)
       IBI.tmp<-rv$IBI.edit[rv$IBI.edit$Time>=time.min & rv$IBI.edit$Time<=time.max,]
-      PPG.tmp<-rv$PPG.proc[rv$PPG.proc$Time>=time.min & rv$PPG.proc$Time<=time.max,]
+      PPG.tmp<-rv$PPG.1000[rv$PPG.1000$Time>=time.min & rv$PPG.1000$Time<=time.max,]
       
       p.IBI<-ggplot(data = IBI.tmp, aes(x=Time, y=IBI))+
         geom_point(col="red")+
@@ -1203,7 +1205,7 @@ server <- function(input, output) {
   })
   
   output$IBI2 <- renderPlot({
-    browser()
+    #browser()
     if(is.null(rv$IBI.edit)){
       temp.df<-data.frame(x=c(-1,0,1), y=c(-1,0,1))
       p.IBI<-ggplot(aes(x=x, y=y), data=temp.df)+
@@ -1325,7 +1327,7 @@ server <- function(input, output) {
   observeEvent(input$Peak_click, {
     #browser()
     if(!is.null(input$Peak_click) & rv$add.delete.on==1){
-      temp.points<-nearPoints(df=rv$PPG.proc, 
+      temp.points<-nearPoints(df=rv$PPG.1000, 
                               input$Peak_click,
                               xvar='Time',
                               yvar='PPG',
@@ -1335,11 +1337,20 @@ server <- function(input, output) {
       Time<-Time[order(Time, decreasing = F)]
       Time2<-Time-min(Time)
       IBI<-time.sum(Time2)
-      rv$IBI.edit<-data.frame(IBI, Time) 
-      tot.edits<-data.frame(IBI=rv$IBI.edit$IBI[rv$IBI.edit$Time==new.time],
-                            Time=new.time,
-                            Edit=1)
-      rv$tot.edits<-rbind(rv$tot.edits, tot.edits)
+      rv$IBI.edit<-data.frame(IBI, Time)
+      if(length(new.time)==0){
+        showModal(modalDialog(
+          title = 'Warning!',
+          'No points selected - Try clicking closer to the PPG Waveform', 
+          size = 'm'
+        ))
+      }
+      else{
+        tot.edits<-data.frame(IBI=rv$IBI.edit$IBI[rv$IBI.edit$Time==new.time],
+                              Time=new.time,
+                              Edit=1)
+        rv$tot.edits<-rbind(rv$tot.edits, tot.edits)
+      }
     }
     rv$IBI.edit<-rv$IBI.edit
   })
@@ -1357,11 +1368,20 @@ server <- function(input, output) {
       Time<-Time[order(Time, decreasing = F)]
       Time2<-Time-min(Time)
       IBI<-time.sum(Time2)
-      rv$IBI.edit<-data.frame(IBI, Time) 
-      tot.edits<-data.frame(IBI=rv$IBI.edit$IBI[rv$IBI.edit$Time==new.time],
-                            Time=new.time,
-                            Edit=1)
-      rv$tot.edits<-rbind(rv$tot.edits, tot.edits)
+      rv$IBI.edit<-data.frame(IBI, Time)
+      if(length(new.time)==0){
+        showModal(modalDialog(
+          title = 'Warning!',
+          'No points selected - Try clicking closer to the PPG Waveform', 
+          size = 'm'
+        ))
+      }
+      else{
+        tot.edits<-data.frame(IBI=rv$IBI.edit$IBI[rv$IBI.edit$Time==new.time],
+                              Time=new.time,
+                              Edit=1)
+        rv$tot.edits<-rbind(rv$tot.edits, tot.edits)
+      }
     }
     rv$IBI.edit<-rv$IBI.edit
   })
@@ -1381,8 +1401,12 @@ server <- function(input, output) {
       Time2<-Time-min(Time)
       IBI<-time.sum(Time2)
       rv$IBI.edit<-data.frame(IBI, Time)
-      if(length(row$selected_==1)==0){
-        rv$tot.edits<-rv$tot.edits
+      if(length(row$selected_[row$selected_==1])==0){
+        showModal(modalDialog(
+          title = 'Warning!',
+          'No points selected for deletion - Try double-clicking closer to the IBI value', 
+          size = 'm'
+        ))
       }
       else if(length(row$selected_==1)>0){
         tot.edits<-data.frame(IBI=rv$IBI.edit$IBI[row$selected_==1],
@@ -1411,13 +1435,19 @@ server <- function(input, output) {
       Time2<-Time-min(Time)
       IBI<-time.sum(Time2)
       rv$IBI.edit<-data.frame(IBI, Time)
-      if(length(row$selected_==1)==0){
-        rv$tot.edits<-rv$tot.edits
+      if(length(row$selected_[row$selected_==1])==0){
+        showModal(modalDialog(
+          title = 'Warning!',
+          'No points selected for deletion - Try double-clicking closer to the IBI value', 
+          size = 'm'
+        ))
       }
       else if(length(row$selected_==1)>0){
         tot.edits<-data.frame(IBI=rv$IBI.edit$IBI[row$selected_==1],
                               Time=rv$IBI.edit$Time[row$selected_==1],
                               Edit=0)
+        tot.edits<-as.data.frame(tot.edits)
+        colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
         rv$tot.edits<-rbind(rv$tot.edits, tot.edits) 
       }
     }
@@ -1435,67 +1465,109 @@ server <- function(input, output) {
       if(!is.null(input$add.in)){
         add<-brushedPoints(rv$IBI.edit, input$select_cases, allRows = T)
         add.temp<-rv$IBI.edit[add$selected_==1,]
-        IBI<-sum(add.temp$IBI)
-        Time.before<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time<add.temp$Time[1]])
-        Time.after<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time>add.temp$Time[length(add.temp$Time)]])
-        if(length(Time.before)==0){
-          Time<-c(IBI, Time.after)
+        if(length(add.temp[,1])<=1){
+          showModal(modalDialog(
+            title = 'Warning!',
+            'Error - Make sure that you have selected more than one IBI value', 
+            size = 'm'
+          ))
         }
-        else if(length(Time.after)==0){
-          Time.new<-Time.before[length(Time.before)]+IBI
-          Time<-c(Time.before, Time.new)
+        else if(length(add.temp[,1])>1){
+          IBI<-sum(add.temp$IBI)
+          Time.before<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time<add.temp$Time[1]])
+          Time.after<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time>add.temp$Time[length(add.temp$Time)]])
+          if(length(Time.before)==0){
+            Time<-c(IBI, Time.after)
+          }
+          else if(length(Time.after)==0){
+            Time.new<-Time.before[length(Time.before)]+IBI
+            Time<-c(Time.before, Time.new)
+          }
+          else{
+            Time.new<-Time.before[length(Time.before)]+IBI
+            Time<-c(Time.before, Time.new, Time.after)
+          }
+          Time2<-Time-min(Time)
+          IBI<-time.sum(Time2)
+          rv$IBI.edit<-data.frame(IBI, Time) 
+          tot.edits<-c(add.temp,2)
+          tot.edits<-as.data.frame(tot.edits)
+          colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
+          rv$tot.edits<-rbind(rv$tot.edits, tot.edits)
         }
-        else{
-          Time.new<-Time.before[length(Time.before)]+IBI
-          Time<-c(Time.before, Time.new, Time.after)
-        }
-        Time2<-Time-min(Time)
-        IBI<-time.sum(Time2)
-        rv$IBI.edit<-data.frame(IBI, Time) 
-        tot.edits<-c(add.temp,2)
-        tot.edits<-as.data.frame(tot.edits)
-        colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
-        rv$tot.edits<-rbind(rv$tot.edits, tot.edits)
       }
     }
     rv$IBI.edit<-rv$IBI.edit
   })
   
   observeEvent(input$average.in, {
-    #browser()
+    browser()
     if(!is.null(input$select_cases) & rv$base.on==1){
       average<-brushedPoints(rv$IBI.edit, input$select_cases, allRows = T)
       average.temp<-rv$IBI.edit[average$selected_==1,]
-      IBI.temp<-rep(mean(average.temp$IBI),length(average.temp$IBI))
-      IBI.before<-as.vector(rv$IBI.edit$IBI[rv$IBI.edit$Time<min(average.temp$Time)])
-      IBI.after<-as.vector(rv$IBI.edit$IBI[rv$IBI.edit$Time>max(average.temp$Time)])
-      IBI.temp<-c(IBI.before, IBI.temp, IBI.after)
-      Time<-IBI.sum(IBI.temp)-3 #needed to correct for 3 second "pre" window
-      rv$IBI.edit<-data.frame(IBI=IBI.temp, Time=Time) 
-      tot.edits<-data.frame(IBI=average.temp$IBI,
-                            Time=average.temp$Time,
-                            Edit=rep(3, length(average.temp$IBI)))
-      rv$tot.edits<-rbind(rv$tot.edits, tot.edits)  
+      if(length(average.temp[,1])<=1){
+        showModal(modalDialog(
+          title = 'Warning!',
+          'Error - Make sure that you have selected more than one IBI value', 
+          size = 'm'
+        ))
+      }
+      else if(length(average.temp[,1])>1){
+        IBI.temp<-rep(mean(average.temp$IBI),length(average.temp$IBI))
+        IBI.before<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time<min(average.temp$Time)])
+        for(i in 1:length(IBI.temp)){
+          IBI.temp[i]<-ifelse(i==1, max(IBI.before)+IBI.temp[i], IBI.temp[i-1]+IBI.temp[i])
+        }
+        IBI.after<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time>max(average.temp$Time)])
+        Time.temp<-c(IBI.before, IBI.temp, IBI.after)
+        IBI<-time.sum(Time.temp)
+        rv$IBI.edit<-data.frame(IBI=IBI, Time=Time.temp) 
+        rv$IBI.edit$IBI[1]<-0
+        tot.edits<-data.frame(IBI=average.temp$IBI,
+                              Time=average.temp$Time,
+                              Edit=rep(3, length(average.temp$IBI)))
+        rv$tot.edits<-rbind(rv$tot.edits, tot.edits)
+      }
     }
     rv$IBI.edit<-rv$IBI.edit
   })
   
   observeEvent(input$divide.in, {
-    #browser()
+    browser()
     if(!is.null(input$select_cases) & rv$base.on==1){
       rv$denom<-round(input$divide.by, digits = 0)
       divide<-brushedPoints(rv$IBI.edit, input$select_cases, allRows = T)
       divide.temp<-divide[divide$selected_==1,]
-      IBI.temp<-rep(divide.temp$IBI/rv$denom, rv$denom)
-      IBI.before<-as.vector(rv$IBI.edit$IBI[rv$IBI.edit$Time<min(divide.temp$Time)])
-      IBI.after<-as.vector(rv$IBI.edit$IBI[rv$IBI.edit$Time>max(divide.temp$Time)])
-      IBI.temp<-c(IBI.before, IBI.temp, IBI.after)
-      Time<-IBI.sum(IBI.temp)-3 #needed to correct for 3 second "pre" window
-      rv$IBI.edit<-data.frame(IBI=IBI.temp, Time=Time) 
-      tot.edits<-data.frame(IBI=divide.temp$IBI, 
-                            Time=divide.temp$Time, 
-                            Edit=rep(4, length(divide.temp$IBI)))
-      rv$tot.edits<-rbind(rv$tot.edits, tot.edits)  
+      if(length(divide.temp[,1])==0){
+        showModal(modalDialog(
+          title = 'Warning!',
+          'Error - Make sure that you have ONE IBI value', 
+          size = 'm'
+        ))
+      }
+      else if(length(divide.temp[,1])>1){
+        showModal(modalDialog(
+          title = 'Warning!',
+          'Error - Make sure that you have ONE IBI value', 
+          size = 'm'
+        ))
+      }
+      else if(length(divide.temp[,1])==1){
+        IBI.temp<-rep(mean(divide.temp$IBI),length(divide.temp$IBI))
+        IBI.before<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time<min(average.temp$Time)])
+        for(i in 1:length(IBI.temp)){
+          IBI.temp[i]<-ifelse(i==1, max(IBI.before)+IBI.temp[i], IBI.temp[i-1]+IBI.temp[i])
+        }
+        IBI.after<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time>max(average.temp$Time)])
+        Time.temp<-c(IBI.before, IBI.temp, IBI.after)
+        IBI<-time.sum(Time.temp)
+        rv$IBI.edit<-data.frame(IBI=IBI, Time=Time.temp) 
+        rv$IBI.edit$IBI[1]<-0
+        tot.edits<-data.frame(IBI=divide.temp$IBI, 
+                              Time=divide.temp$Time, 
+                              Edit=rep(4, length(divide.temp$IBI)))
+        rv$tot.edits<-rbind(rv$tot.edits, tot.edits) 
+      }
     }
     rv$IBI.edit<-rv$IBI.edit
   })
@@ -1506,7 +1578,7 @@ server <- function(input, output) {
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   observeEvent(input$ppg.erase.in,{
-    browser()
+    #browser()
     if(!is.null(input$select_cases2) & rv$adv.on==1){
       time.min<-input$select_cases2$xmin
       time.max<-input$select_cases2$xmax
@@ -1520,11 +1592,11 @@ server <- function(input, output) {
   })
   
   observeEvent(input$ppg.restore.in,{
-    browser()
+    #browser()
     if(!is.null(input$select_cases2) & rv$adv.on==1){
       time.min<-input$select_cases2$xmin
       time.max<-input$select_cases2$xmax
-      rv$PPG.proc2$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-rv$PPG.proc$PPG[rv$PPG.proc$Time>time.min & rv$PPG.proc$Time<time.max]
+      rv$PPG.proc2$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-rv$PPG.100$PPG[rv$PPG.100$Time>time.min & rv$PPG.100$Time<time.max]
       rv$PPG.proc2$Vals[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-'original'
       rv$PPG.GP$PPG[rv$PPG.GP$Time>time.min & rv$PPG.GP$Time<time.max]<-NA
     }
@@ -1535,7 +1607,7 @@ server <- function(input, output) {
   
   observeEvent(input$GP.in, {
     if(!is.null(input$select_cases2) & rv$adv.on==1){
-      browser()
+      #browser()
       time.temp1<-Sys.time()
       options(mc.cores=parallel::detectCores())
       rstan_options(auto_write = TRUE)
