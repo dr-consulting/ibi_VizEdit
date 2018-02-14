@@ -549,6 +549,7 @@ server <- function(input, output) {
             sub.temp<-as.numeric(sub.temp[2:length(sub.temp)])
             rv$sub.time<-data.frame(sub.temp, names, evnt.labels)
             colnames(rv$sub.time)<-c('Time', 'Task', 'Label')
+            rv$sub.time2<-rv$sub.time
           }
         }
         #Bring in and adjust the raw PPG file
@@ -1501,7 +1502,7 @@ server <- function(input, output) {
   })
   
   observeEvent(input$average.in, {
-    browser()
+    #browser()
     if(!is.null(input$select_cases) & rv$base.on==1){
       average<-brushedPoints(rv$IBI.edit, input$select_cases, allRows = T)
       average.temp<-rv$IBI.edit[average$selected_==1,]
@@ -1533,7 +1534,7 @@ server <- function(input, output) {
   })
   
   observeEvent(input$divide.in, {
-    browser()
+    #browser()
     if(!is.null(input$select_cases) & rv$base.on==1){
       rv$denom<-round(input$divide.by, digits = 0)
       divide<-brushedPoints(rv$IBI.edit, input$select_cases, allRows = T)
@@ -1553,12 +1554,12 @@ server <- function(input, output) {
         ))
       }
       else if(length(divide.temp[,1])==1){
-        IBI.temp<-rep(mean(divide.temp$IBI),length(divide.temp$IBI))
-        IBI.before<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time<min(average.temp$Time)])
+        IBI.temp<-rep(divide.temp$IBI/rv$denom, rv$denom)
+        IBI.before<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time<min(divide.temp$Time)])
         for(i in 1:length(IBI.temp)){
           IBI.temp[i]<-ifelse(i==1, max(IBI.before)+IBI.temp[i], IBI.temp[i-1]+IBI.temp[i])
         }
-        IBI.after<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time>max(average.temp$Time)])
+        IBI.after<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time>max(divide.temp$Time)])
         Time.temp<-c(IBI.before, IBI.temp, IBI.after)
         IBI<-time.sum(Time.temp)
         rv$IBI.edit<-data.frame(IBI=IBI, Time=Time.temp) 
@@ -1704,7 +1705,7 @@ server <- function(input, output) {
       units(run_time)<-'mins'
       GP.impute<-data.frame(Time1=min(TIME2),
                             Time2=max(TIME2), 
-                            Time_tot=max(TIME2)-min(TIME2),
+                            Time_tot=round(max(TIME2)-min(TIME2), digits=2),
                             MAP_HR_impute=round(estimate_mode(HR.est$HR)*60, digits = 2),
                             run_time=round(run_time))
       colnames(GP.impute)<-c('Imputation Start',
@@ -1725,7 +1726,7 @@ server <- function(input, output) {
   
   observeEvent(input$save, {
     if(!is.null(input$save)){
-      #browser()
+      browser()
       #Prepping relevant information for summary document
       sub.dir<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output/', sep = '_'))
       dirList<-list.dirs(rv$out.dir)
@@ -1735,8 +1736,8 @@ server <- function(input, output) {
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
       edits.cnt<-unique(rv$tot.edits[,1:2])
-      edits<-length(unique(edits.cnt[,1]))
-      orig.IBI<-length(rv$IBI.raw$IBI[rv$IBI.raw$Time>=min(rv$sub.time$Time) & rv$IBI.raw$Time<=max(rv$sub.time$Time)])
+      edits<-length(edits.cnt[,1])
+      orig.IBI<-length(rv$IBI.raw$IBI[rv$IBI.raw$Time>=min(rv$sub.time2$Time) & rv$IBI.raw$Time<=max(rv$sub.time2$Time)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time)])
       p.new.edits<-edits/fin.IBI
       edit.summary<-c(edits, orig.IBI, fin.IBI, round(p.new.edits,4))
@@ -1830,12 +1831,12 @@ server <- function(input, output) {
       Impute.tab<-rv$GP.impute.tab
       tot.time<-max(rv$PPG.proc$Time)-min(rv$PPG.proc$Time)
       if(length(Impute.tab[,1])>0){
-        tot.impute.time<-sum(Impute.tab$Time_tot)
+        tot.impute.time<-sum(Impute.tab$`Total Time Imputed (s)`)
       }
       else {
         tot.impute.time<-0
       }
-      per.impute.time<-round(tot.impute.time/tot.time, digits=5)
+      per.impute.time<-round(tot.impute.time/tot.time, digits=3)
       
       #------------------------------------------------------
       time.end<-Sys.time()
@@ -1902,8 +1903,8 @@ server <- function(input, output) {
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
       edits.cnt<-unique(rv$tot.edits[,1:2])
-      edits<-length(unique(edits.cnt[,1]))
-      orig.IBI<-length(rv$IBI.raw$IBI[rv$IBI.raw$Time>=min(rv$sub.time$Time) & rv$IBI.raw$Time<=max(rv$sub.time$Time)])
+      edits<-length(edits.cnt[,1])
+      orig.IBI<-length(rv$IBI.raw$IBI[rv$IBI.raw$Time>=min(rv$sub.time2$Time) & rv$IBI.raw$Time<=max(rv$sub.time2$Time)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time)])
       p.new.edits<-edits/fin.IBI
       edit.summary<-c(edits, orig.IBI, fin.IBI, round(p.new.edits,4))
@@ -1997,12 +1998,12 @@ server <- function(input, output) {
       Impute.tab<-rv$GP.impute.tab
       tot.time<-max(rv$PPG.proc$Time)-min(rv$PPG.proc$Time)
       if(length(Impute.tab[,1])>0){
-        tot.impute.time<-sum(Impute.tab$Time_tot)
+        tot.impute.time<-sum(Impute.tab$`Total Time Imputed (s)`)
       }
       else {
         tot.impute.time<-0
       }
-      per.impute.time<-round(tot.impute.time/tot.time, digits = 2)
+      per.impute.time<-round(tot.impute.time/tot.time, digits=3)
       
       #------------------------------------------------------
       time.end<-Sys.time()
