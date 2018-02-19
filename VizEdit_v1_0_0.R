@@ -125,8 +125,8 @@ ui <- shinyUI(
                numericInput(inputId='peak.iter',
                             label = 'Peak Detection Iterations',
                             min = 10, 
-                            max = 200, 
-                            value = 100
+                            max = 50, 
+                            value = 25
                             ),
                tags$div(checkboxGroupInput(inputId='epoch.in',
                                            label = 'Output Epoch Options:',
@@ -669,7 +669,7 @@ server <- function(input, output) {
     x.smooth<-na.omit(x.smooth)
     TIME<-0:(length(x.smooth)-1)
     x.smooth<-x.smooth-predict(lm(x.smooth~TIME))
-    s<-seq(round(DS()/100), round(DS()/2), length.out = peak.iter())
+    s<-round(seq(round(DS()/10), round(DS()/2), length.out = peak.iter()))
     Z<-data.frame(rep(NA, length(s)), 
                   rep(NA, length(s)), 
                   rep(NA, length(s)), 
