@@ -59,14 +59,20 @@ ui <- shinyUI(
                tags$br(),
                tags$p(textOutput('dir.out')
                       ),
-               tags$br(),
                shinyFilesButton(id='fileIn', 
                                 title = 'Choose Heart Rate File:', 
                                 label = 'Select HR File', 
                                 multiple = F
                                 ), 
                tags$br(),
-               tags$p(textOutput(outputId = 'name'))
+               tags$p(textOutput(outputId = 'name')),
+               shinyFilesButton(id='timeIn', 
+                                title = 'Optional Timing File:', 
+                                label = 'Select Timing File', 
+                                multiple = F
+               ),
+               tags$br(),
+               tags$p(textOutput(outputId = 'time.out'))
                ),
         column(3,
                tags$h2('File ID and Information:'
@@ -116,14 +122,6 @@ ui <- shinyUI(
         column(3,
                tags$h2('Optional Settings:'
                        ),
-               shinyFilesButton(id='timeIn', 
-                                title = 'Optional Timing File:', 
-                                label = 'Select Timing File', 
-                                multiple = F
-                                ),
-               textOutput(outputId = 'time.out'
-                          ),
-               tags$br(),
                numericInput(inputId='peak.iter',
                             label = 'Peak Detection Iterations',
                             min = 10, 
@@ -454,7 +452,7 @@ server <- function(input, output) {
   
   text.display3<-reactive({
     if(is.null(input$timeIn)){
-      text3<-paste("File Chosen:", "No file selected")
+      text3<-paste("File Chosen:", "WARNING - no timing file selected!")
     }
     else{
       text3<-paste("File Chosen:", rv$time.name) 
