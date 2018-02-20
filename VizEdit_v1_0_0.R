@@ -669,7 +669,7 @@ server <- function(input, output) {
     x.smooth<-na.omit(x.smooth)
     TIME<-0:(length(x.smooth)-1)
     x.smooth<-x.smooth-predict(lm(x.smooth~TIME))
-    s<-round(seq(round(DS()/6), round(DS()*4/3), length.out = peak.iter()))
+    s<-round(seq(round(ds/6), round(ds*4/3), length.out = peak.iter()))
     Z<-data.frame(rep(NA, length(s)), 
                   rep(NA, length(s)), 
                   rep(NA, length(s)), 
