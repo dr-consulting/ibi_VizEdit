@@ -1,4 +1,4 @@
-# Overview of IBI VizEdit
+#Overview of IBI VizEdit
 
 IBI VizEdit is a program built using RShiny. It is designed to assist in the manual editing of inter-beat interval files that are derived from photoplethysmogram (PPG) recordings. Unlike the electrocardiogram signal (EKG or ECG), PPG signals are characterized by a slow-moving waveform, which presents a different set of challenges when the true signal becomes contaminated with motion artefacts and other sources of noise. 
 
@@ -12,7 +12,33 @@ Please cite as:
 
 Barstead, M. G. (2018). IBI VizEdit v.1.0: An RShiny Application [Computer software]. University of Maryland.
 
-## Features and Settings
+## Program Setup
+
+The program and all its necessary files can be found at the following [GitHub repository](https://github.com/matgbar/IBI_VizEdit). The critical files are the application itself which is `.R` in the main set of files and the folder labeled `IBI_VizEdit_stan`. This latter folder needs to be saved in your Documents (specifically the Documents folder associated with the specific user account logged in). 
+
+Be sure that you are using the most current version of R and RStudio. Update both programs if necessary prior to completing any other steps in setting up the program. 
+
+###Stan and `rstan` in IBI VizEdit
+
+Your very first setup step is to install Stan and `rstan` onto your computer. Stan is a program external to R that allows researchers to easily and quickly implement a variety of Bayesian models.  As opposed to other Bayesian modeling software packages such as JAGS or BUGS, Stan runs its models in compiled C++.  This means that the first time a model is run and (requiring the relevant Stan program is compiled) can be a bit slower than subsequent runs. The increased speed in running a compiled program more than makes up for this minor inconvenience. 
+
+Stan has an active [developer community on GitHub](https://github.com/stan-dev), and more information can be found at [mc-stan.org](http://mc-stan.org/). Its incorporation into IBI VizEdit does require some additional setup, however. Detailed instructions for setting up Stan can be found [here](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows). Be sure to follow the instructions precisely in order to guarantee a clean setup. 
+
+As a reminder, the current version of IBI VizEdit is only supported on Windows 7/8/10. 
+
+**IMPORTANT:** The Stan program incorporated into IBI VizEdit will not run if you do not properly setup Stan and if you do not include the `IBI_VizEdit_stan` folder in your documents folder (the filepath should be `~/Documents/IBI_VizEdit_stan`). This folder is available in the IBI VizEdit repository and must be downloaded and saved in the correct location for the program to work. 
+
+### RStudio Setup
+
+Before you run IBI VizEdit for the first time copy and paste the following line of code into your computer (you will need to be connected to the internet for this to work): 
+
+```R
+install.packages('pacman')
+```
+
+Once installed you can run IBI VizEdit. The first time you run the program will take some time as RStudio will likely need to fetch and install a number of dependent libraries IBI VizEdit requires to run properly. 
+
+## Preparing to Edit 
 
 ### 1. Supported File Types 
 
@@ -122,17 +148,97 @@ Note that the IBI values and the PPG signal are likely to be on different scales
 
 As intra-individual PPG amplitudes may change over the course of an observation, you may need to rescale the PPG waveform several times during a single editing session. Any value over 1 will increase the relative amplitude of the PPG signal, any value below 1 will decrease the relative amplitude. Currently, a 10X increase is the maximum. 
 
-## Editing Your File 
+## Editing Your File: The Base Functions 
 
-There are two different editing panels as part of IBI VizEdit. The specific portion of the file you decide to view and edit on either the "Basic" or the "Advanced" panel is controlled by the small horizontal graphic at the bottom of the "Basic Editing Panel".  Simply use your mouse to highlight a section of the overall file and VizEdit will display that portion of the file in visual editing interface on both panels.
+There are two different editing panels in IBI VizEdit. The specific portion of the file you decide to view and edit on either the "Basic" or the "Advanced" panel is controlled by the small horizontal graphic at the bottom of the "Basic Editing Panel" (see image above in previous section).  Simply use your mouse to highlight a section of the overall file and VizEdit will display that portion of the file in visual editing interface on both panels.
 
 The basic panel allows you to perform several simple functions. 
 
-1. With add/delete turned on you can manually **ADD** a peak with a single click at the exact point (referenced to the x-axis) you believe a beat should have been identified. 
+1. **ADD** a peak with a single click at the exact point (referenced to the x-axis) you believe a beat should have been identified. 
 2. **DELETE** incorrectly identified points. 
 3. **COMBINE** two or more interbeat intervals that were incorrectly identified by the peak detection algorithm. 
-4. **DIVIDE** a point where the peak detection program "skipped" over the identification of previous heart rate points.
-5. **AVERAGE** nearby IBIs when there are issues with detection peak detections.  
+4. **DIVIDE** a point where the peak detection program "skipped" over the identification of previous heart rate points. (Note this is particularly useful when the underlying signal is messy and you cannot identify a specific peak nearby)
+5. **AVERAGE** nearby IBIs when there are issues with detection peak detections. (Note this is a helpful tool when the signal, for one reason or another includes two peaks much closer together than the surrounding data) 
+
+###ADD
+
+Begin by making sure you have the `Add/Delete` button turned on (click on the button - note that the `Select` button needs to be turned off before you can turn this feature on). 
+
+This feature is best used when it is clear that the peak detection algorithm failed to correctly identify a peak at a valid location. 
+
+*Missed Peak Example*
+
+![Adding points 1](Adding points 1.PNG)
+
+To add a point, move your cursor directly over the peak on the PPG signal and left-click your mouse a single time. 
+
+*Missed Peak Added to the IBI File*
+
+![Adding points 2](Adding points 2.PNG)
+
+An alternative choice for this edit may have been to divide the large IBI value in 2. However, since we can see exactly where the peak should have been, there is no need for us to artificially reduce variability in the data by using the divide function. 
+
+###DELETE
+
+If you believe that the peak detection algorithm has incorrectly identified a heart beat, you can delete that value. Oftentimes after deleting a value additional editing steps will need to be taken (e.g., average or dividing). 
+
+*Example of (Potentially) Misidentified Peak*
+
+![Delete 1](Delete 1.PNG)
+
+To use the delete function, turn on the `Add/Delete` button, move your cursor above the IBI value associated with the misidentified peak and double-click. The point will be removed from the IBI file. As previously noted, however, you may need to make additional edits. (Note the `Add/Delete` function is particularly useful when using the advanced editing panel). 
+
+*Example of Deleted IBI*
+
+![Delete 2](Delete 2.PNG)
+
+As noted above, you will likely still need to make additional edits in this case. Also note that deleting a single point is equivalent to combining it with the next IBI value (see `Combine` function for additional details). 
+
+###COMBINE
+
+[Need an Example]
+
+###DIVIDE
+
+The divide function is useful when you cannot add a point manually but you can clearly tell that one or more heartbeats were missed. Usually this occurs when the signal near the correctly identified peaks is corrupted. 
+
+*Missed Peak with Signal Corruption Example* 
+
+![Divide 1 Example](Divide 1 Example.PNG)
+
+
+
+In order to use the divide function, turn on the `Select` button (note that the `Add/Delete` button needs to be set to the off position). You will also need to turn on the Base Editing Functions (see image below for correct tool configuration). With these buttons turned on select the point you wish to divide by clicking and dragging open a selection box in the editing window. The point will turn green once it has been selected. 
+
+![Divide 2 - Selecting point](Divide 2 - Selecting point.PNG)
+
+With the desired point selected, be sure to set the divide value to the correct integer. To determine an appropriate value to divide by, hover your mouse over the nearby correctly identified IBI values to get a sense of the range of local IBI values in this section of the signal. When you believe you have an integer to divide by that will return values in the range of nearby IBIs hit the `Divide` button. 
+
+*Divide Results*
+
+![Divide 3 - Results](Divide 3 - Results.PNG)
+
+(Note the correct button configuration on the screenshot above. These are the tool settings required to use the Base Functions)
+
+###AVERAGE
+
+Sometimes there can be odd delays in the signal between heart beats. These can be the result of naturally occurring arrhythmias or as a function of some combination of movement and/or blood flow that is not directly tied to cardiac output. Typically, the underlying heart rate signal will take on a slightly different wave form when this happens, and the average function can be a useful way to bring the resulting IBIs more in-line with surrounding values. 
+
+*Example of Change in Signal Shape*
+
+![Average 1](Average 1.PNG)
+
+As with the `Combine` and `Divide` functions be sure that you have your tools correctly configured on the left-hand panel. When you are ready select the points you would like to average by clicking and dragging open a selection box in the editing window. In general, it is best to select the points you believe are most affected by the signal distortion. 
+
+![Average 2](Average 2.PNG)
+
+After you have selected the points you want to average and they have changed to green, hit the `Average` button. 
+
+*Results of Averaging* 
+
+![Average 3](Average 3.PNG)
+
+
 
 The advanced panel offers a new suite of data imputation techniques that, as of yet, have not been included in previous heart rate editing packages. Chief among these techniques is the incorporation of Gaussian process models. 
 
@@ -168,35 +274,98 @@ To ensure responsible and effective use of the program you should ensure that:
 1. You have successfully edited the practice files that are included in this repository. On average, your error rate should be no greater than ___. [The actual value to be determined based on incomplete pilot work.]
 2. When editing your own data, be sure to perform post-editing checks. As part of your editing, you can see a running plot in the RStudio plot viewer that plots the number of edits along with the rmssd. In an ideal situation, you would see no correspondence between the number of edits and heart rate variability. This is useful, though probably not a sufficient check to ensure that your edits are not adding any systematic source of variation from the choices you make. 
 
-## Stan and `rstan` in IBI VizEdit
-
-Stan is a program external to R that allows researchers to easily and quickly implement a variety of Bayesian models.  As opposed to other Bayesian modeling software packages such as JAGS or BUGS, Stan runs its models in compiled C++.  This means that the first time a model is run and (requiring the relevant Stan program is compiled) can be a bit slower than subsequent runs. The increased speed in running a compiled program more than makes up for this minor inconvenience. 
-
-Stan has an active [developer community on GitHub](https://github.com/stan-dev), and more information can be found at [mc-stan.org](http://mc-stan.org/). Its incorporation into IBI VizEdit does require some additional setup, however. Detailed instructions for setting up Stan can be found [here](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows). Be sure to follow the instructions precisely in order to guarantee a clean setup. 
-
-As a reminder, the current version of IBI VizEdit is only supported on Windows 7/8/10. 
-
 ## Gaussian Process Modeling
 
-A key novel feature incorporated into IBI VizEdit is the use of Gaussian process models for imputing PPG data in regions where the signal has become corrupted by motion artefact or some other similar source of noise. 
+Perhaps the most novel feature included in IBI VizEdit is a mechanism for simulating heart rate data in instances when a messy signal has corrupted the identification of multiple IBI values. In the past, an editor would usually have to combine, divide, and average his or her way through this section. With Gaussian process modeling, it is now possible to simulate data based on the surrounding valid signal. The current model for imputation is specified using the following covariance functions (interested readers with knowledge of Bayesian Gaussian process models can review the Stan code for more detail): 
 
-![](C:\Users\Mbars\Documents\GitHub\IBI_VizEdit\Supporting_Documents\Artefact_GP.PNG)
-
-The result of running the program, which admittedly takes up to 5 minutes or so on a 7th generation i7 processor with 16 GB of RAM (and more importantly a maximum processing speed of 3.50 GHz). 
-
-Using the default settings for Gaussian process imputation in IBI VizEdit, on the section of messy PPG data depicted above results in the following estimated waveform: 
-
-*[TO BE ADDED]*
-
-Gaussian process models utilize different covariance functions to model the covariance between timepoints in a univariate time series. More details on the specific features of the covariance functions incorporated in IBI VizEdit's Bayesian GP feature can be found in the manual (which is not finished yet... but then again neither is the program)
-
-Briefly, three different covariance functions are included: 
-
-1. A squared exponential covariance function (a common covariance function - to the point that the Stan Development Team has incorporated a specific function for it in their base code). 
-2. A quasi-periodic covariance function based on the individual's heart rate before and after the corrupted section of data. 
-3. A periodic covariance function again based on proximal heart rate, but with the added feature that the heart rate can vary as a function of the participants' average respiration rate. 
-
-Details on the specific formula, code and rationale for these functions can be found in the forthcoming IBI VizEdit manual. 
+The first Gaussian process in the model is specified as follows:
+$$
+g_1 \sim N(0, k_1)
+$$
+with a squared exponential covariance function to model a general decline in the covariance between two points as a function of time, 
+$$
+k_1(t, t') = \sigma_1^2exp\Big(-\frac{(t-t')^2}{2l_1^2}\Big)
+$$
 
 
+The second Gaussian process process is specified as follows: 
+$$
+g_2 \sim N(0, k_2)
+$$
+with a periodic covariance function that is allowed to decay with time, 
+$$
+k_2(t, t') = \sigma_2^2exp\Big(-\frac{2sin^2(\pi(t-t')f_{HR}}{l_2^2} \Big)exp\Big(-\frac{(t-t')^2}{2l_3^2}\Big)
+$$
+where $f_{HR}$ is heart-rate frequency (which needs to be given a range by the user - more on that below). 
 
+
+
+Finally, the third Gaussian process is specified as follows: 
+$$
+g_3 \sim N(0, k_3)
+$$
+with a periodic covariance function for heart rate that varies as a function of the individual's average estimated respiration rate (derived from a spectral analysis). 
+$$
+k_3(t, t') = \sigma_3^2exp\Big(-\frac{2sin^2(\pi(t-t')f_{HR}}{l_4^2}\Big)exp\Big(-\frac{2sin^2(\pi(t-t')f_{R}}{l_5^2}\Big)
+$$
+where $f_R$ is respiration frequency. 
+
+### Using the Bayesian GP imputation - A Simple Example
+
+Bayesian GP is most useful and most appropriate when a number of IBI values are affected by a section of bad signal: 
+
+![GP Easy 1](GP Easy 1.PNG)
+
+In order to ensure a successful Bayesian GP run you need to take the following steps. 
+
+1. Check to make sure that you have at least 5 seconds of good signal on either side of the area you have targeted for imputation (more on what to do if that is not the case below)
+2. Identify the minimum IBI value in the surrounding signal that you are confident is a validly identified IBI value. Use the slider to set the minimum Target HP value to the identified minimum IBI value - .02 (round if necessary). 
+3. Identify the maximum IBI value in the surrounding signal that you are confident is a validly identified IBI value. Use the slider to set the maximum Target HP value to the identified maximum IBI value + .02 (round if necessary).
+
+*Setting Slider Values*
+
+![GP Easy 2](GP Easy 2.PNG)
+
+4. Turn on the Advanced Functions (note that you will not be able to do so if the Base Functions remain on from the Basic Editing Panel). 
+5. Turn the `Select` button on and select the target area - include all values that differ from the surrounding signal. It is best to highlight an area from valid trough to valid trough (see below):
+
+![GP Easy 3](GP Easy 3.PNG)
+
+Note that the selection box only needs to include correct values for the target segment along the x-axis and that it does not need to extend vertically to cover complete set of values along the PPG line. 
+
+6. When you are ready, click the `Bayesian GP` button and wait for the program to run. You can track progress in your RStudio Window (though the Stan developers are working on it, there currently is not an easy way to track estimated time for model runs). *To speed up the run time ensure that you do not have any other programs open that require a large amount of processing power.* ![GP Easy 4](GP Easy 4.PNG)
+
+Note that you can refresh the Viewer to update the model progress. Once the warmup iterations are complete sampling for each chains takes relatively little time. (Total runtime for this model was 352.60 seconds on a laptop with an i7-7500 processor with 4 cores @2.7GHz with a max speed of 3.5GHz). 
+
+7. Once the run is complete click anywhere on the editing window outside the selection box and turn the `Selection` function off.
+8. Turn on the `Add/Delete` function and begin manually adding points at the newly identified peaks.
+
+You can view your imputed signal, along with the original signal on the Basic Editing Panel. Note how the imputed signal both fits with the local ranges of IBIs and includes some variability (i.e., not all of the values are the same). Another interesting result is that two of the peaks that were somewhat distorted in the original signal were actually "recovered" by the Bayesian GP model. 
+
+![GP Easy 5](GP Easy 5.PNG)
+
+### Using Bayesian Imputation - A More Complicated Example
+
+In the first example, the section of corrupted data was surrounded by good signal for at least 5 seconds on either side. That may not always be the case. When you do have concerns about the signal quality that is going to be utilized in the imputation, you need to first prep the area before performing the analysis. To do this you will "erase" sections of bad signal you do not want incorporated in your Bayesian GP model. 
+
+In the plot below, say I wanted to use the Bayesian GP function to impute data for the corrupted signal in the highlighted section. There is clearly an area to the right that is within five seconds of this window and includes portions of distorted signal. 
+
+![GP Hard 1](GP Hard 1.PNG)
+
+To ensure this corrupted data is not used to simulate and impute "good" data, it needs to be removed using the following steps: 
+
+1. Highlight the area targeted for removal as you would if you were going to impute data in that section. (Note this requires that the `Select` button function is turned on)
+
+![GP Hard 2](GP Hard 2.PNG)
+
+2. Click the `PPG Erase` button and the segment of data should disappear from this graph. 
+
+![GP Hard 3](GP Hard 3.PNG)
+
+3. Run the Bayesian GP as normal (i.e., follow the steps outlined above)
+
+If there are multiple segments that are good candidates for Bayesian GP imputation but they fall within 5 seconds of one another, consider moving through the area in a direction fashion from left to right. Remove segments of bad data ahead of an area targeted for imputation, run the imputation, and then clean ahead of the area that was just removed (if you would like to impute using the Bayesian GP function that is). 
+
+Below is an example of imputed data using this left-to-right imputation strategy. Note that in taking this approach, the new imputed data, not the old corrupted signal is used if it falls within the 5-second window. 
+
+![GP Hard 4](GP Hard 4.PNG)
