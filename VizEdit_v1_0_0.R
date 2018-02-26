@@ -235,14 +235,15 @@ ui <- shinyUI(
          column(3,
                 verbatimTextOutput("hover_info"),
                 tags$hr(),
-                numericInput(inputId = 'ppg.scale',
-                             label = 'PPG Zoom Factor:',
-                             min=1, 
-                             max=5,
-                             value=1.5
-                             ),
+                sliderInput(inputId = 'y.axis',
+                            label = 'Y-Axis Min/Max:',
+                            min=0, 
+                            max=5, 
+                            value = c(0, 1.25), 
+                            step = .1
+                            ),
                 actionButton(inputId = 'submit.zoom',
-                             label = 'Zoom',
+                             label = 'Set Y-axis',
                              color = '#58D3F7'),
                 tags$hr(),
                 tags$p('Toggle Base Functions:'),
@@ -728,7 +729,11 @@ server <- function(input, output) {
       colnames(IBI.file)<-c('IBI', 'Time')
       rv$IBI.raw<-as.data.frame(IBI.file)
       rv$PPG.proc$Time<-rv$PPG.proc$Time-min(rv$sub.time$Time)
+      rv$mean.PPG.proc<-mean(rv$PPG.proc$PPG, na.rm = T)
+      rv$PPG.proc$PPG<-(rv$PPG.proc$PPG-rv$mean.PPG.proc)+mean(rv$IBI.raw$IBI)
       rv$PPG.1000$Time<-rv$PPG.1000$Time-min(rv$sub.time$Time)
+      rv$mean.PPG1000<-mean(rv$PPG.1000$PPG, na.rm = T)
+      rv$PPG.1000$PPG<-(rv$PPG.1000$PPG-rv$mean.PPG1000)+mean(rv$IBI.raw$IBI)
       sel.vals<-seq(1, length(rv$PPG.1000$Time), by=10)
       rv$PPG.proc2<-rv$PPG.1000[sel.vals,]
       rv$PPG.proc2$Vals<-rep('original', length(rv$PPG.proc2[,1]))
@@ -752,14 +757,6 @@ server <- function(input, output) {
   #Reactive Values for on/off buttons on Editing Panel 
   #=====================================================================================
   #-------------------------------------------------------------------------------------
-  observeEvent(input$submit.zoom, {
-    rv$mean.PPG1000<-mean(rv$PPG.1000$PPG, na.rm = T)
-    rv$PPG.1000$PPG<-(rv$PPG.1000$PPG-rv$mean.PPG1000)*PPG.zoom()+mean(rv$IBI.edit$IBI)
-    rv$PPG.proc$PPG<-(rv$PPG.proc$PPG-rv$mean.PPG1000)*PPG.zoom()+mean(rv$IBI.edit$IBI)
-    rv$PPG.proc2$PPG<-(rv$PPG.proc2$PPG-rv$mean.PPG1000)*PPG.zoom()+mean(rv$IBI.edit$IBI)
-    rv$PPG.100$PPG<-(rv$PPG.100$PPG-rv$mean.PPG1000)*PPG.zoom()+mean(rv$IBI.edit$IBI)
-    rv$PPG.GP$PPG<-(rv$PPG.GP$PPG-rv$mean.PPG1000)*PPG.zoom()+mean(rv$IBI.edit$IBI)
-  })
   
   observeEvent(input$base.in, {
     #browser()
@@ -1137,6 +1134,10 @@ server <- function(input, output) {
   #Setting up basic plotting environment
   #=====================================================================================
   #-------------------------------------------------------------------------------------
+  observeEvent(input$submit.zoom, {
+    rv$y.axis.min<-input$y.axis[1]
+    rv$y.axis.max<-input$y.axis[2]
+  })
   
   output$IBI <- renderPlot({
     #browser()
@@ -1171,7 +1172,8 @@ server <- function(input, output) {
         xlab('Time(s)')+
         ylab('IBI(s)')+
         geom_vline(aes(xintercept=Time), data=IBI.tmp, color = 'red', lty='dashed', alpha=.25)+
-        geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray80')
+        geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray80')+
+        scale_y_continuous(limits = c(rv$y.axis.min, rv$y.axis.max))
           
       if(!is.null(rv$sub.time)){
         sub.time.tmp<-rv$sub.time[rv$sub.time$Time>=time.min & rv$sub.time$Time<=time.max,]
@@ -1235,7 +1237,8 @@ server <- function(input, output) {
         xlab('Time(s)')+
         ylab('IBI(s)')+
         geom_vline(aes(xintercept=Time), data=IBI.tmp, color = 'red', lty='dashed', alpha=.25)+
-        geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray80')
+        geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray80')+
+        scale_y_continuous(limits = c(rv$y.axis.min, rv$y.axis.max))
       
       if(!is.null(rv$sub.time)){
         sub.time.tmp<-rv$sub.time[rv$sub.time$Time>=time.min & rv$sub.time$Time<=time.max,]
