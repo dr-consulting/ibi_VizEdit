@@ -42,7 +42,7 @@ pacman::p_load(shiny,
 ui <- shinyUI(
   fluidPage(theme = shinytheme('united'),
   titlePanel(
-    'IBI VizEdit v1.0.0'
+    'IBI VizEdit v1.0.1'
     ),
   tabsetPanel(
     tabPanel('Data Entry',
