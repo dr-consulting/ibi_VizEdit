@@ -1152,7 +1152,7 @@ server <- function(input, output) {
   })
   
   output$IBI <- renderPlot({
-    browser()
+    #browser()
     if(is.null(rv$IBI.edit)){
       temp.df<-data.frame(x=c(-1,0,1), y=c(-1,0,1))
       p.IBI<-ggplot(aes(x=x, y=y), data=temp.df)+
@@ -1354,7 +1354,7 @@ server <- function(input, output) {
   #-------------------------------------------------------------------------------------
   observeEvent(input$messy, {
     if(!is.null(input$select_cases)){
-      browser()
+      #browser()
       tmp.pnts<-brushedPoints(df=rv$IBI.edit, brush=input$select_cases, allRows = T)
       rv$IBI.edit$Vals<-ifelse(tmp.pnts$selected_==1, 'Uneditable', rv$IBI.edit$Vals)
     }
@@ -1531,7 +1531,7 @@ server <- function(input, output) {
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   observeEvent(input$add.in, {
-    browser()
+    #browser()
     if(!is.null(input$select_cases) & rv$base.on==1){
       if(!is.null(input$add.in)){
         add<-brushedPoints(rv$IBI.edit, input$select_cases, allRows = T)
