@@ -42,7 +42,11 @@ pacman::p_load(shiny,
 ui <- shinyUI(
   fluidPage(theme = shinytheme('united'),
   titlePanel(
+<<<<<<< HEAD:VizEdit_v1_0_1.R
     'IBI VizEdit v1.0.1'
+=======
+    'IBI VizEdit v1.1.0'
+>>>>>>> 070d03d09685a27c4fce98d6bae85546c94bb665:VizEdit_v1_1_0.R
     ),
   tabsetPanel(
     tabPanel('Data Entry',
@@ -270,13 +274,22 @@ ui <- shinyUI(
                 uiOutput(outputId = 'add.delete.on', 
                          inline = T
                          ),
-                tags$hr(),
                 uiOutput(outputId = 'select.on', 
                          inline = T
-                         )
-                #uiOutput(outputId = 'sel_1.on',
-                #         inline = T
-                #         )
+                         ),
+                tags$hr(),
+                tags$button(id = 'messy',
+                            type = "button",
+                            class = "btn action-button",
+                            style = "color: #000000; background-color: #FA8258; border-color: #FFFFFF",
+                            "Uneditable"
+                            ),
+                tags$button(id = 'restore.IBI',
+                            type = "button",
+                            class = "btn action-button",
+                            style = "color: #000000; background-color: #FA8258; border-color: #FFFFFF",
+                            "Restore IBI"
+                            )
                 ),
          column(9,
                 plotOutput(outputId = "IBI",
@@ -538,6 +551,7 @@ server <- function(input, output) {
           }
           else{
             sub.time<-time.file[time.file$id==paste(sub.id(), time.id(), sep = '_'),]
+            sub.time<-sub.time[, colSums(is.na(sub.time))==0]
             names<-colnames(sub.time[,2:length(sub.time)])
             names<-rep(names[seq(1, length(names), by=2)], each=2)
             events<-rep(c('Start', 'End'), length(names)/2)
@@ -564,12 +578,12 @@ server <- function(input, output) {
           PPG.1000<-resample(tmp, p=1000, q=Hz())
           time.1000<-0:(length(PPG.1000)-1)/1000
           rv$PPG.1000<-data.frame(PPG=PPG.1000, Time=time.1000)
-          rv$PPG.1000<-rv$PPG.1000[rv$PPG.1000$Time>=min(rv$sub.time$Time) - 3 & rv$PPG.1000$Time<=max(rv$sub.time$Time) + 3,]
+          rv$PPG.1000<-rv$PPG.1000[rv$PPG.1000$Time>=min(rv$sub.time$Time, na.rm=T) - 3 & rv$PPG.1000$Time<=max(rv$sub.time$Time, na.rm=T) + 3,]
           tmp2<-resample(tmp, p=DS(), q=Hz())
           tmp2<-range01(tmp2)
           time<-0:(length(tmp2)-1)/DS()
           tmp<-data.frame(PPG=tmp2, Time=time)
-          rv$PPG.proc <- tmp[tmp$Time>=min(rv$sub.time$Time) - 3 & tmp$Time<=max(rv$sub.time$Time) + 3,]
+          rv$PPG.proc <- tmp[tmp$Time>=min(rv$sub.time$Time, na.rm=T) - 3 & tmp$Time<=max(rv$sub.time$Time, na.rm=T) + 3,]
         }
       }
       else{
@@ -728,10 +742,10 @@ server <- function(input, output) {
       IBI.file<-cbind(IBI, IBI.time+min(PPG.cln$Time))
       colnames(IBI.file)<-c('IBI', 'Time')
       rv$IBI.raw<-as.data.frame(IBI.file)
-      rv$PPG.proc$Time<-rv$PPG.proc$Time-min(rv$sub.time$Time)
+      rv$PPG.proc$Time<-rv$PPG.proc$Time-min(rv$sub.time$Time, na.rm=T)
       rv$mean.PPG.proc<-mean(rv$PPG.proc$PPG, na.rm = T)
       rv$PPG.proc$PPG<-(rv$PPG.proc$PPG-rv$mean.PPG.proc)+mean(rv$IBI.raw$IBI)
-      rv$PPG.1000$Time<-rv$PPG.1000$Time-min(rv$sub.time$Time)
+      rv$PPG.1000$Time<-rv$PPG.1000$Time-min(rv$sub.time$Time, na.rm=T)
       rv$mean.PPG1000<-mean(rv$PPG.1000$PPG, na.rm = T)
       rv$PPG.1000$PPG<-(rv$PPG.1000$PPG-rv$mean.PPG1000)+mean(rv$IBI.raw$IBI)
       sel.vals<-seq(1, length(rv$PPG.1000$Time), by=10)
@@ -742,8 +756,10 @@ server <- function(input, output) {
                             Time=rv$PPG.proc2$Time)
       
       rv$IBI.edit<-as.data.frame(IBI.file)
-      rv$IBI.edit$Time<-rv$IBI.edit$Time-min(rv$sub.time$Time)
-      rv$sub.time$Time<-rv$sub.time$Time-min(rv$sub.time$Time)
+      rv$IBI.edit$Time<-rv$IBI.edit$Time-min(rv$sub.time$Time, na.rm=T)
+      rv$IBI.edit2<-rv$IBI.edit
+      rv$IBI.edit$Vals<-rep('Original', length(rv$IBI.edit[,1]))
+      rv$sub.time$Time<-rv$sub.time$Time-min(rv$sub.time$Time, na.rm=T)
       rv$tab<-head(as.data.frame(IBI.list$Z))
       rv$tab.comp<-as.data.frame(IBI.list$Z)
     } 
@@ -1152,6 +1168,10 @@ server <- function(input, output) {
         geom_line(col="black")+
         xlab('Time(s)')+
         ylab('IBI(s)')
+      
+      if(length(rv$IBI.edit$Vals[rv$IBI.edit$Vals=='Uneditable'])>0){
+        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=rv$IBI.edit[rv$IBI.edit$Vals=='Uneditable',], color='#58D3F7')
+      }
         
       if(!is.null(rv$sub.time)){
         p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=rv$sub.time, show.legend = F)+
@@ -1174,7 +1194,7 @@ server <- function(input, output) {
         geom_vline(aes(xintercept=Time), data=IBI.tmp, color = 'red', lty='dashed', alpha=.25)+
         geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray80')+
         scale_y_continuous(limits = c(rv$y.axis.min, rv$y.axis.max))
-          
+      
       if(!is.null(rv$sub.time)){
         sub.time.tmp<-rv$sub.time[rv$sub.time$Time>=time.min & rv$sub.time$Time<=time.max,]
         if(nrow(sub.time.tmp)>0){
@@ -1187,6 +1207,9 @@ server <- function(input, output) {
       if(!is.null(input$select_cases)){
         IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases)
         p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
+        if(length(IBI.tmp$Vals[IBI.tmp$Vals=='Uneditable'])>0){
+          p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.tmp[IBI.tmp$Vals=='Uneditable',], color='#58D3F7')
+        }
       }
         
       if(!is.null(rv$PPG.GP) & length(na.omit(rv$PPG.GP[,1]))>0){
@@ -1218,6 +1241,10 @@ server <- function(input, output) {
         xlab('Time(s)')+
         ylab('IBI(s)')
       
+      if(length(rv$IBI.edit$Vals[rv$IBI.edit$Vals=='Uneditable'])>0){
+        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=rv$IBI.edit[rv$IBI.edit$Vals=='Uneditable',], color='#58D3F7')
+      }
+      
       if(!is.null(rv$sub.time)){
         p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=rv$sub.time, show.legend = F)+
           geom_text(aes(x=Time, label=Label, color=Task, y=.25), data = rv$sub.time, show.legend = F,
@@ -1239,6 +1266,10 @@ server <- function(input, output) {
         geom_vline(aes(xintercept=Time), data=IBI.tmp, color = 'red', lty='dashed', alpha=.25)+
         geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray80')+
         scale_y_continuous(limits = c(rv$y.axis.min, rv$y.axis.max))
+      
+      if(length(IBI.tmp$Vals[IBI.tmp$Vals=='Uneditable'])>0){
+        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.tmp[IBI.tmp$Vals=='Uneditable',], color='#58D3F7')
+      }
       
       if(!is.null(rv$sub.time)){
         sub.time.tmp<-rv$sub.time[rv$sub.time$Time>=time.min & rv$sub.time$Time<=time.max,]
@@ -1285,10 +1316,10 @@ server <- function(input, output) {
   })
   
   output$hover_info <- renderPrint({
-    temp.points<-nearPoints(df=rv$IBI.edit, coordinfo = input$plot_hover, maxpoints = 1)
+    temp.points<-nearPoints(df=rv$IBI.edit[,1:2], coordinfo = input$plot_hover, maxpoints = 1)
     mean.HR<-NA
     if(!is.null(rv$IBI.edit)){
-      mean.HR<-1/mean(rv$IBI.edit$IBI[5:length(rv$IBI.edit$IBI)-5])*60
+      mean.HR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'][5:length(rv$IBI.edit$IBI)-5])*60
       names(mean.HR)<-'Est. Mean HR'
     }
     if(!is.null(input$plot_hover)){
@@ -1303,10 +1334,10 @@ server <- function(input, output) {
   })
   
   output$hover_info2 <- renderPrint({
-    temp.points<-nearPoints(df=rv$IBI.edit, coordinfo = input$plot_hover2, maxpoints = 1)
+    temp.points<-nearPoints(df=rv$IBI.editp[,1:2], coordinfo = input$plot_hover2, maxpoints = 1)
     mean.HR<-NA
     if(!is.null(rv$IBI.edit)){
-      mean.HR<-1/mean(rv$IBI.edit$IBI[5:length(rv$IBI.edit$IBI)-5])*60
+      mean.HR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'][5:length(rv$IBI.edit$IBI)-5])*60
       names(mean.HR)<-'Est. Mean HR'
     }
     if(!is.null(input$plot_hover2)){
@@ -1319,7 +1350,46 @@ server <- function(input, output) {
       mean.HR
     }
   })
+
+  #=====================================================================================
+  #-------------------------------------------------------------------------------------
+  #Setting up default functions - Identifying Messy Data & restoring IBI values 
+  #=====================================================================================
+  #-------------------------------------------------------------------------------------
+  observeEvent(input$messy, {
+    if(!is.null(input$select_cases)){
+      #browser()
+      tmp.pnts<-brushedPoints(df=rv$IBI.edit, brush=input$select_cases, allRows = T)
+      rv$IBI.edit$Vals<-ifelse(tmp.pnts$selected_==1, 'Uneditable', rv$IBI.edit$Vals)
+    }
+  })
   
+  observeEvent(input$restore.IBI, {
+    if(!is.null(input$select_cases)){
+      #browser()
+      xmin<-input$select_cases$xmin
+      xmax<-input$select_cases$xmax
+      rv$IBI.edit[rv$IBI.edit$Time<=xmax & rv$IBI.edit$Time>=xmin,]<-NA
+      rv$IBI.edit<-na.omit(rv$IBI.edit)
+      time.before<-max(rv$IBI.edit$Time[rv$IBI.edit$Time<input$select_cases$xmin])
+      time.tmp<-rv$IBI.edit2$Time[rv$IBI.edit2$Time<=input$select_cases$xmax & rv$IBI.edit2$Time>=input$select_cases$xmin]
+      IBI.tmp<-vector()
+      for(i in 1:length(time.tmp)){
+        if(i==1){
+          IBI.tmp[i]<-time.tmp[i]-time.before
+        }
+        else{
+          IBI.tmp[i]<-time.tmp[i]-time.tmp[i-1]
+        }
+      }
+      IBI<-data.frame(IBI=IBI.tmp, 
+                      Time=time.tmp, 
+                      Vals=rep('Orginal', length(time.tmp)), stringsAsFactors = F)
+      rv$IBI.edit<-rbind(rv$IBI.edit, IBI)
+      rv$IBI.edit<-rv$IBI.edit[order(rv$IBI.edit$Time, decreasing = F), ]
+    }
+  })
+    
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   #Setting up default functions - deleting and adding cases manually
@@ -1338,7 +1408,8 @@ server <- function(input, output) {
       Time<-Time[order(Time, decreasing = F)]
       Time2<-Time-min(Time)
       IBI<-time.sum(Time2)
-      rv$IBI.edit<-data.frame(IBI, Time)
+      Vals<-ifelse(Time==new.time, 'Added', rv$IBI.edit$Vals)
+      rv$IBI.edit<-data.frame(IBI=IBI, Time=Time, Vals=Vals, stringsAsFactors = F)
       if(length(new.time)==0){
         showModal(modalDialog(
           title = 'Warning!',
@@ -1369,7 +1440,8 @@ server <- function(input, output) {
       Time<-Time[order(Time, decreasing = F)]
       Time2<-Time-min(Time)
       IBI<-time.sum(Time2)
-      rv$IBI.edit<-data.frame(IBI, Time)
+      Vals<-ifelse(Time==new.time, 'Added', rv$IBI.edit$Vals)
+      rv$IBI.edit<-data.frame(IBI=IBI, Time=Time, Vals=Vals, stringsAsFactors = F)
       if(length(new.time)==0){
         showModal(modalDialog(
           title = 'Warning!',
@@ -1398,10 +1470,11 @@ server <- function(input, output) {
                       maxpoints = 1, 
                       allRows = T)
       Time<-rv$IBI.edit$Time[row$selected_==0]
+      Vals<-rv$IBI.edit$Vals[row$selected_==0]
       Time<-Time[order(Time, decreasing = F)]
       Time2<-Time-min(Time)
       IBI<-time.sum(Time2)
-      rv$IBI.edit<-data.frame(IBI, Time)
+      rv$IBI.edit<-data.frame(IBI=IBI, Time=Time, Vals=Vals, stringsAsFactors = F)
       if(length(row$selected_[row$selected_==1])==0){
         showModal(modalDialog(
           title = 'Warning!',
@@ -1432,10 +1505,11 @@ server <- function(input, output) {
                       maxpoints = 1, 
                       allRows = T)
       Time<-rv$IBI.edit$Time[row$selected_==0]
+      Vals<-rv$IBI.edit$Vals[row$selected_==0]
       Time<-Time[order(Time, decreasing = F)]
       Time2<-Time-min(Time)
       IBI<-time.sum(Time2)
-      rv$IBI.edit<-data.frame(IBI, Time)
+      rv$IBI.edit<-data.frame(IBI=IBI, Time=Time, Vals=Vals, stringsAsFactors = F)
       if(length(row$selected_[row$selected_==1])==0){
         showModal(modalDialog(
           title = 'Warning!',
@@ -1490,9 +1564,13 @@ server <- function(input, output) {
           }
           Time2<-Time-min(Time)
           IBI<-time.sum(Time2)
-          rv$IBI.edit<-data.frame(IBI, Time) 
+          Vals.before<-rv$IBI.edit$Vals[rv$IBI.edit$Time<add.temp$Time[1]]
+          Vals.mid<-'Combined'
+          Vals.after<-rv$IBI.edit$Vals[rv$IBI.edit$Time>add.temp$Time[length(add.temp$Time)]]
+          Vals<-c(Vals.before, Vals.mid, Vals.after)
+          rv$IBI.edit<-data.frame(IBI=IBI, Time, Vals, stringsAsFactors = F) 
           tot.edits<-c(add.temp,2)
-          tot.edits<-as.data.frame(tot.edits)
+          tot.edits<-as.data.frame(tot.edits[c(1,2,4)])
           colnames(tot.edits)<-c('IBI', 'Time', 'Edit')
           rv$tot.edits<-rbind(rv$tot.edits, tot.edits)
         }
@@ -1522,7 +1600,8 @@ server <- function(input, output) {
         IBI.after<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time>max(average.temp$Time)])
         Time.temp<-c(IBI.before, IBI.temp, IBI.after)
         IBI<-time.sum(Time.temp)
-        rv$IBI.edit<-data.frame(IBI=IBI, Time=Time.temp) 
+        Vals<-ifelse(average$selected_==1, 'Average', rv$IBI.edit$Vals)
+        rv$IBI.edit<-data.frame(IBI=IBI, Time=Time.temp, Vals=Vals, stringsAsFactors = F) 
         rv$IBI.edit$IBI[1]<-0
         tot.edits<-data.frame(IBI=average.temp$IBI,
                               Time=average.temp$Time,
@@ -1562,7 +1641,11 @@ server <- function(input, output) {
         IBI.after<-as.vector(rv$IBI.edit$Time[rv$IBI.edit$Time>max(divide.temp$Time)])
         Time.temp<-c(IBI.before, IBI.temp, IBI.after)
         IBI<-time.sum(Time.temp)
-        rv$IBI.edit<-data.frame(IBI=IBI, Time=Time.temp) 
+        Vals.before<-rv$IBI.edit$Vals[rv$IBI.edit$Time<min(divide.temp$Time)]
+        Vals.mid<-rep('Divide', length(IBI.temp))
+        Vals.after<-rv$IBI.edit$Vals[rv$IBI.edit$Time>max(divide.temp$Time)]
+        Vals<-c(Vals.before, Vals.mid, Vals.after)
+        rv$IBI.edit<-data.frame(IBI=IBI, Time=Time.temp, Vals=Vals) 
         rv$IBI.edit$IBI[1]<-0
         tot.edits<-data.frame(IBI=divide.temp$IBI, 
                               Time=divide.temp$Time, 
@@ -1726,7 +1809,7 @@ server <- function(input, output) {
   
   observeEvent(input$save, {
     if(!is.null(input$save)){
-      browser()
+      #browser()
       #Prepping relevant information for summary document
       sub.dir<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output/', sep = '_'))
       dirList<-list.dirs(rv$out.dir)
@@ -1738,7 +1821,7 @@ server <- function(input, output) {
       edits.cnt<-unique(rv$tot.edits[,1:2])
       edits<-length(edits.cnt[,1])
       orig.IBI<-length(rv$IBI.raw$IBI[rv$IBI.raw$Time>=min(rv$sub.time2$Time) & rv$IBI.raw$Time<=max(rv$sub.time2$Time)])
-      fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time)])
+      fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits/fin.IBI
       edit.summary<-c(edits, orig.IBI, fin.IBI, round(p.new.edits,4))
       values<-c('Total Unique Edits','Total Original IBIs','Total Final IBIs','Proportion of Edits')
@@ -1803,7 +1886,7 @@ server <- function(input, output) {
       #stats by epoch
       epoch.length<-epoch()
       for(e in 1:length(epoch.length)){
-        time.vals<-seq(min(rv$sub.time$Time), max(rv$sub.time$Time), by=epoch.length[e])
+        time.vals<-seq(min(rv$sub.time$Time, na.rm=T), max(rv$sub.time$Time, na.rm=T), by=epoch.length[e])
         epoch.rmssd<-vector()
         epoch.hp<-vector()
         epoch.sd<-vector()
@@ -1817,7 +1900,7 @@ server <- function(input, output) {
         }
         #browser()
         epoch.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(time.vals)-1),
-                             round(time.vals[1:(length(time.vals)-1)]-min(rv$sub.time$Time)), 
+                             round(time.vals[1:(length(time.vals)-1)]-min(rv$sub.time$Time, na.rm=T)), 
                              round(epoch.rmssd, digits = 7), 
                              round(epoch.hp, digits = 7), 
                              round(epoch.sd, digits = 7))
@@ -1873,7 +1956,7 @@ server <- function(input, output) {
       addParagraph(rtffile, paste('\nPercent of PPG file Imputed via GP:', 
                                   paste0(per.impute.time, '%')))
       done(rtffile)
-      write.table(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time),],
+      write.table(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T),],
                   paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
                                                              'edited',
                                                              'IBI.txt', sep = '_')), 
@@ -1905,7 +1988,7 @@ server <- function(input, output) {
       edits.cnt<-unique(rv$tot.edits[,1:2])
       edits<-length(edits.cnt[,1])
       orig.IBI<-length(rv$IBI.raw$IBI[rv$IBI.raw$Time>=min(rv$sub.time2$Time) & rv$IBI.raw$Time<=max(rv$sub.time2$Time)])
-      fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time)])
+      fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits/fin.IBI
       edit.summary<-c(edits, orig.IBI, fin.IBI, round(p.new.edits,4))
       values<-c('Total Unique Edits','Total Original IBIs','Total Final IBIs','Proportion of Edits')
@@ -1970,7 +2053,7 @@ server <- function(input, output) {
       #stats by epoch
       epoch.length<-epoch()
       for(e in 1:length(epoch.length)){
-        time.vals<-seq(min(rv$sub.time$Time), max(rv$sub.time$Time), by=epoch.length[e])
+        time.vals<-seq(min(rv$sub.time$Time, na.rm=T), max(rv$sub.time$Time, na.rm=T), by=epoch.length[e])
         epoch.rmssd<-vector()
         epoch.hp<-vector()
         epoch.sd<-vector()
@@ -1984,7 +2067,7 @@ server <- function(input, output) {
         }
         #browser()
         epoch.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(time.vals)-1),
-                             round(time.vals[1:(length(time.vals)-1)]-min(rv$sub.time$Time)), 
+                             round(time.vals[1:(length(time.vals)-1)]-min(rv$sub.time$Time, na.rm=T)), 
                              round(epoch.rmssd, digits = 7), 
                              round(epoch.hp, digits = 7), 
                              round(epoch.sd, digits = 7))
@@ -2040,7 +2123,7 @@ server <- function(input, output) {
       addParagraph(rtffile, paste('\nPercent of PPG file Imputed via GP:', 
                                   paste0(per.impute.time, '%')))
       done(rtffile)
-      write.table(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time) & rv$IBI.edit$Time<=max(rv$sub.time$Time),], 
+      write.table(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T),], 
                   paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
                                         'edited',
                                         'IBI.txt', sep = '_')), 
