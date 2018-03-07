@@ -1745,13 +1745,8 @@ server <- function(input, output) {
                                  list(mu_HR=mu_HP,
                                       mu_R=mu_R),
                                  list(mu_HR=mu_HP,
-                                      mu_R=mu_R),
-                                 list(mu_HR=mu_HP,
-                                      mu_R=mu_R),
-                                 list(mu_HR=mu_HP,
-                                      mu_R=mu_R),
-                                 list(mu_HR=mu_HP,
-                                      mu_R=mu_R)),
+                                      mu_R=mu_R)
+                                 ),
                      pars = pars.to.monitor,
                      control = list(adapt_delta = rv$delta, 
                                     max_treedepth = 12)
