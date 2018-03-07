@@ -1665,7 +1665,7 @@ server <- function(input, output) {
   
   observeEvent(input$GP.in, {
     if(!is.null(input$select_cases2) & rv$adv.on==1){
-      browser()
+      #browser()
       time.temp1<-Sys.time()
       options(mc.cores=parallel::detectCores())
       rstan_options(auto_write = TRUE)
@@ -1753,7 +1753,7 @@ server <- function(input, output) {
                                  list(mu_HR=mu_HP,
                                       mu_R=mu_R)),
                      pars = pars.to.monitor,
-                     control = list(adapt_delta = .9, 
+                     control = list(adapt_delta = rv$delta, 
                                     max_treedepth = 12)
                      )
       
@@ -1855,7 +1855,7 @@ server <- function(input, output) {
       tot.IBI<-vector()
       tot.editable.IBI<-vector()
       task.edits<-vector()
-      browser()
+      #browser()
       for(i in 1:length(unique(rv$sub.time$Task))){
         tmp<-rv$sub.time[rv$sub.time$Task==Task.un[i],]
         tmp.IBI<-rv$IBI.edit[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2],]
@@ -2039,7 +2039,7 @@ server <- function(input, output) {
       tot.IBI<-vector()
       tot.editable.IBI<-vector()
       task.edits<-vector()
-      browser()
+      #browser()
       for(i in 1:length(unique(rv$sub.time$Task))){
         tmp<-rv$sub.time[rv$sub.time$Task==Task.un[i],]
         tmp.IBI<-rv$IBI.edit[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2],]
