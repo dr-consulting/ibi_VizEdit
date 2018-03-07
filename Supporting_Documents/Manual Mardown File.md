@@ -6,11 +6,11 @@ Though increasingly popular due to their ease of use, most heart rate editing so
 
 Please note that IBI VizEdit is beta software. It has not been fully tested, and there are likely numerous bugs and opportunities to optimize code and performance. Any and all feedback is welcome. 
 
-*As of right now, IBI VizEdit is only supported for use on Windows 7/8/10.* 
+*As of right now, IBI VizEdit is only supported for use on Windows 7/8/10 and Linux (Ubuntu 16.04).* 
 
 Please cite as: 
 
-Barstead, M. G. (2018). IBI VizEdit v.1.0: An RShiny Application [Computer software]. University of Maryland.
+Barstead, M. G. (2018). IBI VizEdit v.1.2: An RShiny Application [Computer software]. University of Maryland.
 
 ## Program Setup
 
@@ -27,6 +27,8 @@ Stan has an active [developer community on GitHub](https://github.com/stan-dev),
 As a reminder, the current version of IBI VizEdit is only supported on Windows 7/8/10. 
 
 **IMPORTANT:** The Stan program incorporated into IBI VizEdit will not run if you do not properly setup Stan and if you do not include the `IBI_VizEdit_stan` folder in your documents folder (the filepath should be `~/Documents/IBI_VizEdit_stan`). This folder is available in the IBI VizEdit repository and must be downloaded and saved in the correct location for the program to work. 
+
+IF YOU USE LINUX: For Linux users the IBI_VizEdit_stan folder should be saved in your home directory (i.e., the path should be: `~/IBI_VizEdit_stan`). 
 
 ### RStudio Setup
 

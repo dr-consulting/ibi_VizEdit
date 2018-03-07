@@ -6,9 +6,9 @@ Though increasingly popular due to their ease of use, most heart rate editing so
 
 Please note that IBI VizEdit is beta software. It has not been fully tested, and there are likely numerous bugs and opportunities to optimize code and performance. Any and all feedback is welcome. 
 
-*As of right now, IBI VizEdit is only supported for use on Windows 7/8/10.* 
+*As of right now, IBI VizEdit is only supported for use on Windows 7/8/10 and Linux (Ubuntu 16.04).* 
 
 Please cite as: 
 
-Barstead, M. G. (2018). IBI VizEdit v.1.0: An RShiny Application [Computer software]. University of Maryland.
+Barstead, M. G. (2018). IBI VizEdit v.1.2: An RShiny Application [Computer software]. University of Maryland.
 

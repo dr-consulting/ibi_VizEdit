@@ -1758,9 +1758,6 @@ server <- function(input, output) {
       mcmc_areas(as.matrix(fit.stan), pars='HR')
       mcmc_areas(as.matrix(fit.stan), pars='a4')
       
-      fit.summary<-summary(fit.stan, pars=pars.to.monitor[-3], probs=c(.01, .99))$summary
-      print(fit.summary)
-      
       #browser()
       #------------------------------------------------------------
       #Taking most likely posterior value from each distribution
@@ -1792,6 +1789,48 @@ server <- function(input, output) {
                              'Total Run Time')
       rv$GP.impute.tab<-rbind(rv$GP.impute.tab, GP.impute)
       rv$PPG.GP$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-PPG.new
+      #--
+      #Saving GP summary information in a separate directory
+      sub.dir<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output/', sep = '_'))
+      dirList<-list.dirs(rv$out.dir)
+      sub.dir2<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output', sep = '_'))
+      if(sum(dirList==sub.dir2)==0){dir.create(sub.dir)}
+      
+      sub.dir.GP<-paste0(sub.dir,'GP_summaries/')
+      dirList.GP<-list.dirs(sub.dir)
+      sub.dir.GP2<-paste0(sub.dir,'GP_summaries')
+      if(sum(dirList==sub.dir.GP2)==0){dir.create(sub.dir.GP)}
+      
+      g1<-traceplot(fit.stan, pars='HR')+
+        ggtitle(paste(sub.id(), time.id(), study.id(), "HR Traceplot GP Imputation:", 
+                      round(time.min, digits = 2), 'to', round(time.max, digits = 2)))
+      ggsave(filename = paste0(sub.dir.GP, sub.id(), time.id(), study.id(),round(time.min*100), '_', round(time.max*100), '.jpeg'),
+             plot = g1, device = 'jpeg', dpi=300, width=8, height=8, units = 'in')
+      
+      fit.summary<-summary(fit.stan, pars=pars.to.monitor[-3], probs=c(.01, .99))$summary
+      
+      #browser()
+      sink(paste0(sub.dir.GP, sub.id(), time.id(), study.id(), round(time.min*100), '_', round(time.max*100),'.txt'))
+      cat(paste0('ID:', '\t\t\t\t', paste(sub.id(), time.id(), study.id(), sep = '_')))
+      cat(paste0('\nT1:', '\t\t\t\t', round(time.min, digits = 2)))
+      cat(paste0('\nT2:', '\t\t\t\t', round(time.max, digits = 2)))
+      cat(paste0('\nTotal Time', '\t\t\t', round(time.max-time.min, digits = 2), '(s)'))
+      cat(paste0('\nRun Time:', '\t\t\t', round(run_time, digits = 2), '(mins)'))
+      cat(paste0('\nMAP HR:', '\t\t\t\t', round(mu_HR2*60, digits = 2)))
+      cat(paste0('\nMAP R:', '\t\t\t\t',round(mu_R2*60, digits = 2)))
+      cat(paste0('\nadapt_delta:', '\t\t\t', rv$delta))
+      cat(paste0('\nIterations:', '\t\t\t', rv$GP.iter))
+      cat(paste0('\nWarmup:', '\t\t\t\t', rv$GP.wrm))
+      cat('\n\nSystem Information:')
+      cat('\n-------------------------------------------------------------------------------------')
+      cat(paste0('\nProcessor:', '\t\t\t', get_cpu()$model_name))
+      cat(paste0('\nNumber of Cores:', '\t\t', detectCores(logical=F)))
+      cat(paste0('\nNumber of Threads:', '\t\t', detectCores(logical=T)))
+      cat(paste0('\nRAM:', '\t\t\t\t', paste(round(get_ram()/1073741824), 'GB')))
+      cat('\n-------------------------------------------------------------------------------------')
+      cat('\n\nGP SUMMARY:\n\n')
+      print(fit.summary)
+      sink()
     }
   })
 
