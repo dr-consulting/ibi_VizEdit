@@ -1739,7 +1739,7 @@ server <- function(input, output) {
                      warmup = rv$GP.wrm,
                      iter = rv$GP.iter,
                      refresh=5,
-                     chains = 6,
+                     chains = 3,
                      init = list(list(mu_HR=mu_HP,
                                       mu_R=mu_R),
                                  list(mu_HR=mu_HP,
