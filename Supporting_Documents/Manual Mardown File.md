@@ -300,15 +300,27 @@ where $f_{HR}$ is heart-rate frequency (which needs to be given a range by the u
 
 
 
-Finally, the third Gaussian process is specified as follows: 
+The third Gaussian process is specified as follows: 
 $$
 g_3 \sim N(0, k_3)
 $$
-with a periodic covariance function for heart rate that varies as a function of the individual's average estimated respiration rate (derived from a spectral analysis). 
+with a periodic covariance function for heart rate that varies as a function of the individual's average estimated respiration rate. Respiration rate is modeled within the Gaussian process and given a prior distribution using spectral density within the frequency of domain of normal respiration. The spectral density is estimated from the entire file. 
 $$
 k_3(t, t') = \sigma_3^2exp\Big(-\frac{2sin^2(\pi(t-t')f_{HR}}{l_4^2}\Big)exp\Big(-\frac{2sin^2(\pi(t-t')f_{R}}{l_5^2}\Big)
 $$
 where $f_R$ is respiration frequency. 
+
+
+
+Finally, the fourth Gaussian process is specified as follows: 
+$$
+g_4 \sim N(0, k_4)
+$$
+with a periodic covariance function for heart rate that allows for heart rate variability in the low frequency domain. A static value of .1 Hz is used to partially control the decay rate (as opposed to specify a strong prior as is the case for respiration above).
+$$
+k_4(t, t') = \sigma_4^2exp\Big(-\frac{2sin^2(\pi(t-t')f_{HR}}{l_6^2}\Big)exp\Big(-\frac{2sin^2(\pi(t-t')(.1)}{l_7^2}\Big)
+$$
+More details regarding the specific implementation can be obtained using the 
 
 ### Using the Bayesian GP imputation - A Simple Example
 
