@@ -9,7 +9,7 @@
 # https://github.com/matgbar/IBI_VizEdit
 #
 # Please cite the use of IBI VizEdit according to standard practices in your field when publishing
-# Barstead, M. G. (2018). IBI VizEdit v.1.0: An RShiny Application [Computer software]. University of Maryland.
+# Barstead, M. G. (2018). IBI VizEdit v.1.2: An RShiny Application [Computer software]. University of Maryland.
 #
 # General questions? Contact the developer Matthew G. Barstead 
 # Contact: barstead@umd.edu
@@ -1625,7 +1625,7 @@ server <- function(input, output) {
         Vals.mid<-rep('Divide', length(IBI.temp))
         Vals.after<-rv$IBI.edit$Vals[rv$IBI.edit$Time>max(divide.temp$Time)]
         Vals<-c(Vals.before, Vals.mid, Vals.after)
-        rv$IBI.edit<-data.frame(IBI=IBI, Time=Time.temp, Vals=Vals) 
+        rv$IBI.edit<-data.frame(IBI=IBI, Time=Time.temp, Vals=Vals, stringsAsFactors = F) 
         rv$IBI.edit$IBI[1]<-0
       }
     }
@@ -1928,8 +1928,11 @@ server <- function(input, output) {
                           round(p.editable, digits=4))
       colnames(task.DF)<-c('id', 'Task', 'RMSSD', 'HP', 'SD', 'Total IBIs', 'Total edits', 'Proportion Edits', 'Proportion Editable')
       #removing values if there are too many uneditable sections in the data... (may be tricky at first to figure out what the right proportion is here)
-      for(i in 2:6){
-        task.DF[,i]<-ifelse(task.DF[,9]>1/3, NA, task.DF[,i])
+      for(j in 2:6){
+        for(i in 1:length(task.DF[,1]))
+        if(task.DF[i,9]<=2/3){
+          task.DF[i,j]<-NA
+        }
       }
       
       #------------------------------------------------------
@@ -2112,8 +2115,11 @@ server <- function(input, output) {
                           round(p.editable, digits=4))
       colnames(task.DF)<-c('id', 'Task', 'RMSSD', 'HP', 'SD', 'Total IBIs', 'Total edits', 'Proportion Edits', 'Proportion Editable')
       #removing values if there are too many uneditable sections in the data... (may be tricky at first to figure out what the right proportion is here)
-      for(i in 2:6){
-        task.DF[,i]<-ifelse(task.DF[,9]>1/3, NA, task.DF[,i])
+      for(j in 2:6){
+        for(i in 1:length(task.DF[,1]))
+          if(task.DF[i,9]<=2/3){
+            task.DF[i,j]<-NA
+          }
       }
       
       #------------------------------------------------------
@@ -2200,7 +2206,7 @@ server <- function(input, output) {
       write.csv(task.DF, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
                                                               'Task.csv', sep = '_')))
       write.table(rv$IBI.edit2, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), 'raw',
-                                                         'IBI.txt', sep = '_')), 
+                                                           'IBI.txt', sep = '_')), 
                   row.names = F, quote = F, sep='\t')
       write.table(rv$PPG.proc, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), paste0(DS(),'Hz'), 
                                                           'PPG.txt', sep = '_')), 
