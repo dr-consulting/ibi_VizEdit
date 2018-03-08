@@ -1852,7 +1852,7 @@ server <- function(input, output) {
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
       edits.cnt<-length(rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original',1])
-      orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time2$Time) & rv$IBI.edit2$Time<=max(rv$sub.time2$Time)])
+      orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time) & rv$IBI.edit2$Time<=max(rv$sub.time$Time)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits.cnt/fin.IBI
       edit.summary<-c(edits.cnt, orig.IBI, fin.IBI, round(p.new.edits,4))
@@ -1873,6 +1873,7 @@ server <- function(input, output) {
       #--
       edit.pnts<-rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original',]
       colnames(edit.pnts)<-c('Edited IBI Value', 'Time', 'Edit Type')
+      edit.pnts[,1:2]<-round(edit.pnts[,1:2], digits = 4)
       #--
       RMSSD<-rmssd(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
       SD<-sd(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
@@ -1993,15 +1994,15 @@ server <- function(input, output) {
       addTable(rtffile, sampling)
       addParagraph(rtffile, '\n\nTable 3:\nEditing Summary')
       addTable(rtffile, edit.summary)
-      addParagraph(rtffile, '\n\nTable4:\nEditing Summary by Edit Type')
+      addParagraph(rtffile, '\n\nTable 4:\nEditing Summary by Edit Type')
       addTable(rtffile, edit.type)
-      addParagraph(rtffile, '\n\nTable 4:\nEdited IBI File Properties')
+      addParagraph(rtffile, '\n\nTable 5:\nEdited IBI File Properties')
       addTable(rtffile, IBI.summary)
-      addParagraph(rtffile, '\n\nTable 5:\nEdited IBI File Properties by Task')
+      addParagraph(rtffile, '\n\nTable 6:\nEdited IBI File Properties by Task')
       addTable(rtffile, task.DF)
-      addParagraph(rtffile, '\n\nTable 6:\nPoint Editing Summary')
+      addParagraph(rtffile, '\n\nTable 7:\nPoint Editing Summary')
       addTable(rtffile, edit.pnts)
-      addParagraph(rtffile,'\n\nTable 7:\nGaussian Process Imputation Summary')
+      addParagraph(rtffile,'\n\nTable 8:\nGaussian Process Imputation Summary')
       if(length(Impute.tab)>0){
         addTable(rtffile, Impute.tab)
       }
@@ -2039,7 +2040,7 @@ server <- function(input, output) {
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
       edits.cnt<-length(rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original',1])
-      orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time2$Time) & rv$IBI.edit2$Time<=max(rv$sub.time2$Time)])
+      orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time) & rv$IBI.edit2$Time<=max(rv$sub.time$Time)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits.cnt/fin.IBI
       edit.summary<-c(edits.cnt, orig.IBI, fin.IBI, round(p.new.edits,4))
@@ -2060,6 +2061,7 @@ server <- function(input, output) {
       #--
       edit.pnts<-rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original',]
       colnames(edit.pnts)<-c('Edited IBI Value', 'Time', 'Edit Type')
+      edit.pnts[,1:2]<-round(edit.pnts[,1:2], digits = 4)
       #--
       RMSSD<-rmssd(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
       SD<-sd(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
@@ -2180,15 +2182,15 @@ server <- function(input, output) {
       addTable(rtffile, sampling)
       addParagraph(rtffile, '\n\nTable 3:\nEditing Summary')
       addTable(rtffile, edit.summary)
-      addParagraph(rtffile, '\n\nTable4:\nEditing Summary by Edit Type')
+      addParagraph(rtffile, '\n\nTable 4:\nEditing Summary by Edit Type')
       addTable(rtffile, edit.type)
-      addParagraph(rtffile, '\n\nTable 4:\nEdited IBI File Properties')
+      addParagraph(rtffile, '\n\nTable 5:\nEdited IBI File Properties')
       addTable(rtffile, IBI.summary)
-      addParagraph(rtffile, '\n\nTable 5:\nEdited IBI File Properties by Task')
+      addParagraph(rtffile, '\n\nTable 6:\nEdited IBI File Properties by Task')
       addTable(rtffile, task.DF)
-      addParagraph(rtffile, '\n\nTable 6:\nPoint Editing Summary')
+      addParagraph(rtffile, '\n\nTable 7:\nPoint Editing Summary')
       addTable(rtffile, edit.pnts)
-      addParagraph(rtffile,'\n\nTable 7:\nGaussian Process Imputation Summary')
+      addParagraph(rtffile,'\n\nTable 8:\nGaussian Process Imputation Summary')
       if(length(Impute.tab)>0){
         addTable(rtffile, Impute.tab)
       }
