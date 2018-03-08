@@ -1371,20 +1371,29 @@ server <- function(input, output) {
       rv$IBI.edit<-na.omit(rv$IBI.edit)
       time.before<-max(rv$IBI.edit$Time[rv$IBI.edit$Time<input$select_cases$xmin])
       time.tmp<-rv$IBI.edit2$Time[rv$IBI.edit2$Time<=input$select_cases$xmax & rv$IBI.edit2$Time>=input$select_cases$xmin]
-      IBI.tmp<-vector()
-      for(i in 1:length(time.tmp)){
-        if(i==1){
-          IBI.tmp[i]<-time.tmp[i]-time.before
-        }
-        else{
-          IBI.tmp[i]<-time.tmp[i]-time.tmp[i-1]
-        }
+      if(length(time.tmp)<1){
+        showModal(modalDialog(
+          title = 'Warning', 
+          'There are no Original IBI values in the range selected',
+          size = 'm'
+        ))
       }
-      IBI<-data.frame(IBI=IBI.tmp, 
-                      Time=time.tmp, 
-                      Vals=rep('Orginal', length(time.tmp)), stringsAsFactors = F)
-      rv$IBI.edit<-rbind(rv$IBI.edit, IBI)
-      rv$IBI.edit<-rv$IBI.edit[order(rv$IBI.edit$Time, decreasing = F), ]
+      else{
+        IBI.tmp<-vector()
+        for(i in 1:length(time.tmp)){
+          if(i==1){
+            IBI.tmp[i]<-time.tmp[i]-time.before
+          }
+          else{
+            IBI.tmp[i]<-time.tmp[i]-time.tmp[i-1]
+          }
+        }
+        IBI<-data.frame(IBI=IBI.tmp, 
+                        Time=time.tmp, 
+                        Vals=rep('Orginal', length(time.tmp)), stringsAsFactors = F)
+        rv$IBI.edit<-rbind(rv$IBI.edit, IBI)
+        rv$IBI.edit<-rv$IBI.edit[order(rv$IBI.edit$Time, decreasing = F), ]
+      }
     }
   })
     
