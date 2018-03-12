@@ -326,13 +326,17 @@ More details regarding the specific implementation can be obtained using the
 
 ### Using the Bayesian GP imputation - A Simple Example
 
-Bayesian GP is most useful and most appropriate when a number of IBI values are affected by a section of bad signal: 
+Bayesian GP is most useful and most appropriate when a number of IBI values are affected by a section of bad signal, and obvious editing strategies fail to offer easy solutions that reasonably bring data back in line with surrounding "good" signal. 
+
+
+
+**IMPORTANT: Current pilot work (as of VizEdit v1.2.0) indicates that windows over 10 seconds may not produce particularly stable imputation results.**  
 
 ![GP Easy 1](GP Easy 1.PNG)
 
 In order to ensure a successful Bayesian GP run you need to take the following steps. 
 
-1. Check to make sure that you have at least 5 seconds of good signal on either side of the area you have targeted for imputation (more on what to do if that is not the case below)
+1. Your target imputation window requires "good" signal to be present on both sides (i.e., before and after the desired imputation window). As of VizEdit v1.2.0, the editor needs to ensure that there is good signal 1.5X the length of the imputation window before and after. That means if the editor selects a 5 second window for imputation, he or she needs to ensure that there is clear data for the 7.5 seconds preceding and following the targeted window. (More on when this is not the case below.)
 2. Identify the minimum IBI value in the surrounding signal that you are confident is a validly identified IBI value. Use the slider to set the minimum Target HP value to the identified minimum IBI value - .02 (round if necessary). 
 3. Identify the maximum IBI value in the surrounding signal that you are confident is a validly identified IBI value. Use the slider to set the maximum Target HP value to the identified maximum IBI value + .02 (round if necessary).
 
@@ -349,7 +353,7 @@ Note that the selection box only needs to include correct values for the target 
 
 6. When you are ready, click the `Bayesian GP` button and wait for the program to run. You can track progress in your RStudio Window (though the Stan developers are working on it, there currently is not an easy way to track estimated time for model runs). *To speed up the run time ensure that you do not have any other programs open that require a large amount of processing power.* ![GP Easy 4](GP Easy 4.PNG)
 
-Note that you can refresh the Viewer to update the model progress. Once the warmup iterations are complete sampling for each chains takes relatively little time. (Total runtime for this model was 352.60 seconds on a laptop with an i7-7500 processor with 4 cores @2.7GHz with a max speed of 3.5GHz). 
+Note that you can refresh the Viewer to update the model progress (Windows only - chain updates will appear in the console for Linux distributions). Once the warmup iterations are complete sampling for each chains takes relatively little time. (Total runtime for this model was 352.60 seconds on a laptop with an i7-7500 processor with 4 cores @2.7GHz with a max speed of 3.5GHz). 
 
 7. Once the run is complete click anywhere on the editing window outside the selection box and turn the `Selection` function off.
 8. Turn on the `Add/Delete` function and begin manually adding points at the newly identified peaks.
@@ -360,9 +364,9 @@ You can view your imputed signal, along with the original signal on the Basic Ed
 
 ### Using Bayesian Imputation - A More Complicated Example
 
-In the first example, the section of corrupted data was surrounded by good signal for at least 5 seconds on either side. That may not always be the case. When you do have concerns about the signal quality that is going to be utilized in the imputation, you need to first prep the area before performing the analysis. To do this you will "erase" sections of bad signal you do not want incorporated in your Bayesian GP model. 
+In the first example, the section of corrupted data was surrounded by good signal for at least 1.5x the length of the imputation window on either side of that window (i.e., before AND after). That may not always be the case. When you do have concerns about the signal quality that is going to be utilized in the imputation, you need to first prep the area before performing the analysis. To do this you will "erase" sections of bad signal you do not want incorporated in your Bayesian GP model. 
 
-In the plot below, say I wanted to use the Bayesian GP function to impute data for the corrupted signal in the highlighted section. There is clearly an area to the right that is within five seconds of this window and includes portions of distorted signal. 
+In the plot below, say I wanted to use the Bayesian GP function to impute data for the corrupted signal in the highlighted section (note this is an example only - averaging these data points would be a viable and less time-consuming editing strategy). There is clearly an area to the right that is within five seconds of this window and includes portions of distorted signal. 
 
 ![GP Hard 1](GP Hard 1.PNG)
 

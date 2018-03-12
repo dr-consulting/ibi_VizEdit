@@ -239,7 +239,7 @@ ui <- shinyUI(
                 tags$hr(),
                 sliderInput(inputId = 'y.axis',
                             label = 'Y-Axis Min/Max:',
-                            min=0, 
+                            min=-2, 
                             max=5, 
                             value = c(0, 1.25), 
                             step = .1
@@ -1851,7 +1851,7 @@ server <- function(input, output) {
   
   observeEvent(input$save, {
     if(!is.null(input$save)){
-      #browser()
+      browser()
       #Prepping relevant information for summary document
       sub.dir<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output/', sep = '_'))
       dirList<-list.dirs(rv$out.dir)
@@ -1860,8 +1860,8 @@ server <- function(input, output) {
       sampling<-cbind(Hz(), DS())
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
-      edits.cnt<-length(rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original',1])
-      orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time) & rv$IBI.edit2$Time<=max(rv$sub.time$Time)])
+      edits.cnt<-length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original'])
+      orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit2$Time<=max(rv$sub.time$Time, na.rm=T)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits.cnt/fin.IBI
       edit.summary<-c(edits.cnt, orig.IBI, fin.IBI, round(p.new.edits,4))
@@ -2049,7 +2049,7 @@ server <- function(input, output) {
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
       edits.cnt<-length(rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original',1])
-      orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time) & rv$IBI.edit2$Time<=max(rv$sub.time$Time)])
+      orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit2$Time<=max(rv$sub.time$Time, na.rm=T)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits.cnt/fin.IBI
       edit.summary<-c(edits.cnt, orig.IBI, fin.IBI, round(p.new.edits,4))
