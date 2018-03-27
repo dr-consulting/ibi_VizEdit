@@ -1708,7 +1708,7 @@ server <- function(input, output) {
                     rv$PPG.proc2[rv$PPG.proc2$Time>max.TIME2 & rv$PPG.proc2$Time<min.TIME2+1.5*time.span,])
       Y.vals<-na.omit(Y.vals)
       tot.Y.vals<-length(Y.vals[,1])
-      sel.Y.vals<-round(seq(1, tot.Y.vals, length.out = 50))
+      sel.Y.vals<-round(seq(1, tot.Y.vals, length.out = round(length(Y.vals)/DS()*4)))
       sel.Y.vals<-unique(sel.Y.vals)
       Y<-Y.vals$PPG[sel.Y.vals]
       X<-Y.vals$Time[sel.Y.vals]
