@@ -1705,10 +1705,10 @@ server <- function(input, output) {
       max.TIME2<-max(TIME2)
       time.span<-max.TIME2-min.TIME2
       Y.vals<-rbind(rv$PPG.proc2[rv$PPG.proc2$Time>min.TIME2-1.5*time.span & rv$PPG.proc2$Time<min.TIME2,],
-                    rv$PPG.proc2[rv$PPG.proc2$Time>max.TIME2 & rv$PPG.proc2$Time<min.TIME2+1.5*time.span,])
+                    rv$PPG.proc2[rv$PPG.proc2$Time>max.TIME2 & rv$PPG.proc2$Time<max.TIME2+1.5*time.span,])
       Y.vals<-na.omit(Y.vals)
       tot.Y.vals<-length(Y.vals[,1])
-      sel.Y.vals<-round(seq(1, tot.Y.vals, length.out = round(length(Y.vals)/DS()*4)))
+      sel.Y.vals<-round(seq(1, tot.Y.vals, length.out = round(tot.Y.vals/100*5)))
       sel.Y.vals<-unique(sel.Y.vals)
       Y<-Y.vals$PPG[sel.Y.vals]
       X<-Y.vals$Time[sel.Y.vals]
@@ -1762,10 +1762,6 @@ server <- function(input, output) {
                      control = list(adapt_delta = rv$delta, 
                                     max_treedepth = 12)
                      )
-      
-      traceplot(fit.stan, pars='HR')
-      mcmc_areas(as.matrix(fit.stan), pars='HR')
-      mcmc_areas(as.matrix(fit.stan), pars='a4')
       
       #browser()
       #------------------------------------------------------------
@@ -1851,7 +1847,7 @@ server <- function(input, output) {
   
   observeEvent(input$save, {
     if(!is.null(input$save)){
-      browser()
+      #browser()
       #Prepping relevant information for summary document
       sub.dir<-paste0(rv$out.dir, '/', paste(sub.id(), time.id(), study.id(), 'Output/', sep = '_'))
       dirList<-list.dirs(rv$out.dir)
