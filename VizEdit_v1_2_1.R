@@ -29,8 +29,10 @@
 # Details about the processing steps are detailed at the link below: 
 # https://github.com/matgbar/IBI_VizEdit
 #
-# Please cite the use of IBI VizEdit according to standard practices in your field when publishing
-# Barstead, M. G. (2018). IBI VizEdit v.1.2: An RShiny Application [Computer software]. University of Maryland.
+# Please cite the use of IBI VizEdit according to standard practices in your field when publishing:
+# Barstead, M. G. (2018). IBI VizEdit v.1.2-beta: An RShiny Application [Computer software]. University of Maryland.
+#
+# DOI: 10.5281/zenodo.1209474
 #
 # General questions? Contact the developer Matthew G. Barstead 
 # Contact: barstead@umd.edu

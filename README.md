@@ -10,5 +10,13 @@ Please note that IBI VizEdit is beta software. It has not been fully tested, and
 
 Please cite as: 
 
-Barstead, M. G. (2018). IBI VizEdit v.1.2: An RShiny Application [Computer software]. University of Maryland. `[![DOI](https://zenodo.org/badge/119615926.svg)](https://zenodo.org/badge/latestdoi/119615926)`
+Barstead, M. G. (2018). IBI VizEdit v.1.2-beta: An RShiny Application [Computer software]. University of Maryland. [doi: 10.5281/zenodo.1209474](`https://zenodo.org/badge/latestdoi/119615926`)
+
+
+
+
+
+
+
+
 
