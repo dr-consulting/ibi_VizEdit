@@ -2,7 +2,7 @@
 # This is the Shiny web application IBI VizEdit - Matthew G. Barstead (c) 2018. 
 # You can run the application by clicking the 'Run App' button above.
 #===================================================================================================
-# By running this application you agree to the terms outlined at the link below:
+# By running this application you agree to the terms outlined below:
 # 
 # MIT License
 #
