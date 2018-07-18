@@ -1,5 +1,5 @@
 #===================================================================================================
-# This is the Shiny web application IBI VizEdit - Matthew G. Barstead (c) 2018. 
+# This is the Shiny application IBI VizEdit - Matthew G. Barstead (c) 2018. 
 # You can run the application by clicking the 'Run App' button above.
 #===================================================================================================
 # By running this application you agree to the terms outlined below:
@@ -149,8 +149,8 @@ ui <- shinyUI(
                numericInput(inputId='peak.iter',
                             label = 'Peak Detection Iterations',
                             min = 10, 
-                            max = 50, 
-                            value = 25
+                            max = 250, 
+                            value = 200
                             ),
                tags$div(checkboxGroupInput(inputId='epoch.in',
                                            label = 'Output Epoch Options:',
@@ -357,15 +357,15 @@ ui <- shinyUI(
                tags$hr(),
                numericInput(inputId = 'n.iter',
                             label = 'GP iterations',
-                            value = 750, 
+                            value = 4000, 
                             min = 500,
-                            max = 3000
+                            max = 5000
                             ),
                numericInput(inputId = 'n.wrm',
                             label = 'GP warmup',
-                            value = 500, 
+                            value = 2000, 
                             min = 250,
-                            max = 1500
+                            max = 2500
                ),
                tags$p('Warmup iterations must be less than total iterations'),
                numericInput(inputId = 'adapt.delta',
@@ -699,12 +699,14 @@ server <- function(input, output) {
   #===========================================================================
   #Function 3 - Iterative function for getting IBIs
   iter.IBI<-function(x, ds=500){
+    #browser()
     require(psych)
     x.smooth<-as.numeric(smooth(x))
     x.smooth<-na.omit(x.smooth)
     TIME<-0:(length(x.smooth)-1)
     x.smooth<-x.smooth-predict(lm(x.smooth~TIME))
-    s<-round(seq(round(ds/6), round(ds*4/3), length.out = peak.iter()))
+    x.smooth<-smooth.spline(x.smooth, nknots = 10000)$y
+    s<-round(seq(round(ds/50), round(ds/2), length.out = peak.iter()))
     Z<-data.frame(rep(NA, length(s)), 
                   rep(NA, length(s)), 
                   rep(NA, length(s)), 
@@ -1899,7 +1901,7 @@ server <- function(input, output) {
       edit.type<-cbind(edit.type.names, edit.type.sum, round(edit.type.p*100, digits = 2), round(edit.type.p.overall*100, digits=2))
       colnames(edit.type)<-c('Edit Type', 'Total Number of Edits', 'Total Edits %', 'Overall %')
       #--
-      edit.pnts<-rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original',]
+      edit.pnts<-rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' | rv$IBI.edit$Vals!='Original',]
       colnames(edit.pnts)<-c('Edited IBI Value', 'Time', 'Edit Type')
       edit.pnts[,1:2]<-round(edit.pnts[,1:2], digits = 4)
       #--
@@ -2087,7 +2089,7 @@ server <- function(input, output) {
       edit.type<-cbind(edit.type.names, edit.type.sum, round(edit.type.p*100, digits = 2), round(edit.type.p.overall*100, digits=2))
       colnames(edit.type)<-c('Edit Type', 'Total Number of Edits', 'Total Edits %', 'Overall %')
       #--
-      edit.pnts<-rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original',]
+      edit.pnts<-rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' | rv$IBI.edit$Vals!='Original',]
       colnames(edit.pnts)<-c('Edited IBI Value', 'Time', 'Edit Type')
       edit.pnts[,1:2]<-round(edit.pnts[,1:2], digits = 4)
       #--
