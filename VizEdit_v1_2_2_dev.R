@@ -1217,7 +1217,7 @@ server <- function(input, output) {
   })
   
   output$IBI <- renderPlot({
-    browser()
+    #browser()
     if(is.null(rv$IBI.edit)){
         temp.df<-data.frame(x=c(-1,0,1), y=c(-1,0,1))
         p.IBI<-ggplot(aes(x=x, y=y), data=temp.df)+
@@ -1266,6 +1266,11 @@ server <- function(input, output) {
       } 
       if(length(rv$IBI.edit$Vals[rv$IBI.edit$Vals=='Uneditable'])>0){
         p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=rv$IBI.edit[rv$IBI.edit$Vals=='Uneditable',], color='#58D3F7')
+      }
+      edit.pnts<-rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable',]
+      edit.pnts<-edit.pnts[edit.pnts$Vals!='Original',]
+      if(length(edit.pnts[,1])>0){
+        p.IBI<-p.IBI+geom_point(data=edit.pnts, aes(x=Time, y=IBI), color='#bb8fce')
       }
     }  
     p.IBI
@@ -1450,7 +1455,7 @@ server <- function(input, output) {
   #-------------------------------------------------------------------------------------
   observeEvent(input$Peak_click, {
     #browser()
-    if(!is.null(input$Peak_click) & rv$add.delete.on==1){
+    if(!is.null(input$Peak_click) & rv$add.delete.on==1 & is.null(input$select_cases)){
       temp.points<-nearPoints(df=rv$PPG.1000, 
                               input$Peak_click,
                               xvar='Time',
@@ -1485,7 +1490,7 @@ server <- function(input, output) {
   
   observeEvent(input$Peak_click2, {
     #browser()
-    if(!is.null(input$Peak_click2) & rv$add.delete.on2==1){
+    if(!is.null(input$Peak_click2) & rv$add.delete.on2==1 & is.null(input$select_cases2)){
       temp.points<-nearPoints(df=rv$PPG.proc2, 
                               input$Peak_click2,
                               xvar='Time',
@@ -1520,7 +1525,7 @@ server <- function(input, output) {
   
   observeEvent(input$Delete, {
     #browser()
-    if(!is.null(input$Delete) & rv$add.delete.on==1){
+    if(!is.null(input$Delete) & rv$add.delete.on==1 & is.null(input$select_cases)){
       row<-nearPoints(rv$IBI.edit, 
                       input$Delete,
                       xvar = 'Time',
@@ -1547,7 +1552,7 @@ server <- function(input, output) {
   
   observeEvent(input$Delete2, {
     #browser()
-    if(!is.null(input$Delete2) & rv$add.delete.on2==1){
+    if(!is.null(input$Delete2) & rv$add.delete.on2==1 & is.null(input$select_cases2)){
       row<-nearPoints(rv$IBI.edit, 
                       input$Delete2,
                       xvar = 'Time',
@@ -1579,7 +1584,7 @@ server <- function(input, output) {
   #-------------------------------------------------------------------------------------
   observeEvent(input$add.in, {
     #browser()
-    if(!is.null(input$select_cases) & rv$base.on==1){
+    if(!is.null(input$select_cases) & rv$select.on==1){
       if(!is.null(input$add.in)){
         add<-brushedPoints(rv$IBI.edit, input$select_cases, allRows = T)
         add.temp<-rv$IBI.edit[add$selected_==1,]
@@ -1620,7 +1625,7 @@ server <- function(input, output) {
   
   observeEvent(input$average.in, {
     #browser()
-    if(!is.null(input$select_cases) & rv$base.on==1){
+    if(!is.null(input$select_cases) & rv$select.on==1){
       average<-brushedPoints(rv$IBI.edit, input$select_cases, allRows = T)
       average.temp<-rv$IBI.edit[average$selected_==1,]
       if(length(average.temp[,1])<=1){
@@ -1649,21 +1654,21 @@ server <- function(input, output) {
   
   observeEvent(input$divide.in, {
     #browser()
-    if(!is.null(input$select_cases) & rv$base.on==1){
+    if(!is.null(input$select_cases) & rv$select.on==1){
       rv$denom<-round(input$divide.by, digits = 0)
       divide<-brushedPoints(rv$IBI.edit, input$select_cases, allRows = T)
       divide.temp<-divide[divide$selected_==1,]
       if(length(divide.temp[,1])==0){
         showModal(modalDialog(
           title = 'Warning!',
-          'Error - Make sure that you have ONE IBI value', 
+          'Error - Make sure that you have selected ONE IBI value', 
           size = 'm'
         ))
       }
       else if(length(divide.temp[,1])>1){
         showModal(modalDialog(
           title = 'Warning!',
-          'Error - Make sure that you have ONE IBI value', 
+          'Error - Make sure that you have selected ONE IBI value', 
           size = 'm'
         ))
       }
@@ -1694,7 +1699,7 @@ server <- function(input, output) {
   #-------------------------------------------------------------------------------------
   observeEvent(input$ppg.erase.in,{
     #browser()
-    if(!is.null(input$select_cases2) & rv$adv.on==1){
+    if(!is.null(input$select_cases2) & rv$adv.on==1 & rv$select.on2==1){
       time.min<-input$select_cases2$xmin
       time.max<-input$select_cases2$xmax
       rv$PPG.proc2$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-NA
@@ -1708,7 +1713,7 @@ server <- function(input, output) {
   
   observeEvent(input$ppg.restore.in,{
     #browser()
-    if(!is.null(input$select_cases2) & rv$adv.on==1){
+    if(!is.null(input$select_cases2) & rv$adv.on==1 & rv$select.on2==1){
       time.min<-input$select_cases2$xmin
       time.max<-input$select_cases2$xmax
       rv$PPG.proc2$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-rv$PPG.100$PPG[rv$PPG.100$Time>time.min & rv$PPG.100$Time<time.max]
@@ -1721,7 +1726,7 @@ server <- function(input, output) {
   })
   
   observeEvent(input$GP.in, {
-    if(!is.null(input$select_cases2) & rv$adv.on==1){
+    if(!is.null(input$select_cases2) & rv$adv.on==1 & rv$select.on2==1){
       #browser()
       time.temp1<-Sys.time()
       options(mc.cores=parallel::detectCores())
@@ -1922,7 +1927,8 @@ server <- function(input, output) {
       edit.type<-cbind(edit.type.names, edit.type.sum, round(edit.type.p*100, digits = 2), round(edit.type.p.overall*100, digits=2))
       colnames(edit.type)<-c('Edit Type', 'Total Number of Edits', 'Total Edits %', 'Overall %')
       #--
-      edit.pnts<-rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' | rv$IBI.edit$Vals!='Original',]
+      edit.pnts<-rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable',]
+      edit.pnts<-edit.pnts[edit.pnts$Vals!='Original',]
       colnames(edit.pnts)<-c('Edited IBI Value', 'Time', 'Edit Type')
       edit.pnts[,1:2]<-round(edit.pnts[,1:2], digits = 4)
       #--
@@ -1936,6 +1942,10 @@ server <- function(input, output) {
       colnames(IBI.summary)<-c('Measure', 'Value')
       #------------------------------------------------------
       #stats by task 
+      CE.raw.folder<-paste0(sub.dir2, '/CE_raw_IBIs')
+      dir.create(CE.raw.folder)
+      CE.edit.folder<-paste0(sub.dir2, '/CE_edited_IBIs')
+      dir.create(CE.edit.folder)
       Task.un<-unique(rv$sub.time$Task)
       task.rmssd<-vector()
       task.hp<-vector()
@@ -1959,9 +1969,38 @@ server <- function(input, output) {
         write.table(tmp.IBI, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                Task.un[i],'IBI_edited.txt', sep = '_')), 
                     quote = F)
+        sink(paste0(CE.edit.folder, '/', Task.un[i], '_IBI_edited.ibi'))
+        cat('Cardio Edit data file Version: 1.0.1 (Made by IBI VizEdit - (c) M.G. Barstead)')
+        cat('\nStudyID', '\t', ':', '\t', sub.id())
+        cat('\nSubjectID', '\t', ':', '\t', time.id())
+        cat('\nConditionID', '\t', ':')
+        cat('\nSegmentID', '\t', ':')
+        cat('\nMiscID', '\t\t', ':')
+        cat('\n----------------------------------------\n')
+        sink()
+        write.table(as.matrix(round(tmp.IBI$IBI, digits = 3), ncol=1), 
+                    row.names = F, 
+                    col.names = F, 
+                    file=paste0(CE.edit.folder, '/', Task.un[i], '_IBI_edited.ibi'), 
+                    append = T)
         write.table(tmp.IBI.raw, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                   Task.un[i],'IBI_raw.txt', sep = '_')), 
                     quote=F)
+        sink(paste0(CE.raw.folder, '/', Task.un[i], '_IBI_raw.ibi'))
+        cat('Cardio Edit data file Version: 1.0.1 (Made by IBI VizEdit - (c) M.G. Barstead)')
+        cat('\nStudyID', '\t', ':', '\t', sub.id())
+        cat('\nSubjectID', '\t', ':', '\t', time.id())
+        cat('\nConditionID', '\t', ':')
+        cat('\nSegmentID', '\t', ':')
+        cat('\nMiscID', '\t\t', ':')
+        cat('\n----------------------------------------\n')
+        sink()
+        write.table(as.matrix(round(tmp.IBI.raw$IBI, digits = 3), ncol=1), 
+                    row.names = F, 
+                    col.names = F, 
+                    file=paste0(CE.raw.folder, '/', Task.un[i], '_IBI_raw.ibi'), 
+                    append = T)
+        
         write.table(tmp.PPG, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                       Task.un[i], DS(), 'Hz',
                                                                       'PPG.txt', sep = '_')), 
@@ -2076,7 +2115,7 @@ server <- function(input, output) {
       write.table(rv$PPG.proc, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), paste0(DS(),'Hz'), 
                                                           'PPG.txt', sep = '_')), 
                   row.names = F, quote = F, sep='\t')
-    }
+      }
   })
   
   observeEvent(input$save.close, {
@@ -2090,7 +2129,7 @@ server <- function(input, output) {
       sampling<-cbind(Hz(), DS())
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
-      edits.cnt<-length(rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original',1])
+      edits.cnt<-length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original'])
       orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit2$Time<=max(rv$sub.time$Time, na.rm=T)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits.cnt/fin.IBI
@@ -2110,7 +2149,8 @@ server <- function(input, output) {
       edit.type<-cbind(edit.type.names, edit.type.sum, round(edit.type.p*100, digits = 2), round(edit.type.p.overall*100, digits=2))
       colnames(edit.type)<-c('Edit Type', 'Total Number of Edits', 'Total Edits %', 'Overall %')
       #--
-      edit.pnts<-rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable' | rv$IBI.edit$Vals!='Original',]
+      edit.pnts<-rv$IBI.edit[rv$IBI.edit$Vals!='Uneditable',]
+      edit.pnts<-edit.pnts[edit.pnts$Vals!='Original',]
       colnames(edit.pnts)<-c('Edited IBI Value', 'Time', 'Edit Type')
       edit.pnts[,1:2]<-round(edit.pnts[,1:2], digits = 4)
       #--
@@ -2124,6 +2164,10 @@ server <- function(input, output) {
       colnames(IBI.summary)<-c('Measure', 'Value')
       #------------------------------------------------------
       #stats by task 
+      CE.raw.folder<-paste0(sub.dir2, '/CE_raw_IBIs')
+      dir.create(CE.raw.folder)
+      CE.edit.folder<-paste0(sub.dir2, '/CE_edited_IBIs')
+      dir.create(CE.edit.folder)
       Task.un<-unique(rv$sub.time$Task)
       task.rmssd<-vector()
       task.hp<-vector()
@@ -2147,9 +2191,37 @@ server <- function(input, output) {
         write.table(tmp.IBI, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                             Task.un[i],'IBI_edited.txt', sep = '_')), 
                     quote = F)
+        sink(paste0(CE.edit.folder, '/', Task.un[i], '_IBI_edited.ibi'))
+        cat('Cardio Edit data file Version: 1.0.1 (Made by IBI VizEdit - (c) M.G. Barstead)')
+        cat('\nStudyID', '\t', ':', '\t', sub.id())
+        cat('\nSubjectID', '\t', ':', '\t', time.id())
+        cat('\nConditionID', '\t', ':')
+        cat('\nSegmentID', '\t', ':')
+        cat('\nMiscID', '\t\t', ':')
+        cat('\n----------------------------------------\n')
+        sink()
+        write.table(as.matrix(round(tmp.IBI$IBI, digits = 3), ncol=1), 
+                    row.names = F, 
+                    col.names = F, 
+                    file=paste0(CE.edit.folder, '/', Task.un[i], '_IBI_edited.ibi'), 
+                    append = T)
         write.table(tmp.IBI.raw, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                                 Task.un[i],'IBI_raw.txt', sep = '_')), 
                     quote=F)
+        sink(paste0(CE.raw.folder, '/', Task.un[i], '_IBI_raw.ibi'))
+        cat('Cardio Edit data file Version: 1.0.1 (Made by IBI VizEdit - (c) M.G. Barstead)')
+        cat('\nStudyID', '\t', ':', '\t', sub.id())
+        cat('\nSubjectID', '\t', ':', '\t', time.id())
+        cat('\nConditionID', '\t', ':')
+        cat('\nSegmentID', '\t', ':')
+        cat('\nMiscID', '\t\t', ':')
+        cat('\n----------------------------------------\n')
+        sink()
+        write.table(as.matrix(round(tmp.IBI.raw$IBI, digits = 3), ncol=1), 
+                    row.names = F, 
+                    col.names = F, 
+                    file=paste0(CE.raw.folder, '/', Task.un[i], '_IBI_raw.ibi'), 
+                    append = T)
         write.table(tmp.PPG, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
                                                                             Task.un[i], DS(), 'Hz',
                                                                             'PPG.txt', sep = '_')), 
@@ -2264,7 +2336,7 @@ server <- function(input, output) {
       write.table(rv$PPG.proc, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), paste0(DS(),'Hz'), 
                                                           'PPG.txt', sep = '_')), 
                   row.names = F, quote = F, sep='\t')
-      #==============================================
+    #==============================================
       stopApp()
     }
   })
