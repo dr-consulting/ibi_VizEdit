@@ -1218,84 +1218,56 @@ server <- function(input, output) {
   
   output$IBI <- renderPlot({
     browser()
-    if(rv$ppg.on==0 & is.null(rv$IBI.edit)){
-      temp.df<-data.frame(x=c(-1,0,1), y=c(-1,0,1))
-      p.IBI<-ggplot(aes(x=x, y=y), data=temp.df)+
-        annotate('text', x=0, y=0, label='No Processed Data Provided')
-    }
-    else if(rv$ppg.on==0 & !is.null(rv$IBI.edit) & is.null(input$zoom_brush)){
-      p.IBI<-ggplot(data = rv$IBI.edit, aes(x=Time, y=IBI))+
-        geom_point(col="red")+
-        geom_line(col="black")+
-        xlab('Time(s)')+
-        ylab('IBI(s)')
-      
-      if(length(rv$IBI.edit$Vals[rv$IBI.edit$Vals=='Uneditable'])>0){
-        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=rv$IBI.edit[rv$IBI.edit$Vals=='Uneditable',], color='#58D3F7')
+    if(is.null(rv$IBI.edit)){
+        temp.df<-data.frame(x=c(-1,0,1), y=c(-1,0,1))
+        p.IBI<-ggplot(aes(x=x, y=y), data=temp.df)+
+          annotate('text', x=0, y=0, label='No Processed Data Provided')  
       }
-        
-      if(!is.null(rv$sub.time)){
-        p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=rv$sub.time, show.legend = F)+
-          geom_text(aes(x=Time, label=Label, color=Task, y=.25), data = rv$sub.time, show.legend = F,
-                    angle = 60, hjust=0)
-      }
-    }
-      
-    else if(rv$ppg.on==0 & !is.null(rv$IBI.edit) & !is.null(input$zoom_brush)){
-      time.min<-as.numeric(input$zoom_brush$xmin)
-      time.max<-as.numeric(input$zoom_brush$xmax)
-      IBI.tmp<-rv$IBI.edit[rv$IBI.edit$Time>=time.min & rv$IBI.edit$Time<=time.max,]
-      #PPG.tmp<-rv$PPG.1000[rv$PPG.1000$Time>=time.min & rv$PPG.1000$Time<=time.max,]
-      
-      p.IBI<-ggplot(data = IBI.tmp, aes(x=Time, y=IBI))+
-        geom_point(col="red")+
-        geom_line(col="black")+
-        xlab('Time(s)')+
-        ylab('IBI(s)')+
-        geom_vline(aes(xintercept=Time), data=IBI.tmp, color = 'red', lty='dashed', alpha=.25)+
-        #geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray80')+
-        scale_y_continuous(limits = c(rv$y.axis.min, rv$y.axis.max))
-      
-      if(!is.null(rv$sub.time)){
-        sub.time.tmp<-rv$sub.time[rv$sub.time$Time>=time.min & rv$sub.time$Time<=time.max,]
-        if(nrow(sub.time.tmp)>0){
-          p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=sub.time.tmp, show.legend = F)+
-            geom_text(aes(x=Time, label=Label, color=Task, y=.25), data = sub.time.tmp, show.legend = F,
+    else if(!is.null(rv$IBI.edit)){
+      if(is.null(input$zoom_brush)){
+        p.IBI<-ggplot(data = rv$IBI.edit, aes(x=Time, y=IBI))+
+          geom_point(col="red")+
+          geom_line(col="black")+
+          xlab('Time(s)')+
+          ylab('IBI(s)')
+        if(!is.null(rv$sub.time)){
+          p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=rv$sub.time, show.legend = F)+
+            geom_text(aes(x=Time, label=Label, color=Task, y=.25), data = rv$sub.time, show.legend = F,
                       angle = 60, hjust=0)
         }
       }
-        
-      if(!is.null(input$select_cases)){
-        IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases)
-        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
-        if(length(IBI.tmp$Vals[IBI.tmp$Vals=='Uneditable'])>0){
-          p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.tmp[IBI.tmp$Vals=='Uneditable',], color='#58D3F7')
-        }
-      }
-        
-      #if(!is.null(rv$PPG.GP) & length(na.omit(rv$PPG.GP[,1]))>0){
-      #  PPG.GP.tmp<-rv$PPG.GP[rv$PPG.GP$Time>=time.min & rv$PPG.GP$Time<=time.max,]
-      #  if(length(na.omit(PPG.GP.tmp$PPG))>0){
-      #    p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), 
-      #                           data = PPG.GP.tmp,
-      #                           col='#58D3F7')
-        else{
-          p.IBI<-p.IBI
-        }
-    }
-    if(rv$ppg.on==1 & !is.null(rv$IBI.edit)){
-      if(is.null(input$select_cases)){
-        PPG.tmp<-rv$PPG.1000
-        p.IBI<-p.IBI+
-          geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray80')
-      }
-      else if(!is.null(input$select_cases)){
+      
+      else if(!is.null(input$zoom_brush)){
         time.min<-as.numeric(input$zoom_brush$xmin)
         time.max<-as.numeric(input$zoom_brush$xmax)
         IBI.tmp<-rv$IBI.edit[rv$IBI.edit$Time>=time.min & rv$IBI.edit$Time<=time.max,]
         PPG.tmp<-rv$PPG.1000[rv$PPG.1000$Time>=time.min & rv$PPG.1000$Time<=time.max,]
+        
+        p.IBI<-ggplot(data = IBI.tmp, aes(x=Time, y=IBI))+
+          geom_point(col="red")+
+          geom_line(col="black")+
+          xlab('Time(s)')+
+          ylab('IBI(s)')+
+          geom_vline(aes(xintercept=Time), data=IBI.tmp, color = 'red', lty='dashed', alpha=.25)+
+          scale_y_continuous(limits = c(rv$y.axis.min, rv$y.axis.max))+
+          scale_x_continuous(limits = c(time.min, time.max))
+        if(!is.null(rv$sub.time)){
+          p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=rv$sub.time, show.legend = F)+
+            geom_text(aes(x=Time, label=Label, color=Task, y=.25), data = rv$sub.time, show.legend = F,
+                      angle = 60, hjust=0)
+        }
+        if(rv$ppg.on==1){
+          p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray')
+        }
       }
-    }
+      if(!is.null(input$select_cases)){
+        IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases)
+        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
+      } 
+      if(length(rv$IBI.edit$Vals[rv$IBI.edit$Vals=='Uneditable'])>0){
+        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=rv$IBI.edit[rv$IBI.edit$Vals=='Uneditable',], color='#58D3F7')
+      }
+    }  
     p.IBI
   })
   
