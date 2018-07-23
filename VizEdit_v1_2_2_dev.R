@@ -67,7 +67,7 @@ pacman::p_load(shiny,
 ui <- shinyUI(
   fluidPage(theme = shinytheme('united'),
   titlePanel(
-    'IBI VizEdit v1.2.1'
+    'IBI VizEdit v1.2.3'
     ),
   tabsetPanel(
     tabPanel('Data Entry',
@@ -1907,7 +1907,9 @@ server <- function(input, output) {
       sampling<-cbind(Hz(), DS())
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
-      edits.cnt<-length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original'])
+      edits.cnt<-length(rv$IBI.edit$IBI) - 
+        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable']) - 
+        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Original'])
       orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit2$Time<=max(rv$sub.time$Time, na.rm=T)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits.cnt/fin.IBI
@@ -1931,191 +1933,201 @@ server <- function(input, output) {
       edit.pnts<-edit.pnts[edit.pnts$Vals!='Original',]
       colnames(edit.pnts)<-c('Edited IBI Value', 'Time', 'Edit Type')
       edit.pnts[,1:2]<-round(edit.pnts[,1:2], digits = 4)
+      if(length(edit.pnts[,1])==0){
+        showModal(modalDialog(
+          title = 'Warning!',
+          'You Did Not Make Any Edits', 
+          size = 'm'
+        ))
+      }
       #--
-      RMSSD<-rmssd(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
-      SD<-sd(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
-      meanHP<-mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
-      meanHR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])*60
-      IBI.summary<-c(round(RMSSD, 5), round(SD, 5), round(meanHP,5), round(meanHR,2))
-      values<-c('RMSSD', 'SD','Mean Heart Period', 'Mean BPM')
-      IBI.summary<-cbind(values, IBI.summary)
-      colnames(IBI.summary)<-c('Measure', 'Value')
-      #------------------------------------------------------
-      #stats by task 
-      CE.raw.folder<-paste0(sub.dir2, '/CE_raw_IBIs')
-      dir.create(CE.raw.folder)
-      CE.edit.folder<-paste0(sub.dir2, '/CE_edited_IBIs')
-      dir.create(CE.edit.folder)
-      Task.un<-unique(rv$sub.time$Task)
-      task.rmssd<-vector()
-      task.hp<-vector()
-      task.sd<-vector()
-      tot.IBI<-vector()
-      tot.editable.IBI<-vector()
-      task.edits<-vector()
-      #browser()
-      for(i in 1:length(unique(rv$sub.time$Task))){
-        tmp<-rv$sub.time[rv$sub.time$Task==Task.un[i],]
-        tmp.IBI<-rv$IBI.edit[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2],]
-        tmp.IBI.raw<-rv$IBI.edit2[rv$IBI.edit2$Time>tmp$Time[1] & rv$IBI.edit2$Time<tmp$Time[2],]
-        tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2],]
-        
-        task.rmssd<-c(task.rmssd, rmssd(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable'], na.rm = T))
-        task.hp<-c(task.hp, mean(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable'], na.rm = T))
-        task.sd<-c(task.sd, sd(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable'], na.rm = T))
-        tot.IBI<-c(tot.IBI, length(tmp.IBI[,1]))
-        tot.editable.IBI<-c(tot.editable.IBI, length(tmp.IBI[tmp.IBI$Vals!='Uneditable',1]))
-        task.edits<-c(task.edits, length(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable' & tmp.IBI$Vals!='Original']))
-        write.table(tmp.IBI, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
-                                                               Task.un[i],'IBI_edited.txt', sep = '_')), 
-                    quote = F)
-        sink(paste0(CE.edit.folder, '/', Task.un[i], '_IBI_edited.ibi'))
-        cat('Cardio Edit data file Version: 1.0.1 (Made by IBI VizEdit - (c) M.G. Barstead)')
-        cat('\nStudyID', '\t', ':', '\t', sub.id())
-        cat('\nSubjectID', '\t', ':', '\t', time.id())
-        cat('\nConditionID', '\t', ':')
-        cat('\nSegmentID', '\t', ':')
-        cat('\nMiscID', '\t\t', ':')
-        cat('\n----------------------------------------\n')
-        sink()
-        write.table(as.matrix(round(tmp.IBI$IBI, digits = 3), ncol=1), 
-                    row.names = F, 
-                    col.names = F, 
-                    file=paste0(CE.edit.folder, '/', Task.un[i], '_IBI_edited.ibi'), 
-                    append = T)
-        write.table(tmp.IBI.raw, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
-                                                                  Task.un[i],'IBI_raw.txt', sep = '_')), 
-                    quote=F)
-        sink(paste0(CE.raw.folder, '/', Task.un[i], '_IBI_raw.ibi'))
-        cat('Cardio Edit data file Version: 1.0.1 (Made by IBI VizEdit - (c) M.G. Barstead)')
-        cat('\nStudyID', '\t', ':', '\t', sub.id())
-        cat('\nSubjectID', '\t', ':', '\t', time.id())
-        cat('\nConditionID', '\t', ':')
-        cat('\nSegmentID', '\t', ':')
-        cat('\nMiscID', '\t\t', ':')
-        cat('\n----------------------------------------\n')
-        sink()
-        write.table(as.matrix(round(tmp.IBI.raw$IBI, digits = 3), ncol=1), 
-                    row.names = F, 
-                    col.names = F, 
-                    file=paste0(CE.raw.folder, '/', Task.un[i], '_IBI_raw.ibi'), 
-                    append = T)
-        
-        write.table(tmp.PPG, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
-                                                                      Task.un[i], DS(), 'Hz',
-                                                                      'PPG.txt', sep = '_')), 
-                    quote=F)
-      }
-      p.edits<-task.edits/tot.IBI
-      p.editable<-tot.editable.IBI/tot.IBI
-      task.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(Task.un)),
-                          Task.un, 
-                          round(task.rmssd, digits=4), 
-                          round(task.hp, digits=4), 
-                          round(task.sd, digits=4), 
-                          round(tot.IBI, digits=4), 
-                          task.edits, 
-                          round(p.edits, digits = 4), 
-                          round(p.editable, digits=4))
-      colnames(task.DF)<-c('id', 'Task', 'RMSSD', 'HP', 'SD', 'Total IBIs', 'Total edits', 'Proportion Edits', 'Proportion Editable')
-      #removing values if there are too many uneditable sections in the data... (may be tricky at first to figure out what the right proportion is here)
-      for(j in 2:6){
-        for(i in 1:length(task.DF[,1]))
-        if(task.DF[i,9]<=2/3){
-          task.DF[i,j]<-NA
-        }
-      }
-      
-      #------------------------------------------------------
-      #stats by epoch
-      epoch.length<-epoch()
-      for(e in 1:length(epoch.length)){
-        time.vals<-seq(min(rv$sub.time$Time, na.rm=T), max(rv$sub.time$Time, na.rm=T), by=epoch.length[e])
-        epoch.rmssd<-vector()
-        epoch.hp<-vector()
-        epoch.sd<-vector()
+      else if(length(edit.pnts[,1])>0){
+        RMSSD<-rmssd(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
+        SD<-sd(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
+        meanHP<-mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
+        meanHR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])*60
+        IBI.summary<-c(round(RMSSD, 5), round(SD, 5), round(meanHP,5), round(meanHR,2))
+        values<-c('RMSSD', 'SD','Mean Heart Period', 'Mean BPM')
+        IBI.summary<-cbind(values, IBI.summary)
+        colnames(IBI.summary)<-c('Measure', 'Value')
+        #------------------------------------------------------
+        #stats by task 
+        CE.raw.folder<-paste0(sub.dir2, '/CE_raw_IBIs')
+        dir.create(CE.raw.folder)
+        CE.edit.folder<-paste0(sub.dir2, '/CE_edited_IBIs')
+        dir.create(CE.edit.folder)
+        Task.un<-unique(rv$sub.time$Task)
+        task.rmssd<-vector()
+        task.hp<-vector()
+        task.sd<-vector()
+        tot.IBI<-vector()
+        tot.editable.IBI<-vector()
+        task.edits<-vector()
         #browser()
-        for(i in 1:(length(time.vals)-1)){
-          min.val<-time.vals[i]
-          max.val<-time.vals[i+1]
-          epoch.rmssd<-c(epoch.rmssd, rmssd(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min.val & rv$IBI.edit$Time<max.val]))
-          epoch.hp<-c(epoch.hp, mean(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min.val& rv$IBI.edit$Time<max.val]))
-          epoch.sd<-c(epoch.sd, sd(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min.val & rv$IBI.edit$Time<max.val]))
+        for(i in 1:length(unique(rv$sub.time$Task))){
+          tmp<-rv$sub.time[rv$sub.time$Task==Task.un[i],]
+          tmp.IBI<-rv$IBI.edit[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2],]
+          tmp.IBI.raw<-rv$IBI.edit2[rv$IBI.edit2$Time>tmp$Time[1] & rv$IBI.edit2$Time<tmp$Time[2],]
+          tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2],]
+          
+          task.rmssd<-c(task.rmssd, rmssd(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable'], na.rm = T))
+          task.hp<-c(task.hp, mean(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable'], na.rm = T))
+          task.sd<-c(task.sd, sd(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable'], na.rm = T))
+          tot.IBI<-c(tot.IBI, length(tmp.IBI[,1]))
+          tot.editable.IBI<-c(tot.editable.IBI, length(tmp.IBI[tmp.IBI$Vals!='Uneditable',1]))
+          task.edits<-c(task.edits, length(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable' & tmp.IBI$Vals!='Original']))
+          write.table(tmp.IBI, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+                                                                              Task.un[i],'IBI_edited.txt', sep = '_')), 
+                      quote = F)
+          sink(paste0(CE.edit.folder, '/', Task.un[i], '_IBI_edited.ibi'))
+          cat('Cardio Edit data file Version: 1.0.1 (Made by IBI VizEdit - (c) M.G. Barstead)')
+          cat('\nStudyID', '\t', ':', '\t', sub.id())
+          cat('\nSubjectID', '\t', ':', '\t', time.id())
+          cat('\nConditionID', '\t', ':')
+          cat('\nSegmentID', '\t', ':')
+          cat('\nMiscID', '\t\t', ':')
+          cat('\n----------------------------------------\n')
+          sink()
+          write.table(as.matrix(round(tmp.IBI$IBI, digits = 3), ncol=1), 
+                      row.names = F, 
+                      col.names = F, 
+                      file=paste0(CE.edit.folder, '/', Task.un[i], '_IBI_edited.ibi'), 
+                      append = T)
+          write.table(tmp.IBI.raw, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+                                                                                  Task.un[i],'IBI_raw.txt', sep = '_')), 
+                      quote=F)
+          sink(paste0(CE.raw.folder, '/', Task.un[i], '_IBI_raw.ibi'))
+          cat('Cardio Edit data file Version: 1.0.1 (Made by IBI VizEdit - (c) M.G. Barstead)')
+          cat('\nStudyID', '\t', ':', '\t', sub.id())
+          cat('\nSubjectID', '\t', ':', '\t', time.id())
+          cat('\nConditionID', '\t', ':')
+          cat('\nSegmentID', '\t', ':')
+          cat('\nMiscID', '\t\t', ':')
+          cat('\n----------------------------------------\n')
+          sink()
+          write.table(as.matrix(round(tmp.IBI.raw$IBI, digits = 3), ncol=1), 
+                      row.names = F, 
+                      col.names = F, 
+                      file=paste0(CE.raw.folder, '/', Task.un[i], '_IBI_raw.ibi'), 
+                      append = T)
+          
+          write.table(tmp.PPG, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+                                                                              Task.un[i], DS(), 'Hz',
+                                                                              'PPG.txt', sep = '_')), 
+                      quote=F)
         }
-        #browser()
-        epoch.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(time.vals)-1),
-                             round(time.vals[1:(length(time.vals)-1)]-min(rv$sub.time$Time, na.rm=T)), 
-                             round(epoch.rmssd, digits = 7), 
-                             round(epoch.hp, digits = 7), 
-                             round(epoch.sd, digits = 7))
-        colnames(epoch.DF)<-c('id', 'epoch', 'RMSSD', 'HP', 'SD')
-        write.csv(epoch.DF, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
-                                                                 paste0(epoch.length[e], 's'),
-                                                                 'Epochs.csv', sep = '_')))
-      }
-      #------------------------------------------------------
-      #Imputation stats for PPG file
-      Impute.tab<-rv$GP.impute.tab
-      tot.time<-max(rv$PPG.proc$Time)-min(rv$PPG.proc$Time)
-      if(length(Impute.tab[,1])>0){
-        tot.impute.time<-sum(Impute.tab$`Total Time Imputed (s)`)
-      }
-      else {
-        tot.impute.time<-0
-      }
-      per.impute.time<-round(tot.impute.time/tot.time, digits=3)
-      
-      #------------------------------------------------------
-      time.end<-Sys.time()
-      edit.time<-time.end-rv$start.time
-      units(edit.time)<-'mins'
-      rtffile <- RTF(paste0(sub.dir, paste(sub.id(), study.id(), time.id(),
-                                                   'Cases Processing Summary.rtf', sep = '_')))
-      addParagraph(rtffile, 'IBI VizEdit v1.2.1\nAuthor: Matthew G. Barstead\n(c) 2018')
-      addParagraph(rtffile, '--------------------------------------------------------------')
-      addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
-                                  '\nTotal Editing Time:', round(edit.time, digits = 2), 
-                                  'mins'))
-      addParagraph(rtffile, paste('Edited by:', editor.id()))
-      addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
-      addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
-      addTable(rtffile, as.data.frame(round(rv$tab.comp, digits = 3)))
-      addParagraph(rtffile, "\n\nTable 2:\n Samping Rate Summary")
-      addTable(rtffile, sampling)
-      addParagraph(rtffile, '\n\nTable 3:\nEditing Summary')
-      addTable(rtffile, edit.summary)
-      addParagraph(rtffile, '\n\nTable 4:\nEditing Summary by Edit Type')
-      addTable(rtffile, edit.type)
-      addParagraph(rtffile, '\n\nTable 5:\nEdited IBI File Properties')
-      addTable(rtffile, IBI.summary)
-      addParagraph(rtffile, '\n\nTable 6:\nEdited IBI File Properties by Task')
-      addTable(rtffile, task.DF)
-      addParagraph(rtffile, '\n\nTable 7:\nPoint Editing Summary')
-      addTable(rtffile, edit.pnts)
-      addParagraph(rtffile,'\n\nTable 8:\nGaussian Process Imputation Summary')
-      if(length(Impute.tab)>0){
-        addTable(rtffile, Impute.tab)
-      }
-      else{
-        addParagraph(rtffile, 'No Gaussian process imputation used')
-      }
-      addParagraph(rtffile, paste('\nPercent of PPG file Imputed via GP:', 
-                                  paste0(per.impute.time, '%')))
-      done(rtffile)
-      write.table(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T),],
-                  paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
-                                                             'edited',
+        p.edits<-task.edits/tot.IBI
+        p.editable<-tot.editable.IBI/tot.IBI
+        task.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(Task.un)),
+                            Task.un, 
+                            round(task.rmssd, digits=4), 
+                            round(task.hp, digits=4), 
+                            round(task.sd, digits=4), 
+                            round(tot.IBI, digits=4), 
+                            task.edits, 
+                            round(p.edits, digits = 4), 
+                            round(p.editable, digits=4))
+        colnames(task.DF)<-c('id', 'Task', 'RMSSD', 'HP', 'SD', 'Total IBIs', 'Total edits', 'Proportion Edits', 'Proportion Editable')
+        #removing values if there are too many uneditable sections in the data... (may be tricky at first to figure out what the right proportion is here)
+        for(j in 2:6){
+          for(i in 1:length(task.DF[,1]))
+            if(task.DF[i,9]<=2/3){
+              task.DF[i,j]<-NA
+            }
+        }
+        
+        #------------------------------------------------------
+        #stats by epoch
+        epoch.length<-epoch()
+        for(e in 1:length(epoch.length)){
+          time.vals<-seq(min(rv$sub.time$Time, na.rm=T), max(rv$sub.time$Time, na.rm=T), by=epoch.length[e])
+          epoch.rmssd<-vector()
+          epoch.hp<-vector()
+          epoch.sd<-vector()
+          #browser()
+          for(i in 1:(length(time.vals)-1)){
+            min.val<-time.vals[i]
+            max.val<-time.vals[i+1]
+            epoch.rmssd<-c(epoch.rmssd, rmssd(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min.val & rv$IBI.edit$Time<max.val]))
+            epoch.hp<-c(epoch.hp, mean(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min.val& rv$IBI.edit$Time<max.val]))
+            epoch.sd<-c(epoch.sd, sd(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min.val & rv$IBI.edit$Time<max.val]))
+          }
+          #browser()
+          epoch.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(time.vals)-1),
+                               round(time.vals[1:(length(time.vals)-1)]-min(rv$sub.time$Time, na.rm=T)), 
+                               round(epoch.rmssd, digits = 7), 
+                               round(epoch.hp, digits = 7), 
+                               round(epoch.sd, digits = 7))
+          colnames(epoch.DF)<-c('id', 'epoch', 'RMSSD', 'HP', 'SD')
+          write.csv(epoch.DF, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
+                                                                   paste0(epoch.length[e], 's'),
+                                                                   'Epochs.csv', sep = '_')))
+        }
+        #------------------------------------------------------
+        #Imputation stats for PPG file
+        Impute.tab<-rv$GP.impute.tab
+        tot.time<-max(rv$PPG.proc$Time)-min(rv$PPG.proc$Time)
+        if(length(Impute.tab[,1])>0){
+          tot.impute.time<-sum(Impute.tab$`Total Time Imputed (s)`)
+        }
+        else {
+          tot.impute.time<-0
+        }
+        per.impute.time<-round(tot.impute.time/tot.time, digits=3)
+        
+        #------------------------------------------------------
+        time.end<-Sys.time()
+        edit.time<-time.end-rv$start.time
+        units(edit.time)<-'mins'
+        rtffile <- RTF(paste0(sub.dir, paste(sub.id(), study.id(), time.id(),
+                                             'Cases Processing Summary.rtf', sep = '_')))
+        addParagraph(rtffile, 'IBI VizEdit v1.2.3\nAuthor: Matthew G. Barstead\n(c) 2018')
+        addParagraph(rtffile, '--------------------------------------------------------------')
+        addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
+                                    '\nTotal Editing Time:', round(edit.time, digits = 2), 
+                                    'mins'))
+        addParagraph(rtffile, paste('Edited by:', editor.id()))
+        addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
+        addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
+        addTable(rtffile, as.data.frame(round(rv$tab.comp, digits = 3)))
+        addParagraph(rtffile, "\n\nTable 2:\n Samping Rate Summary")
+        addTable(rtffile, sampling)
+        addParagraph(rtffile, '\n\nTable 3:\nEditing Summary')
+        addTable(rtffile, edit.summary)
+        addParagraph(rtffile, '\n\nTable 4:\nEditing Summary by Edit Type')
+        addTable(rtffile, edit.type)
+        addParagraph(rtffile, '\n\nTable 5:\nEdited IBI File Properties')
+        addTable(rtffile, IBI.summary)
+        addParagraph(rtffile, '\n\nTable 6:\nEdited IBI File Properties by Task')
+        addTable(rtffile, task.DF)
+        addParagraph(rtffile, '\n\nTable 7:\nPoint Editing Summary')
+        addTable(rtffile, edit.pnts)
+        addParagraph(rtffile,'\n\nTable 8:\nGaussian Process Imputation Summary')
+        if(length(Impute.tab)>0){
+          addTable(rtffile, Impute.tab)
+        }
+        else{
+          addParagraph(rtffile, 'No Gaussian process imputation used')
+        }
+        addParagraph(rtffile, paste('\nPercent of PPG file Imputed via GP:', 
+                                    paste0(per.impute.time, '%')))
+        done(rtffile)
+        write.table(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T),],
+                    paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
+                                          'edited',
+                                          'IBI.txt', sep = '_')), 
+                    row.names = F, quote = F, sep='\t')
+        write.csv(task.DF, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
+                                                                'Task.csv', sep = '_')))
+        write.table(rv$IBI.edit2, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), 'raw',
                                                              'IBI.txt', sep = '_')), 
-                  row.names = F, quote = F, sep='\t')
-      write.csv(task.DF, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
-                                               'Task.csv', sep = '_')))
-      write.table(rv$IBI.edit2, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), 'raw',
-                                                         'IBI.txt', sep = '_')), 
-                  row.names = F, quote = F, sep='\t')
-      write.table(rv$PPG.proc, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), paste0(DS(),'Hz'), 
-                                                          'PPG.txt', sep = '_')), 
-                  row.names = F, quote = F, sep='\t')
+                    row.names = F, quote = F, sep='\t')
+        write.table(rv$PPG.proc, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), paste0(DS(),'Hz'), 
+                                                            'PPG.txt', sep = '_')), 
+                    row.names = F, quote = F, sep='\t')
+        #stopApp()
       }
+    }
   })
   
   observeEvent(input$save.close, {
@@ -2129,7 +2141,9 @@ server <- function(input, output) {
       sampling<-cbind(Hz(), DS())
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
-      edits.cnt<-length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable' & rv$IBI.edit$Vals!='Original'])
+      edits.cnt<-length(rv$IBI.edit$IBI) - 
+        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable']) - 
+        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Original'])
       orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit2$Time<=max(rv$sub.time$Time, na.rm=T)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits.cnt/fin.IBI
@@ -2153,191 +2167,200 @@ server <- function(input, output) {
       edit.pnts<-edit.pnts[edit.pnts$Vals!='Original',]
       colnames(edit.pnts)<-c('Edited IBI Value', 'Time', 'Edit Type')
       edit.pnts[,1:2]<-round(edit.pnts[,1:2], digits = 4)
+      if(length(edit.pnts[,1]==0)){
+        showModal(modalDialog(
+          title = 'Warning!',
+          'You Did Not Make Any Edits', 
+          size = 'm'
+        ))
+      }
       #--
-      RMSSD<-rmssd(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
-      SD<-sd(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
-      meanHP<-mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
-      meanHR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])*60
-      IBI.summary<-c(round(RMSSD, 5), round(SD, 5), round(meanHP,5), round(meanHR,2))
-      values<-c('RMSSD', 'SD','Mean Heart Period', 'Mean BPM')
-      IBI.summary<-cbind(values, IBI.summary)
-      colnames(IBI.summary)<-c('Measure', 'Value')
-      #------------------------------------------------------
-      #stats by task 
-      CE.raw.folder<-paste0(sub.dir2, '/CE_raw_IBIs')
-      dir.create(CE.raw.folder)
-      CE.edit.folder<-paste0(sub.dir2, '/CE_edited_IBIs')
-      dir.create(CE.edit.folder)
-      Task.un<-unique(rv$sub.time$Task)
-      task.rmssd<-vector()
-      task.hp<-vector()
-      task.sd<-vector()
-      tot.IBI<-vector()
-      tot.editable.IBI<-vector()
-      task.edits<-vector()
-      #browser()
-      for(i in 1:length(unique(rv$sub.time$Task))){
-        tmp<-rv$sub.time[rv$sub.time$Task==Task.un[i],]
-        tmp.IBI<-rv$IBI.edit[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2],]
-        tmp.IBI.raw<-rv$IBI.edit2[rv$IBI.edit2$Time>tmp$Time[1] & rv$IBI.edit2$Time<tmp$Time[2],]
-        tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2],]
-        
-        task.rmssd<-c(task.rmssd, rmssd(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable'], na.rm = T))
-        task.hp<-c(task.hp, mean(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable'], na.rm = T))
-        task.sd<-c(task.sd, sd(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable'], na.rm = T))
-        tot.IBI<-c(tot.IBI, length(tmp.IBI[,1]))
-        tot.editable.IBI<-c(tot.editable.IBI, length(tmp.IBI[tmp.IBI$Vals!='Uneditable',1]))
-        task.edits<-c(task.edits, length(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable' & tmp.IBI$Vals!='Original']))
-        write.table(tmp.IBI, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
-                                                                            Task.un[i],'IBI_edited.txt', sep = '_')), 
-                    quote = F)
-        sink(paste0(CE.edit.folder, '/', Task.un[i], '_IBI_edited.ibi'))
-        cat('Cardio Edit data file Version: 1.0.1 (Made by IBI VizEdit - (c) M.G. Barstead)')
-        cat('\nStudyID', '\t', ':', '\t', sub.id())
-        cat('\nSubjectID', '\t', ':', '\t', time.id())
-        cat('\nConditionID', '\t', ':')
-        cat('\nSegmentID', '\t', ':')
-        cat('\nMiscID', '\t\t', ':')
-        cat('\n----------------------------------------\n')
-        sink()
-        write.table(as.matrix(round(tmp.IBI$IBI, digits = 3), ncol=1), 
-                    row.names = F, 
-                    col.names = F, 
-                    file=paste0(CE.edit.folder, '/', Task.un[i], '_IBI_edited.ibi'), 
-                    append = T)
-        write.table(tmp.IBI.raw, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
-                                                                                Task.un[i],'IBI_raw.txt', sep = '_')), 
-                    quote=F)
-        sink(paste0(CE.raw.folder, '/', Task.un[i], '_IBI_raw.ibi'))
-        cat('Cardio Edit data file Version: 1.0.1 (Made by IBI VizEdit - (c) M.G. Barstead)')
-        cat('\nStudyID', '\t', ':', '\t', sub.id())
-        cat('\nSubjectID', '\t', ':', '\t', time.id())
-        cat('\nConditionID', '\t', ':')
-        cat('\nSegmentID', '\t', ':')
-        cat('\nMiscID', '\t\t', ':')
-        cat('\n----------------------------------------\n')
-        sink()
-        write.table(as.matrix(round(tmp.IBI.raw$IBI, digits = 3), ncol=1), 
-                    row.names = F, 
-                    col.names = F, 
-                    file=paste0(CE.raw.folder, '/', Task.un[i], '_IBI_raw.ibi'), 
-                    append = T)
-        write.table(tmp.PPG, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
-                                                                            Task.un[i], DS(), 'Hz',
-                                                                            'PPG.txt', sep = '_')), 
-                    quote=F)
-      }
-      p.edits<-task.edits/tot.IBI
-      p.editable<-tot.editable.IBI/tot.IBI
-      task.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(Task.un)),
-                          Task.un, 
-                          round(task.rmssd, digits=4), 
-                          round(task.hp, digits=4), 
-                          round(task.sd, digits=4), 
-                          round(tot.IBI, digits=4), 
-                          task.edits, 
-                          round(p.edits, digits = 4), 
-                          round(p.editable, digits=4))
-      colnames(task.DF)<-c('id', 'Task', 'RMSSD', 'HP', 'SD', 'Total IBIs', 'Total edits', 'Proportion Edits', 'Proportion Editable')
-      #removing values if there are too many uneditable sections in the data... (may be tricky at first to figure out what the right proportion is here)
-      for(j in 2:6){
-        for(i in 1:length(task.DF[,1]))
-          if(task.DF[i,9]<=2/3){
-            task.DF[i,j]<-NA
-          }
-      }
-      
-      #------------------------------------------------------
-      #stats by epoch
-      epoch.length<-epoch()
-      for(e in 1:length(epoch.length)){
-        time.vals<-seq(min(rv$sub.time$Time, na.rm=T), max(rv$sub.time$Time, na.rm=T), by=epoch.length[e])
-        epoch.rmssd<-vector()
-        epoch.hp<-vector()
-        epoch.sd<-vector()
+      else if(length(edit.pnts[,1]>0)){
+        RMSSD<-rmssd(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
+        SD<-sd(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
+        meanHP<-mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])
+        meanHR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'])*60
+        IBI.summary<-c(round(RMSSD, 5), round(SD, 5), round(meanHP,5), round(meanHR,2))
+        values<-c('RMSSD', 'SD','Mean Heart Period', 'Mean BPM')
+        IBI.summary<-cbind(values, IBI.summary)
+        colnames(IBI.summary)<-c('Measure', 'Value')
+        #------------------------------------------------------
+        #stats by task 
+        CE.raw.folder<-paste0(sub.dir2, '/CE_raw_IBIs')
+        dir.create(CE.raw.folder)
+        CE.edit.folder<-paste0(sub.dir2, '/CE_edited_IBIs')
+        dir.create(CE.edit.folder)
+        Task.un<-unique(rv$sub.time$Task)
+        task.rmssd<-vector()
+        task.hp<-vector()
+        task.sd<-vector()
+        tot.IBI<-vector()
+        tot.editable.IBI<-vector()
+        task.edits<-vector()
         #browser()
-        for(i in 1:(length(time.vals)-1)){
-          min.val<-time.vals[i]
-          max.val<-time.vals[i+1]
-          epoch.rmssd<-c(epoch.rmssd, rmssd(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min.val & rv$IBI.edit$Time<max.val]))
-          epoch.hp<-c(epoch.hp, mean(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min.val& rv$IBI.edit$Time<max.val]))
-          epoch.sd<-c(epoch.sd, sd(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min.val & rv$IBI.edit$Time<max.val]))
+        for(i in 1:length(unique(rv$sub.time$Task))){
+          tmp<-rv$sub.time[rv$sub.time$Task==Task.un[i],]
+          tmp.IBI<-rv$IBI.edit[rv$IBI.edit$Time>tmp$Time[1] & rv$IBI.edit$Time<tmp$Time[2],]
+          tmp.IBI.raw<-rv$IBI.edit2[rv$IBI.edit2$Time>tmp$Time[1] & rv$IBI.edit2$Time<tmp$Time[2],]
+          tmp.PPG<-rv$PPG.proc[rv$PPG.proc$Time>tmp$Time[1] & rv$PPG.proc$Time<tmp$Time[2],]
+          
+          task.rmssd<-c(task.rmssd, rmssd(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable'], na.rm = T))
+          task.hp<-c(task.hp, mean(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable'], na.rm = T))
+          task.sd<-c(task.sd, sd(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable'], na.rm = T))
+          tot.IBI<-c(tot.IBI, length(tmp.IBI[,1]))
+          tot.editable.IBI<-c(tot.editable.IBI, length(tmp.IBI[tmp.IBI$Vals!='Uneditable',1]))
+          task.edits<-c(task.edits, length(tmp.IBI$IBI[tmp.IBI$Vals!='Uneditable' & tmp.IBI$Vals!='Original']))
+          write.table(tmp.IBI, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+                                                                              Task.un[i],'IBI_edited.txt', sep = '_')), 
+                      quote = F)
+          sink(paste0(CE.edit.folder, '/', Task.un[i], '_IBI_edited.ibi'))
+          cat('Cardio Edit data file Version: 1.0.1 (Made by IBI VizEdit - (c) M.G. Barstead)')
+          cat('\nStudyID', '\t', ':', '\t', sub.id())
+          cat('\nSubjectID', '\t', ':', '\t', time.id())
+          cat('\nConditionID', '\t', ':')
+          cat('\nSegmentID', '\t', ':')
+          cat('\nMiscID', '\t\t', ':')
+          cat('\n----------------------------------------\n')
+          sink()
+          write.table(as.matrix(round(tmp.IBI$IBI, digits = 3), ncol=1), 
+                      row.names = F, 
+                      col.names = F, 
+                      file=paste0(CE.edit.folder, '/', Task.un[i], '_IBI_edited.ibi'), 
+                      append = T)
+          write.table(tmp.IBI.raw, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+                                                                                  Task.un[i],'IBI_raw.txt', sep = '_')), 
+                      quote=F)
+          sink(paste0(CE.raw.folder, '/', Task.un[i], '_IBI_raw.ibi'))
+          cat('Cardio Edit data file Version: 1.0.1 (Made by IBI VizEdit - (c) M.G. Barstead)')
+          cat('\nStudyID', '\t', ':', '\t', sub.id())
+          cat('\nSubjectID', '\t', ':', '\t', time.id())
+          cat('\nConditionID', '\t', ':')
+          cat('\nSegmentID', '\t', ':')
+          cat('\nMiscID', '\t\t', ':')
+          cat('\n----------------------------------------\n')
+          sink()
+          write.table(as.matrix(round(tmp.IBI.raw$IBI, digits = 3), ncol=1), 
+                      row.names = F, 
+                      col.names = F, 
+                      file=paste0(CE.raw.folder, '/', Task.un[i], '_IBI_raw.ibi'), 
+                      append = T)
+          
+          write.table(tmp.PPG, row.names = F, sep='\t', paste0(sub.dir, paste(sub.id(), time.id(), study.id(),
+                                                                              Task.un[i], DS(), 'Hz',
+                                                                              'PPG.txt', sep = '_')), 
+                      quote=F)
         }
-        #browser()
-        epoch.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(time.vals)-1),
-                             round(time.vals[1:(length(time.vals)-1)]-min(rv$sub.time$Time, na.rm=T)), 
-                             round(epoch.rmssd, digits = 7), 
-                             round(epoch.hp, digits = 7), 
-                             round(epoch.sd, digits = 7))
-        colnames(epoch.DF)<-c('id', 'epoch', 'RMSSD', 'HP', 'SD')
-        write.csv(epoch.DF, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
-                                                                 paste0(epoch.length[e], 's'),
-                                                                 'Epochs.csv', sep = '_')))
+        p.edits<-task.edits/tot.IBI
+        p.editable<-tot.editable.IBI/tot.IBI
+        task.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(Task.un)),
+                            Task.un, 
+                            round(task.rmssd, digits=4), 
+                            round(task.hp, digits=4), 
+                            round(task.sd, digits=4), 
+                            round(tot.IBI, digits=4), 
+                            task.edits, 
+                            round(p.edits, digits = 4), 
+                            round(p.editable, digits=4))
+        colnames(task.DF)<-c('id', 'Task', 'RMSSD', 'HP', 'SD', 'Total IBIs', 'Total edits', 'Proportion Edits', 'Proportion Editable')
+        #removing values if there are too many uneditable sections in the data... (may be tricky at first to figure out what the right proportion is here)
+        for(j in 2:6){
+          for(i in 1:length(task.DF[,1]))
+            if(task.DF[i,9]<=2/3){
+              task.DF[i,j]<-NA
+            }
+        }
+        
+        #------------------------------------------------------
+        #stats by epoch
+        epoch.length<-epoch()
+        for(e in 1:length(epoch.length)){
+          time.vals<-seq(min(rv$sub.time$Time, na.rm=T), max(rv$sub.time$Time, na.rm=T), by=epoch.length[e])
+          epoch.rmssd<-vector()
+          epoch.hp<-vector()
+          epoch.sd<-vector()
+          #browser()
+          for(i in 1:(length(time.vals)-1)){
+            min.val<-time.vals[i]
+            max.val<-time.vals[i+1]
+            epoch.rmssd<-c(epoch.rmssd, rmssd(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min.val & rv$IBI.edit$Time<max.val]))
+            epoch.hp<-c(epoch.hp, mean(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min.val& rv$IBI.edit$Time<max.val]))
+            epoch.sd<-c(epoch.sd, sd(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min.val & rv$IBI.edit$Time<max.val]))
+          }
+          #browser()
+          epoch.DF<-data.frame(rep(paste(sub.id(), time.id(), study.id(), sep='_'), length(time.vals)-1),
+                               round(time.vals[1:(length(time.vals)-1)]-min(rv$sub.time$Time, na.rm=T)), 
+                               round(epoch.rmssd, digits = 7), 
+                               round(epoch.hp, digits = 7), 
+                               round(epoch.sd, digits = 7))
+          colnames(epoch.DF)<-c('id', 'epoch', 'RMSSD', 'HP', 'SD')
+          write.csv(epoch.DF, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
+                                                                   paste0(epoch.length[e], 's'),
+                                                                   'Epochs.csv', sep = '_')))
+        }
+        #------------------------------------------------------
+        #Imputation stats for PPG file
+        Impute.tab<-rv$GP.impute.tab
+        tot.time<-max(rv$PPG.proc$Time)-min(rv$PPG.proc$Time)
+        if(length(Impute.tab[,1])>0){
+          tot.impute.time<-sum(Impute.tab$`Total Time Imputed (s)`)
+        }
+        else {
+          tot.impute.time<-0
+        }
+        per.impute.time<-round(tot.impute.time/tot.time, digits=3)
+        
+        #------------------------------------------------------
+        time.end<-Sys.time()
+        edit.time<-time.end-rv$start.time
+        units(edit.time)<-'mins'
+        rtffile <- RTF(paste0(sub.dir, paste(sub.id(), study.id(), time.id(),
+                                             'Cases Processing Summary.rtf', sep = '_')))
+        addParagraph(rtffile, 'IBI VizEdit v1.2.3\nAuthor: Matthew G. Barstead\n(c) 2018')
+        addParagraph(rtffile, '--------------------------------------------------------------')
+        addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
+                                    '\nTotal Editing Time:', round(edit.time, digits = 2), 
+                                    'mins'))
+        addParagraph(rtffile, paste('Edited by:', editor.id()))
+        addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
+        addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
+        addTable(rtffile, as.data.frame(round(rv$tab.comp, digits = 3)))
+        addParagraph(rtffile, "\n\nTable 2:\n Samping Rate Summary")
+        addTable(rtffile, sampling)
+        addParagraph(rtffile, '\n\nTable 3:\nEditing Summary')
+        addTable(rtffile, edit.summary)
+        addParagraph(rtffile, '\n\nTable 4:\nEditing Summary by Edit Type')
+        addTable(rtffile, edit.type)
+        addParagraph(rtffile, '\n\nTable 5:\nEdited IBI File Properties')
+        addTable(rtffile, IBI.summary)
+        addParagraph(rtffile, '\n\nTable 6:\nEdited IBI File Properties by Task')
+        addTable(rtffile, task.DF)
+        addParagraph(rtffile, '\n\nTable 7:\nPoint Editing Summary')
+        addTable(rtffile, edit.pnts)
+        addParagraph(rtffile,'\n\nTable 8:\nGaussian Process Imputation Summary')
+        if(length(Impute.tab)>0){
+          addTable(rtffile, Impute.tab)
+        }
+        else{
+          addParagraph(rtffile, 'No Gaussian process imputation used')
+        }
+        addParagraph(rtffile, paste('\nPercent of PPG file Imputed via GP:', 
+                                    paste0(per.impute.time, '%')))
+        done(rtffile)
+        write.table(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T),],
+                    paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
+                                          'edited',
+                                          'IBI.txt', sep = '_')), 
+                    row.names = F, quote = F, sep='\t')
+        write.csv(task.DF, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
+                                                                'Task.csv', sep = '_')))
+        write.table(rv$IBI.edit2, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), 'raw',
+                                                             'IBI.txt', sep = '_')), 
+                    row.names = F, quote = F, sep='\t')
+        write.table(rv$PPG.proc, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), paste0(DS(),'Hz'), 
+                                                            'PPG.txt', sep = '_')), 
+                    row.names = F, quote = F, sep='\t')
+        stopApp()
       }
-      #------------------------------------------------------
-      #Imputation stats for PPG file
-      Impute.tab<-rv$GP.impute.tab
-      tot.time<-max(rv$PPG.proc$Time)-min(rv$PPG.proc$Time)
-      if(length(Impute.tab[,1])>0){
-        tot.impute.time<-sum(Impute.tab$`Total Time Imputed (s)`)
-      }
-      else {
-        tot.impute.time<-0
-      }
-      per.impute.time<-round(tot.impute.time/tot.time, digits=3)
-      
-      #------------------------------------------------------
-      time.end<-Sys.time()
-      edit.time<-time.end-rv$start.time
-      units(edit.time)<-'mins'
-      rtffile <- RTF(paste0(sub.dir, paste(sub.id(), study.id(), time.id(),
-                                           'Cases Processing Summary.rtf', sep = '_')))
-      addParagraph(rtffile, 'IBI VizEdit v1.2.1\nAuthor: Matthew G. Barstead\n(c) 2018')
-      addParagraph(rtffile, '--------------------------------------------------------------')
-      addParagraph(rtffile, paste('Completion Date and Time:', Sys.time(),
-                                  '\nTotal Editing Time:', round(edit.time, digits = 2), 
-                                  'mins'))
-      addParagraph(rtffile, paste('Edited by:', editor.id()))
-      addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
-      addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
-      addTable(rtffile, as.data.frame(round(rv$tab.comp, digits = 3)))
-      addParagraph(rtffile, "\n\nTable 2:\n Samping Rate Summary")
-      addTable(rtffile, sampling)
-      addParagraph(rtffile, '\n\nTable 3:\nEditing Summary')
-      addTable(rtffile, edit.summary)
-      addParagraph(rtffile, '\n\nTable 4:\nEditing Summary by Edit Type')
-      addTable(rtffile, edit.type)
-      addParagraph(rtffile, '\n\nTable 5:\nEdited IBI File Properties')
-      addTable(rtffile, IBI.summary)
-      addParagraph(rtffile, '\n\nTable 6:\nEdited IBI File Properties by Task')
-      addTable(rtffile, task.DF)
-      addParagraph(rtffile, '\n\nTable 7:\nPoint Editing Summary')
-      addTable(rtffile, edit.pnts)
-      addParagraph(rtffile,'\n\nTable 8:\nGaussian Process Imputation Summary')
-      if(length(Impute.tab)>0){
-        addTable(rtffile, Impute.tab)
-      }
-      else{
-        addParagraph(rtffile, 'No Gaussian process imputation used')
-      }
-      addParagraph(rtffile, paste('\nPercent of PPG file Imputed via GP:', 
-                                  paste0(per.impute.time, '%')))
-      done(rtffile)
-      write.table(rv$IBI.edit[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T),],
-                  paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
-                                        'edited',
-                                        'IBI.txt', sep = '_')), 
-                  row.names = F, quote = F, sep='\t')
-      write.csv(task.DF, row.names = F, paste0(sub.dir, paste(sub.id(), time.id(), study.id(), 
-                                                              'Task.csv', sep = '_')))
-      write.table(rv$IBI.edit2, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), 'raw',
-                                                           'IBI.txt', sep = '_')), 
-                  row.names = F, quote = F, sep='\t')
-      write.table(rv$PPG.proc, paste0(sub.dir, '/', paste(sub.id(), study.id(), time.id(), paste0(DS(),'Hz'), 
-                                                          'PPG.txt', sep = '_')), 
-                  row.names = F, quote = F, sep='\t')
-    #==============================================
-      stopApp()
     }
   })
 }
