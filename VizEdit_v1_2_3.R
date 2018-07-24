@@ -260,10 +260,6 @@ ui <- shinyUI(
          column(3,
                 verbatimTextOutput("hover_info"),
                 tags$hr(),
-                uiOutput(outputId = 'ppg.on', 
-                         inline = T
-                         ),
-                tags$hr(),
                 sliderInput(inputId = 'y.axis',
                             label = 'Y-Axis Min/Max:',
                             min=-5, 
@@ -274,6 +270,9 @@ ui <- shinyUI(
                 actionButton(inputId = 'submit.zoom',
                              label = 'Set Y-axis',
                              color = '#58D3F7'),
+                uiOutput(outputId = 'ppg.on', 
+                         inline = T
+                ),
                 tags$hr(),
                 tags$p('Toggle Base Functions:'),
                 uiOutput(outputId = 'base.on'
@@ -1251,15 +1250,18 @@ server <- function(input, output) {
           geom_vline(aes(xintercept=Time), data=IBI.tmp, color = 'red', lty='dashed', alpha=.25)+
           scale_y_continuous(limits = c(rv$y.axis.min, rv$y.axis.max))+
           scale_x_continuous(limits = c(time.min, time.max))
+        
         if(!is.null(rv$sub.time)){
           p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=rv$sub.time, show.legend = F)+
             geom_text(aes(x=Time, label=Label, color=Task, y=.25), data = rv$sub.time, show.legend = F,
                       angle = 60, hjust=0)
         }
+        
         if(rv$ppg.on==1){
           p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray')
         }
       }
+      
       if(!is.null(input$select_cases)){
         IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases)
         p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
