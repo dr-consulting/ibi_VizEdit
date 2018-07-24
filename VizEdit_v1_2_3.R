@@ -1908,8 +1908,8 @@ server <- function(input, output) {
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
       edits.cnt<-length(rv$IBI.edit$IBI) - 
-        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable']) - 
-        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Original'])
+        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals=='Uneditable']) - 
+        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals=='Original'])
       orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit2$Time<=max(rv$sub.time$Time, na.rm=T)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits.cnt/fin.IBI
@@ -2142,8 +2142,8 @@ server <- function(input, output) {
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
       edits.cnt<-length(rv$IBI.edit$IBI) - 
-        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable']) - 
-        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Original'])
+        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals=='Uneditable']) - 
+        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals=='Original'])
       orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit2$Time<=max(rv$sub.time$Time, na.rm=T)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits.cnt/fin.IBI
