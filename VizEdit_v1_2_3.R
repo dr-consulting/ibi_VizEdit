@@ -290,7 +290,7 @@ ui <- shinyUI(
                          ),
                 numericInput(inputId = 'divide.by',
                              label = 'Divide by:', 
-                             min = 4, 
+                             min = 2, 
                              max = 10, 
                              value = 2
                              ),
