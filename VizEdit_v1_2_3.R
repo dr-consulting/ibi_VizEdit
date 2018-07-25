@@ -324,7 +324,6 @@ ui <- shinyUI(
                            hover = hoverOpts(id="plot_hover", delay = 500)
                            )
                 ),
-         column(3),
          column(9,
                 plotOutput(outputId = "PPG_overall",
                            height = '150px',
@@ -1262,10 +1261,6 @@ server <- function(input, output) {
         }
       }
       
-      if(!is.null(input$select_cases)){
-        IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases)
-        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
-      } 
       if(length(rv$IBI.edit$Vals[rv$IBI.edit$Vals=='Uneditable'])>0){
         p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=rv$IBI.edit[rv$IBI.edit$Vals=='Uneditable',], color='#58D3F7')
       }
@@ -1274,6 +1269,10 @@ server <- function(input, output) {
       if(length(edit.pnts[,1])>0){
         p.IBI<-p.IBI+geom_point(data=edit.pnts, aes(x=Time, y=IBI), color='#bb8fce')
       }
+      if(!is.null(input$select_cases)){
+        IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases)
+        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
+      } 
     }  
     p.IBI
   })
@@ -1315,7 +1314,7 @@ server <- function(input, output) {
         xlab('Time(s)')+
         ylab('IBI(s)')+
         geom_vline(aes(xintercept=Time), data=IBI.tmp, color = 'red', lty='dashed', alpha=.25)+
-        geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray80')+
+        geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray')+
         scale_y_continuous(limits = c(rv$y.axis.min, rv$y.axis.max))
       
       if(length(IBI.tmp$Vals[IBI.tmp$Vals=='Uneditable'])>0){
@@ -1330,12 +1329,38 @@ server <- function(input, output) {
                       angle = 60, hjust=0)
         }
       }
-      
       if(!is.null(input$select_cases2)){
+        browser()
         IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases2)
-        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
+        impute.win<-input$select_cases2$xmax - input$select_cases2$xmin
+        low.win<-c(input$select_cases2$xmin - impute.win*1.5, input$select_cases2$xmin)
+        upp.win<-c(input$select_cases2$xmax, input$select_cases2$xmax + impute.win*1.5)
+        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')+
+          geom_rect(data = data.frame(xmin = low.win[1], 
+                                      xmax = low.win[2], 
+                                      ymin = -Inf, 
+                                      ymax = Inf), 
+                    aes(xmin=xmin, 
+                        xmax=xmax, 
+                        ymin=ymin, 
+                        ymax=ymax),
+                    fill = 'lightgreen',
+                    alpha = .4, 
+                    inherit.aes = F
+                    )+
+          geom_rect(data = data.frame(xmin = upp.win[1], 
+                                      xmax = upp.win[2], 
+                                      ymin = -Inf, 
+                                      ymax = Inf), 
+                    aes(xmin=xmin, 
+                        xmax=xmax, 
+                        ymin=ymin, 
+                        ymax=ymax),
+                    fill = 'lightgreen',
+                    alpha = .4, 
+                    inherit.aes = F
+                    )
       }
-      
       if(!is.null(rv$PPG.GP) & length(na.omit(rv$PPG.GP[,1]))>0){
         PPG.GP.tmp<-rv$PPG.GP[rv$PPG.GP$Time>=time.min & rv$PPG.GP$Time<=time.max,]
         if(length(na.omit(PPG.GP.tmp$PPG))>0){
@@ -1443,7 +1468,7 @@ server <- function(input, output) {
         }
         IBI<-data.frame(IBI=IBI.tmp, 
                         Time=time.tmp, 
-                        Vals=rep('Orginal', length(time.tmp)), stringsAsFactors = F)
+                        Vals=rep('Original', length(time.tmp)), stringsAsFactors = F)
         rv$IBI.edit<-rbind(rv$IBI.edit, IBI)
         rv$IBI.edit<-rv$IBI.edit[order(rv$IBI.edit$Time, decreasing = F), ]
       }
@@ -2091,7 +2116,7 @@ server <- function(input, output) {
         addParagraph(rtffile, paste('Edited by:', editor.id()))
         addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
         addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
-        addTable(rtffile, as.data.frame(round(rv$tab.comp, digits = 3)))
+        addTable(rtffile, as.data.frame(round(rv$tab.comp[1:15,], digits = 3)))
         addParagraph(rtffile, "\n\nTable 2:\n Samping Rate Summary")
         addTable(rtffile, sampling)
         addParagraph(rtffile, '\n\nTable 3:\nEditing Summary')
@@ -2325,7 +2350,7 @@ server <- function(input, output) {
         addParagraph(rtffile, paste('Edited by:', editor.id()))
         addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
         addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
-        addTable(rtffile, as.data.frame(round(rv$tab.comp, digits = 3)))
+        addTable(rtffile, as.data.frame(round(rv$tab.comp[1:15,], digits = 3)))
         addParagraph(rtffile, "\n\nTable 2:\n Samping Rate Summary")
         addTable(rtffile, sampling)
         addParagraph(rtffile, '\n\nTable 3:\nEditing Summary')
