@@ -1330,7 +1330,7 @@ server <- function(input, output) {
         }
       }
       if(!is.null(input$select_cases2)){
-        browser()
+        #browser()
         IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases2)
         impute.win<-input$select_cases2$xmax - input$select_cases2$xmin
         low.win<-c(input$select_cases2$xmin - impute.win*1.5, input$select_cases2$xmin)
