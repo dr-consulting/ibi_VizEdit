@@ -37,8 +37,8 @@
 # General questions? Contact the developer Matthew G. Barstead 
 # Contact: barstead@umd.edu
 #===================================================================================================
-
-require(pacman)
+if(!require('pacman')) install.packages('pacman')
+pacman::p_unload(pacman::p_loaded(), character.only=TRUE)
 pacman::p_load(shiny, 
                ggplot2, 
                shinythemes,
