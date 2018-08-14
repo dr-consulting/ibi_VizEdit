@@ -49,8 +49,6 @@ pacman::p_load(shiny,
                psych,
                rtf, 
                shinyBS, 
-               rpart, 
-               party,
                tseries, 
                rstan,
                rstanarm,
@@ -418,7 +416,14 @@ server <- function(input, output) {
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   options(shiny.maxRequestSize=150*1024^2)
-  user.folder<-Sys.getenv('USERPROFILE') 
+  
+  if(Sys.getenv('USERPROFILE')==''){
+    user.folder<-Sys.getenv('PWD')   
+  }
+  else{
+    user.folder<-Sys.getenv('USERPROFILE')
+  }
+  
   rv<-reactiveValues(
     tot.edits=data.frame(),
     base.on=0,
@@ -442,6 +447,7 @@ server <- function(input, output) {
   #Note - want to program here so that the file structure follows working directory...
   shinyDirChoose(input, 'dir', roots=c(User=user.folder))
   observeEvent(input$dir,{
+    #browser()
     if(!is.null(input$dir)){
       rv$wd<-parseDirPath(roots=c(User=user.folder), input$dir)
       shinyFileChoose(input, 'fileIn', roots=c(wd=rv$wd, User=user.folder))
