@@ -417,12 +417,7 @@ server <- function(input, output) {
   #-------------------------------------------------------------------------------------
   options(shiny.maxRequestSize=150*1024^2)
   
-  if(Sys.getenv('USERPROFILE')==''){
-    user.folder<-Sys.getenv('PWD')   
-  }
-  else{
-    user.folder<-Sys.getenv('USERPROFILE')
-  }
+  user.folder<-Sys.getenv('USERPROFILE')
   
   rv<-reactiveValues(
     tot.edits=data.frame(),
