@@ -581,17 +581,35 @@ server <- function(input, output) {
           }
           else{
             sub.time<-time.file[time.file$id==paste(sub.id(), time.id(), sep = '_'),]
-            sub.time<-sub.time[, colSums(is.na(sub.time))==0]
-            names<-colnames(sub.time[,2:length(sub.time)])
-            names<-rep(names[seq(1, length(names), by=2)], each=2)
-            events<-rep(c('Start', 'End'), length(names)/2)
-            evnt.labels<-paste(names, events)
-            sub.temp<-as.matrix(sub.time)
-            sub.temp<-as.vector(sub.temp)
-            sub.temp<-as.numeric(sub.temp[2:length(sub.temp)])
-            rv$sub.time<-data.frame(sub.temp, names, evnt.labels)
-            colnames(rv$sub.time)<-c('Time', 'Task', 'Label')
-            rv$sub.time2<-rv$sub.time
+            if(sum(!is.na(sub.time))==1){
+              showModal(modalDialog(
+                title = 'DO NOT PROCEED',
+                paste('Check your timing file for issues with case:',
+                      paste(sub.id(), time.id(), sep = '_')),
+                size = 'm'
+              ))
+            }
+            else if(sum(!is.na(sub.time))%%2==0){
+              showModal(modalDialog(
+                title = 'DO NOT PROCEED',
+                paste('Check your timing file for issues with case:',
+                      paste(sub.id(), time.id(), sep = '_')),
+                size = 'm'
+              ))
+            }
+            else{
+              sub.time<-sub.time[, colSums(is.na(sub.time))==0]
+              names<-colnames(sub.time[,2:length(sub.time)])
+              names<-rep(names[seq(1, length(names), by=2)], each=2)
+              events<-rep(c('Start', 'End'), length(names)/2)
+              evnt.labels<-paste(names, events)
+              sub.temp<-as.matrix(sub.time)
+              sub.temp<-as.vector(sub.temp)
+              sub.temp<-as.numeric(sub.temp[2:length(sub.temp)])
+              rv$sub.time<-data.frame(sub.temp, names, evnt.labels)
+              colnames(rv$sub.time)<-c('Time', 'Task', 'Label')
+              rv$sub.time2<-rv$sub.time
+            }
           }
         }
         #Bring in and adjust the raw PPG file
@@ -601,6 +619,13 @@ server <- function(input, output) {
             title = 'Warning!',
             'Number of columns incorrect. Check header and column number entry values', 
             size = 'm'
+          ))
+        }
+        else if(!is.numeric(PPG.file[,col.num()])==TRUE){
+          showModal(modalDialog(
+            title = 'Warning!',
+            'Data entered is non-numeric. Check header and column entry values. Select "OK" to reset.',
+            footer = modalButton('Dismiss')
           ))
         }
         else{
@@ -625,6 +650,13 @@ server <- function(input, output) {
             size = 'm'
           ))
         }
+        else if(!is.numeric(PPG.file[,col.num()])==TRUE){
+          showModal(modalDialog(
+            title = 'Warning!',
+            'Data entered is non-numeric. Check header and column entry values. Select "OK" to reset.',
+            footer = modalButton('Dismiss')
+          ))
+        }
         else{
           tmp<-as.numeric(PPG.file[,col.num()])
           PPG.1000<-resample(tmp, p=1000, q=Hz())
@@ -637,6 +669,35 @@ server <- function(input, output) {
         }
       }
     }
+  })
+  
+  
+  observeEvent(input$reset, {
+    showModal(modalDialog(
+      title = 'Warning!',
+      'Resetting the program will lead to data loss. Be sure you have saved your work',
+      footer = tagList(modalButton('Cancel'), 
+                       actionButton('ok.reset', 'OK')
+                       )
+    ))
+  })
+  
+  observeEvent(input$ok.reset, {
+    rv<-reactiveValues(
+      tot.edits=data.frame(),
+      base.on=0,
+      adv.on=0,
+      ppg.on = 0,
+      pred.seas=NULL,
+      select.on=0,
+      add.delete.on=0,
+      select.on2=0,
+      add.delete.on2=0,
+      start.time=NULL,
+      GP.impute.tab=NULL, 
+      IBI.temp=NULL
+    )
+    removeModal()
   })
   
   #=====================================================================================
@@ -1276,7 +1337,7 @@ server <- function(input, output) {
         p.IBI<-p.IBI+geom_point(data=edit.pnts, aes(x=Time, y=IBI), color='#bb8fce')
       }
       if(!is.null(input$select_cases)){
-        IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases)
+        IBI.temp<-brushedPoints(df=rv$IBI.edit, input$select_cases)
         p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
       } 
     }  
@@ -1401,7 +1462,7 @@ server <- function(input, output) {
     temp.points<-nearPoints(df=rv$IBI.edit[,1:2], coordinfo = input$plot_hover, maxpoints = 1)
     mean.HR<-NA
     if(!is.null(rv$IBI.edit)){
-      mean.HR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'][5:length(rv$IBI.edit$IBI)-5])*60
+      mean.HR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'][5:length(rv$IBI.edit$IBI)-5], na.rm = T)*60
       names(mean.HR)<-'Est. Mean HR'
     }
     if(!is.null(input$plot_hover)){
@@ -1419,7 +1480,7 @@ server <- function(input, output) {
     temp.points<-nearPoints(df=rv$IBI.edit[,1:2], coordinfo = input$plot_hover2, maxpoints = 1)
     mean.HR<-NA
     if(!is.null(rv$IBI.edit)){
-      mean.HR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'][5:length(rv$IBI.edit$IBI)-5])*60
+      mean.HR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'][5:length(rv$IBI.edit$IBI)-5], na.rm=T)*60
       names(mean.HR)<-'Est. Mean HR'
     }
     if(!is.null(input$plot_hover2)){
