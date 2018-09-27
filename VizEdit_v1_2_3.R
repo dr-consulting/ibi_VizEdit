@@ -417,7 +417,7 @@ server <- function(input, output) {
   #-------------------------------------------------------------------------------------
   options(shiny.maxRequestSize=150*1024^2)
   #browser()
-  if(Sys.getenv('HOME')!="")
+  if(Sys.getenv('USERPROFILE')=="")
     user.folder<-"~"
   else if(Sys.getenv("HOMEPATH")!="")
     user.folder<-Sys.getenv('USERPROFILE')
