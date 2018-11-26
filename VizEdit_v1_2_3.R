@@ -357,13 +357,13 @@ ui <- shinyUI(
                tags$hr(),
                numericInput(inputId = 'n.iter',
                             label = 'GP iterations',
-                            value = 4000, 
+                            value = 3100, 
                             min = 500,
                             max = 5000
                             ),
                numericInput(inputId = 'n.wrm',
                             label = 'GP warmup',
-                            value = 2000, 
+                            value = 3000, 
                             min = 250,
                             max = 2500
                ),
