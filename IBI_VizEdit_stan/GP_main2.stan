@@ -18,43 +18,42 @@ functions{
 		real rho7,
 		real HR_f,
 		real R_f){
-					matrix[Nx, Ny] K1;
-					matrix[Nx, Ny] K2;
-					matrix[Nx, Ny] K3;
-					matrix[Nx, Ny] K4;
-					matrix[Nx, Ny] Sigma;
-	
-					//periodic covariance that does not decay
-					for(i in 1:Nx){
-						for (j in 1:Ny){
-							K1[i, j] = alpha1*exp(-square(x[i]-y[j])/2/square(rho1));
-						}
-					}
-					
-					//specifying first quasi-periodic process that incorporates heart rate
-					for(i in 1:Nx){
-						for(j in 1:Ny){
-							K2[i, j] = alpha2*exp(-2*square(sin(pi()*fabs(x[i]-y[j])*HR_f))/square(rho2))*
-							exp(-square(x[i]-y[j])/2/square(rho3));
-						}
-					}
-					
-					//specifying second quasi-periodic process that incorporates heart rate
-					for(i in 1:Nx){
-						for(j in 1:Ny){
-							K3[i, j] = alpha3*exp(-2*square(sin(pi()*fabs(x[i]-y[j])*HR_f))/square(rho4))*
-							exp(-2*square(sin(pi()*fabs(x[i]-y[j])*R_f))/square(rho5));
-						}
-					}
-					for(i in 1:Nx){
-						for(j in 1:Ny){
-							K4[i, j] = alpha4*exp(-2*square(sin(pi()*fabs(x[i]-y[j])*HR_f))/square(rho6))*
-							exp(-2*square(sin(pi()*fabs(x[i]-y[j])*.1))/square(rho7));
-						}
-					}
-					Sigma = K1+K2+K3+K4;
-					return Sigma;
+			matrix[Nx, Ny] K1;
+			matrix[Nx, Ny] K2;
+			matrix[Nx, Ny] K3;
+			matrix[Nx, Ny] K4;
+			matrix[Nx, Ny] Sigma;
+			//periodic covariance that does not decay
+			for(i in 1:Nx){
+				for (j in 1:Ny){
+					K1[i, j] = alpha1*exp(-square(x[i]-y[j])/2/square(rho1));
 				}
+			}
+					
+			//specifying first quasi-periodic process that incorporates heart rate
+			for(i in 1:Nx){
+				for(j in 1:Ny){
+					K2[i, j] = alpha2*exp(-2*square(sin(pi()*fabs(x[i]-y[j])*HR_f))/square(rho2))*
+					exp(-square(x[i]-y[j])/2/square(rho3));
+				}
+			}
+					
+			//specifying second quasi-periodic process that incorporates heart rate
+			for(i in 1:Nx){
+				for(j in 1:Ny){
+					K3[i, j] = alpha3*exp(-2*square(sin(pi()*fabs(x[i]-y[j])*HR_f))/square(rho4))*
+					exp(-2*square(sin(pi()*fabs(x[i]-y[j])*R_f))/square(rho5));
+				}
+			}
+			for(i in 1:Nx){
+				for(j in 1:Ny){
+					K4[i, j] = alpha4*exp(-2*square(sin(pi()*fabs(x[i]-y[j])*HR_f))/square(rho6))*
+					exp(-2*square(sin(pi()*fabs(x[i]-y[j])*.1))/square(rho7));
+				}
+			}
+			Sigma = K1+K2+K3+K4;
+			return Sigma;
+			}
 	//function for posterior calculations
 	vector post_pred_rng(
 		real a1,
@@ -76,14 +75,14 @@ functions{
 		int Np, 
 		vector xp,
 		vector yobs){
-				matrix[No,No] Ko;
-				matrix[Np,Np] Kp;
-				matrix[No,Np] Kop;
-				matrix[Np,No] Ko_inv_t;
-				vector[Np] mu_p;
-				matrix[Np,Np] Tau;
-				matrix[Np,Np] L2;
-				vector[Np] yp;
+			matrix[No,No] Ko;
+			matrix[Np,Np] Kp;
+			matrix[No,Np] Kop;
+			matrix[Np,No] Ko_inv_t;
+			vector[Np] mu_p;
+			matrix[Np,Np] Tau;
+			matrix[Np,Np] L2;
+			vector[Np] yp;
 	
 	//--------------------------------------------------------------------
 	//Kernel Multiple GPs for observed data
