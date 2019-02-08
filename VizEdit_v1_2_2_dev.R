@@ -1,3 +1,6 @@
+#           **WARNING - WARNING - WARNING - WARNING - WARNING - WARNING**
+#           This is a development file - it should not be downloaded/used!!
+
 #===================================================================================================
 # This is the Shiny application IBI VizEdit - Matthew G. Barstead (c) 2018. 
 # You can run the application by clicking the 'Run App' button above.
@@ -37,8 +40,8 @@
 # General questions? Contact the developer Matthew G. Barstead 
 # Contact: barstead@umd.edu
 #===================================================================================================
-
-require(pacman)
+if(!require('pacman')) install.packages('pacman')
+pacman::p_unload(pacman::p_loaded(), character.only=TRUE)
 pacman::p_load(shiny, 
                ggplot2, 
                shinythemes,
@@ -49,8 +52,6 @@ pacman::p_load(shiny,
                psych,
                rtf, 
                shinyBS, 
-               rpart, 
-               party,
                tseries, 
                rstan,
                rstanarm,
@@ -59,357 +60,357 @@ pacman::p_load(shiny,
                astsa, 
                parallel,
                benchmarkme,
-               doParallel)
+               doParallel,
+               imputeTS, 
+               seewave)
 
 ###########################################################################################
 ###########################################################################################
 # Begining of the UI 
 ui <- shinyUI(
   fluidPage(theme = shinytheme('united'),
-  titlePanel(
-    'IBI VizEdit v1.2.3'
-    ),
-  tabsetPanel(
-    tabPanel('Data Entry',
-#############################################
-      wellPanel(fluidRow(
-        column(3,
-               tags$h2('Select File and Directory:'
-                       ),
-               shinyDirButton(id='dir',
-                              label='Select Directory',
-                              title = 'Choose Your Working Directory'
-                              ),
-               tags$br(),
-               tags$p(textOutput('dir.out')
-                      ),
-               shinyFilesButton(id='fileIn', 
-                                title = 'Choose Heart Rate File:', 
-                                label = 'Select HR File', 
-                                multiple = F
+            titlePanel(
+              'IBI VizEdit v1.2.3'
+            ),
+            tabsetPanel(
+              tabPanel('Data Entry',
+                       #############################################
+                       wellPanel(fluidRow(
+                         column(3,
+                                tags$h2('Select File and Directory:'
+                                ),
+                                shinyDirButton(id='dir',
+                                               label='Select Directory',
+                                               title = 'Choose Your Working Directory'
+                                ),
+                                tags$br(),
+                                tags$p(textOutput('dir.out')
+                                ),
+                                shinyFilesButton(id='fileIn', 
+                                                 title = 'Choose Heart Rate File:', 
+                                                 label = 'Select HR File', 
+                                                 multiple = F
                                 ), 
-               tags$br(),
-               tags$p(textOutput(outputId = 'name')),
-               shinyFilesButton(id='timeIn', 
-                                title = 'Optional Timing File:', 
-                                label = 'Select Timing File', 
-                                multiple = F
-               ),
-               tags$br(),
-               tags$p(textOutput(outputId = 'time.out'))
-               ),
-        column(3,
-               tags$h2('File ID and Information:'
-                       ),
-               textInput(inputId='sub.id', 
-                         label = 'Subject ID:'
+                                tags$br(),
+                                tags$p(textOutput(outputId = 'name')),
+                                shinyFilesButton(id='timeIn', 
+                                                 title = 'Optional Timing File:', 
+                                                 label = 'Select Timing File', 
+                                                 multiple = F
+                                ),
+                                tags$br(),
+                                tags$p(textOutput(outputId = 'time.out'))
                          ),
-               textInput(inputId='time.id',
-                         label = 'Time Point:'
+                         column(3,
+                                tags$h2('File ID and Information:'
+                                ),
+                                textInput(inputId='sub.id', 
+                                          label = 'Subject ID:'
+                                ),
+                                textInput(inputId='time.id',
+                                          label = 'Time Point:'
+                                ), 
+                                textInput(inputId='study.id',
+                                          label = '(Optional) Study ID:'
+                                ),
+                                textInput(inputId='editor',
+                                          label = 'Editor Name:'
+                                )
+                         ),
+                         column(3,
+                                tags$h2('Data Details:'
+                                ),
+                                numericInput(inputId='col.select', 
+                                             label = 'Data is in column:',
+                                             min = 0, 
+                                             max = 999, 
+                                             value = 2
+                                ),
+                                numericInput(inputId='header', 
+                                             label = 'Number of header lines in file:',
+                                             min = 0, 
+                                             max = 200, 
+                                             value = 15
+                                ),
+                                numericInput(inputId='Hz',
+                                             label = 'File Sampling Rate in Hz',
+                                             min = 125, 
+                                             max = 2000, 
+                                             value = 2000
+                                ),
+                                numericInput(inputId='DS',
+                                             label = 'Preferred Downsampling Rate',
+                                             min = 25,
+                                             max = 2000,
+                                             value = 100
+                                ),
+                                tags$p('Note: Larger values increase computation time')
                          ), 
-               textInput(inputId='study.id',
-                         label = '(Optional) Study ID:'
-                         ),
-               textInput(inputId='editor',
-                         label = 'Editor Name:'
+                         column(3,
+                                tags$h2('Optional Settings:'
+                                ),
+                                numericInput(inputId='peak.iter',
+                                             label = 'Peak Detection Iterations',
+                                             min = 10, 
+                                             max = 250, 
+                                             value = 200
+                                ),
+                                tags$div(checkboxGroupInput(inputId='epoch.in',
+                                                            label = 'Output Epoch Options:',
+                                                            choiceNames = c('10s', '15s', '20s', '30s', '45s'),
+                                                            choiceValues = c('10', '15', '20', '30', '45'), 
+                                                            selected = c('10', '15', '20', '30', '45'),
+                                                            inline = F)
+                                )
                          )
-               ),
-        column(3,
-               tags$h2('Data Details:'
+                       )
                        ),
-               numericInput(inputId='col.select', 
-                            label = 'Data is in column:',
-                            min = 0, 
-                            max = 999, 
-                            value = 2
-                            ),
-               numericInput(inputId='header', 
-                            label = 'Number of header lines in file:',
-                            min = 0, 
-                            max = 200, 
-                            value = 15
-                            ),
-               numericInput(inputId='Hz',
-                            label = 'File Sampling Rate in Hz',
-                            min = 125, 
-                            max = 2000, 
-                            value = 2000
-                            ),
-               numericInput(inputId='DS',
-                            label = 'Preferred Downsampling Rate',
-                            min = 25,
-                            max = 2000,
-                            value = 100
-                            ),
-               tags$p('Note: Larger values increase computation time')
-               ), 
-        column(3,
-               tags$h2('Optional Settings:'
-                       ),
-               numericInput(inputId='peak.iter',
-                            label = 'Peak Detection Iterations',
-                            min = 10, 
-                            max = 250, 
-                            value = 200
-                            ),
-               tags$div(checkboxGroupInput(inputId='epoch.in',
-                                           label = 'Output Epoch Options:',
-                                           choiceNames = c('10s', '15s', '20s', '30s', '45s'),
-                                           choiceValues = c('10', '15', '20', '30', '45'), 
-                                           selected = c('10', '15', '20', '30', '45'),
-                                           inline = F)
-                        )
-               )
-        )
-      ),
-      wellPanel(fluidRow(
-        column(3,
-               tags$h4('Load file using current settings'
-                       ),
-               tags$button(id='load', 
-                           type = "button",
-                           class = "btn action-button",
-                           style="color: #000000; background-color: #82FA58; border-color: #FFFFFF", 
-                           'Load File Settings'
-                           )
-               ),
-        column(3,
-               tags$h4('Reset fields to change existing file'
-                       ),
-               tags$button(id='reset',
-                           type = "button",
-                           class = "btn action-button",
-                           style="color: #000000; background-color: #FA8258; border-color: #FFFFFF", 
-                           'Reset File Settings'
-                           )
-               ),
-        column(3,
-               tags$h4('Save Edited File'
-               ),
-               tags$button(id = 'save',
-                           type = "button",
-                           class = "btn action-button",
-                           style = "color: #000000; background-color: #82FA58; border-color: #FFFFFF",
-                           'Save'
-                           )
-               ),
-        column(3,
-               tags$h4('Save Edited File and Close'
-               ),
-               tags$button(id = 'save.close',
-                           type = "button",
-                           class = "btn action-button",
-                           style = "color: #000000; background-color: #FA8258; border-color: #FFFFFF",
-                           onclick = "setTimeout(function(){window.close();},4000);",  # close browser
-                           "Save & Close window"
-                           )
-        )
-        )
-        )
-    ),
-    #Tab2 - Data Pre-Flight
-    tabPanel('Processing Panel',
-    ####################################
-      wellPanel(fluidRow(
-        column(6,
-               tags$h3('View plot of heart rate signal'
-                       ),
-               tags$button(id='view.ppg',
-                           type = "button",
-                           class = "btn action-button",
-                           style="color: #000000; background-color: #58D3F7; border-color: #FFFFFF", 
-                           'View HR Plot'
-                           ),
-               tags$p('Use slider to adjust plot window width'
-                      ),
-               sliderInput(inputId='Viewer', 
-                           min = 0, 
-                           max = 1200, 
-                           value = c(0, 60), 
-                           post = 'seconds',
-                           label = 'Choose View Window'
-                           ),
-               plotOutput(outputId = 'PPG.check'
-                          )
-               ),
-        column(3,
-               tags$h3('Process Raw File'
-                       ),
-               tags$button(id='submit.file',
-                           type = "button",
-                           class = "btn action-button",
-                           style="color: #000000; background-color: #82FA58; border-color: #FFFFFF", 
-                           'Process File'
-                           ),
-               tags$p('Processing Optimization Information:'
-                      ),
-               tableOutput(outputId = 'Iteration.Data'
-                           )
-               ), 
-        column(3,
-               tags$h3('Event Summary Timing:'
-                       ),
-               tableOutput(outputId = 'Event.Data'
-                           )
-               )
-        )
-        )
-    ),
-    tabPanel('Basic Editing Panel',
-       fluidRow(
-         column(3,
-                verbatimTextOutput("hover_info"),
-                tags$hr(),
-                uiOutput(outputId = 'ppg.on', 
-                         inline = T
+                       wellPanel(fluidRow(
+                         column(3,
+                                tags$h4('Load file using current settings'
+                                ),
+                                tags$button(id='load', 
+                                            type = "button",
+                                            class = "btn action-button",
+                                            style="color: #000000; background-color: #82FA58; border-color: #FFFFFF", 
+                                            'Load File Settings'
+                                )
                          ),
-                tags$hr(),
-                sliderInput(inputId = 'y.axis',
-                            label = 'Y-Axis Min/Max:',
-                            min=-5, 
-                            max=5, 
-                            value = c(0, 2), 
-                            step = .25
-                            ),
-                actionButton(inputId = 'submit.zoom',
-                             label = 'Set Y-axis',
-                             color = '#58D3F7'),
-                tags$hr(),
-                tags$p('Toggle Base Functions:'),
-                uiOutput(outputId = 'base.on'
+                         column(3,
+                                tags$h4('Reset fields to change existing file'
+                                ),
+                                tags$button(id='reset',
+                                            type = "button",
+                                            class = "btn action-button",
+                                            style="color: #000000; background-color: #FA8258; border-color: #FFFFFF", 
+                                            'Reset File Settings'
+                                )
                          ),
-                tags$br(),
-                tags$p('Select Function:'),
-                uiOutput(outputId = 'add.on', 
-                         inline = T
+                         column(3,
+                                tags$h4('Save Edited File'
+                                ),
+                                tags$button(id = 'save',
+                                            type = "button",
+                                            class = "btn action-button",
+                                            style = "color: #000000; background-color: #82FA58; border-color: #FFFFFF",
+                                            'Save'
+                                )
                          ),
-                uiOutput(outputId = 'divide.on', 
-                         inline = T
+                         column(3,
+                                tags$h4('Save Edited File and Close'
+                                ),
+                                tags$button(id = 'save.close',
+                                            type = "button",
+                                            class = "btn action-button",
+                                            style = "color: #000000; background-color: #FA8258; border-color: #FFFFFF",
+                                            onclick = "setTimeout(function(){window.close();},4000);",  # close browser
+                                            "Save & Close window"
+                                )
+                         )
+                       )
+                       )
+              ),
+              #Tab2 - Data Pre-Flight
+              tabPanel('Processing Panel',
+                       ####################################
+                       wellPanel(fluidRow(
+                         column(6,
+                                tags$h3('View plot of heart rate signal'
+                                ),
+                                tags$button(id='view.ppg',
+                                            type = "button",
+                                            class = "btn action-button",
+                                            style="color: #000000; background-color: #58D3F7; border-color: #FFFFFF", 
+                                            'View HR Plot'
+                                ),
+                                tags$p('Use slider to adjust plot window width'
+                                ),
+                                sliderInput(inputId='Viewer', 
+                                            min = 0, 
+                                            max = 1200, 
+                                            value = c(0, 60), 
+                                            post = 'seconds',
+                                            label = 'Choose View Window'
+                                ),
+                                plotOutput(outputId = 'PPG.check'
+                                )
                          ),
-                uiOutput(outputId = 'average.on', 
-                         inline = T
+                         column(3,
+                                tags$h3('Process Raw File'
+                                ),
+                                tags$button(id='submit.file',
+                                            type = "button",
+                                            class = "btn action-button",
+                                            style="color: #000000; background-color: #82FA58; border-color: #FFFFFF", 
+                                            'Process File'
+                                ),
+                                tags$p('Processing Optimization Information:'
+                                ),
+                                tableOutput(outputId = 'Iteration.Data'
+                                )
+                         ), 
+                         column(3,
+                                tags$h3('Event Summary Timing:'
+                                ),
+                                tableOutput(outputId = 'Event.Data'
+                                )
+                         )
+                       )
+                       )
+              ),
+              tabPanel('Basic Editing Panel',
+                       fluidRow(
+                         column(3,
+                                verbatimTextOutput("hover_info"),
+                                tags$hr(),
+                                sliderInput(inputId = 'y.axis',
+                                            label = 'Y-Axis Min/Max:',
+                                            min=-5, 
+                                            max=5, 
+                                            value = c(0, 2), 
+                                            step = .25
+                                ),
+                                actionButton(inputId = 'submit.zoom',
+                                             label = 'Set Y-axis',
+                                             color = '#58D3F7'),
+                                uiOutput(outputId = 'ppg.on', 
+                                         inline = T
+                                ),
+                                tags$hr(),
+                                tags$p('Toggle Base Functions:'),
+                                uiOutput(outputId = 'base.on'
+                                ),
+                                tags$br(),
+                                tags$p('Select Function:'),
+                                uiOutput(outputId = 'add.on', 
+                                         inline = T
+                                ),
+                                uiOutput(outputId = 'divide.on', 
+                                         inline = T
+                                ),
+                                uiOutput(outputId = 'average.on', 
+                                         inline = T
+                                ),
+                                numericInput(inputId = 'divide.by',
+                                             label = 'Divide by:', 
+                                             min = 2, 
+                                             max = 10, 
+                                             value = 2
+                                ),
+                                tags$hr(),
+                                uiOutput(outputId = 'add.delete.on', 
+                                         inline = T
+                                ),
+                                uiOutput(outputId = 'select.on', 
+                                         inline = T
+                                ),
+                                tags$hr(),
+                                tags$button(id = 'messy',
+                                            type = "button",
+                                            class = "btn action-button",
+                                            style = "color: #000000; background-color: #FA8258; border-color: #FFFFFF",
+                                            "Uneditable"
+                                ),
+                                tags$button(id = 'restore.IBI',
+                                            type = "button",
+                                            class = "btn action-button",
+                                            style = "color: #000000; background-color: #FA8258; border-color: #FFFFFF",
+                                            "Restore IBI"
+                                )
                          ),
-                numericInput(inputId = 'divide.by',
-                             label = 'Divide by:', 
-                             min = 4, 
-                             max = 10, 
-                             value = 2
-                             ),
-                tags$hr(),
-                uiOutput(outputId = 'add.delete.on', 
-                         inline = T
+                         column(9,
+                                plotOutput(outputId = "IBI",
+                                           height = '600px',
+                                           click = "Peak_click",
+                                           dblclick = "Delete",
+                                           brush = brushOpts(id="select_cases", delay = 750),
+                                           hover = hoverOpts(id="plot_hover", delay = 500)
+                                )
                          ),
-                uiOutput(outputId = 'select.on', 
-                         inline = T
+                         column(9,
+                                plotOutput(outputId = "PPG_overall",
+                                           height = '150px',
+                                           hover = hoverOpts(id="plot_hover", delay = 500),
+                                           brush =  brushOpts(id="zoom_brush", direction = 'x')
+                                )
+                         )
+                       )
+              ),
+              tabPanel('Advanced Editing Panel',
+                       fluidRow(
+                         column(3,
+                                verbatimTextOutput(outputId = "hover_info2"
+                                ),
+                                tags$hr(),
+                                tags$p('Toggle Advanced Functions:'),
+                                uiOutput(outputId = 'adv.on', 
+                                         inline = T
+                                ),
+                                tags$p('Select Function:'),
+                                uiOutput(outputId = 'ppg.erase', 
+                                         inline = T
+                                ),
+                                uiOutput(outputId = 'ppg.restore', 
+                                         inline = T
+                                ),
+                                uiOutput(outputId = 'seas.on', 
+                                         inline = T
+                                ),
+                                uiOutput(outputId = 'GP.on',
+                                         inline = T
+                                ),
+                                tags$hr(),
+                                numericInput(inputId = 'n.iter',
+                                             label = 'GP iterations',
+                                             value = 3100, 
+                                             min = 500,
+                                             max = 5000
+                                ),
+                                numericInput(inputId = 'n.wrm',
+                                             label = 'GP warmup',
+                                             value = 3000, 
+                                             min = 250,
+                                             max = 2500
+                                ),
+                                tags$p('Warmup iterations must be less than total iterations'),
+                                numericInput(inputId = 'adapt.delta',
+                                             label = 'Delta Adaptation',
+                                             value = .9,
+                                             min = .70,
+                                             max=.99),
+                                tags$p('min delta = .70, max delta = .99; higher values can lead to slower run times'),
+                                tags$hr(),
+                                sliderInput(inputId = 'freq.select',
+                                            label = 'Select Target HP range',
+                                            min = .3, 
+                                            max = 1.5,
+                                            value = c(.5, .75),
+                                            post = 'IBI'
+                                ),
+                                tags$hr(),
+                                uiOutput(outputId = 'add.delete.on2', 
+                                         inline = T
+                                ),
+                                uiOutput(outputId = 'select.on2', 
+                                         inline = T
+                                )
+                                #uiOutput(outputId = 'sel_2.on',
+                                #          inline=T
+                                #          )
                          ),
-                tags$hr(),
-                tags$button(id = 'messy',
-                            type = "button",
-                            class = "btn action-button",
-                            style = "color: #000000; background-color: #FA8258; border-color: #FFFFFF",
-                            "Uneditable"
-                            ),
-                tags$button(id = 'restore.IBI',
-                            type = "button",
-                            class = "btn action-button",
-                            style = "color: #000000; background-color: #FA8258; border-color: #FFFFFF",
-                            "Restore IBI"
-                            )
-                ),
-         column(9,
-                plotOutput(outputId = "IBI",
-                           height = '600px',
-                           click = "Peak_click",
-                           dblclick = "Delete",
-                           brush = brushOpts(id="select_cases", delay = 750),
-                           hover = hoverOpts(id="plot_hover", delay = 500)
-                           )
-                ),
-         column(3),
-         column(9,
-                plotOutput(outputId = "PPG_overall",
-                           height = '150px',
-                           hover = hoverOpts(id="plot_hover", delay = 500),
-                           brush =  brushOpts(id="zoom_brush", direction = 'x')
-                           )
-                )
-         )
-       ),
-    tabPanel('Advanced Editing Panel',
-      fluidRow(
-        column(3,
-               verbatimTextOutput(outputId = "hover_info2"
-                                  ),
-               tags$hr(),
-               tags$p('Toggle Advanced Functions:'),
-               uiOutput(outputId = 'adv.on', 
-                        inline = T
-                        ),
-               tags$p('Select Function:'),
-               uiOutput(outputId = 'ppg.erase', 
-                        inline = T
-                        ),
-               uiOutput(outputId = 'ppg.restore', 
-                        inline = T
-                        ),
-               uiOutput(outputId = 'seas.on', 
-                        inline = T
-                        ),
-               uiOutput(outputId = 'GP.on',
-                        inline = T
-                        ),
-               tags$hr(),
-               numericInput(inputId = 'n.iter',
-                            label = 'GP iterations',
-                            value = 4000, 
-                            min = 500,
-                            max = 5000
-                            ),
-               numericInput(inputId = 'n.wrm',
-                            label = 'GP warmup',
-                            value = 2000, 
-                            min = 250,
-                            max = 2500
-               ),
-               tags$p('Warmup iterations must be less than total iterations'),
-               numericInput(inputId = 'adapt.delta',
-                            label = 'Delta Adaptation',
-                            value = .9,
-                            min = .70,
-                            max=.99),
-               tags$p('min delta = .70, max delta = .99; higher values can lead to slower run times'),
-               tags$hr(),
-               sliderInput(inputId = 'freq.select',
-                           label = 'Select Target HP range',
-                           min = .3, 
-                           max = 1.5,
-                           value = c(.5, .75),
-                           post = 'IBI'
-                           ),
-               tags$hr(),
-               uiOutput(outputId = 'add.delete.on2', 
-                        inline = T
-                        ),
-               uiOutput(outputId = 'select.on2', 
-                        inline = T
-                        )
-               #uiOutput(outputId = 'sel_2.on',
-              #          inline=T
-              #          )
-               ),
-        column(9,
-               plotOutput(outputId = "IBI2",
-                          height = '750px',
-                          click = "Peak_click2",
-                          dblclick = "Delete2",
-                          brush = brushOpts(id="select_cases2", delay=750),
-                          hover = hoverOpts(id="plot_hover2", delay = 500)
-                          )
-               )
-      )
-)
-)
-)
+                         column(9,
+                                plotOutput(outputId = "IBI2",
+                                           height = '750px',
+                                           click = "Peak_click2",
+                                           dblclick = "Delete2",
+                                           brush = brushOpts(id="select_cases2", delay=750),
+                                           hover = hoverOpts(id="plot_hover2", delay = 500)
+                                )
+                         )
+                       )
+              )
+            )
+  )
 )
 
 server <- function(input, output) {
@@ -420,7 +421,14 @@ server <- function(input, output) {
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   options(shiny.maxRequestSize=150*1024^2)
-  user.folder<-Sys.getenv('USERPROFILE') 
+  #browser()
+  if(Sys.getenv('USERPROFILE')=="")
+    user.folder<-"~"
+  else if(Sys.getenv("HOMEPATH")!="")
+    user.folder<-Sys.getenv('USERPROFILE')
+  else
+    user.folder<-'C:/'
+  
   rv<-reactiveValues(
     tot.edits=data.frame(),
     base.on=0,
@@ -444,6 +452,7 @@ server <- function(input, output) {
   #Note - want to program here so that the file structure follows working directory...
   shinyDirChoose(input, 'dir', roots=c(User=user.folder))
   observeEvent(input$dir,{
+    #browser()
     if(!is.null(input$dir)){
       rv$wd<-parseDirPath(roots=c(User=user.folder), input$dir)
       shinyFileChoose(input, 'fileIn', roots=c(wd=rv$wd, User=user.folder))
@@ -511,7 +520,7 @@ server <- function(input, output) {
   study.id<-reactive({input$study.id})
   time.id<-reactive({input$time.id})
   editor.id<-reactive({input$editor})
-
+  
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   #Input information for data
@@ -577,17 +586,35 @@ server <- function(input, output) {
           }
           else{
             sub.time<-time.file[time.file$id==paste(sub.id(), time.id(), sep = '_'),]
-            sub.time<-sub.time[, colSums(is.na(sub.time))==0]
-            names<-colnames(sub.time[,2:length(sub.time)])
-            names<-rep(names[seq(1, length(names), by=2)], each=2)
-            events<-rep(c('Start', 'End'), length(names)/2)
-            evnt.labels<-paste(names, events)
-            sub.temp<-as.matrix(sub.time)
-            sub.temp<-as.vector(sub.temp)
-            sub.temp<-as.numeric(sub.temp[2:length(sub.temp)])
-            rv$sub.time<-data.frame(sub.temp, names, evnt.labels)
-            colnames(rv$sub.time)<-c('Time', 'Task', 'Label')
-            rv$sub.time2<-rv$sub.time
+            if(sum(!is.na(sub.time))==1){
+              showModal(modalDialog(
+                title = 'DO NOT PROCEED',
+                paste('Check your timing file for issues with case:',
+                      paste(sub.id(), time.id(), sep = '_')),
+                size = 'm'
+              ))
+            }
+            else if(sum(!is.na(sub.time))%%2==0){
+              showModal(modalDialog(
+                title = 'DO NOT PROCEED',
+                paste('Check your timing file for issues with case:',
+                      paste(sub.id(), time.id(), sep = '_')),
+                size = 'm'
+              ))
+            }
+            else{
+              sub.time<-sub.time[, colSums(is.na(sub.time))==0]
+              names<-colnames(sub.time[,2:length(sub.time)])
+              names<-rep(names[seq(1, length(names), by=2)], each=2)
+              events<-rep(c('Start', 'End'), length(names)/2)
+              evnt.labels<-paste(names, events)
+              sub.temp<-as.matrix(sub.time)
+              sub.temp<-as.vector(sub.temp)
+              sub.temp<-as.numeric(sub.temp[2:length(sub.temp)])
+              rv$sub.time<-data.frame(sub.temp, names, evnt.labels)
+              colnames(rv$sub.time)<-c('Time', 'Task', 'Label')
+              rv$sub.time2<-rv$sub.time
+            }
           }
         }
         #Bring in and adjust the raw PPG file
@@ -599,8 +626,18 @@ server <- function(input, output) {
             size = 'm'
           ))
         }
+        else if(!is.numeric(PPG.file[,col.num()])==TRUE){
+          showModal(modalDialog(
+            title = 'Warning!',
+            'Data entered is non-numeric. Check header and column entry values. Select "OK" to reset.',
+            footer = modalButton('Dismiss')
+          ))
+        }
         else{
           tmp<-as.numeric(PPG.file[,col.num()])
+          #Filtering out all non-allowable frequency patterns (i.e., outside heart rate)
+          tmp<-ts(tmp, frequency = Hz())
+          tmp<-bwfilter(tmp, from = 50/60, to = 150/60, bandpass = TRUE)
           PPG.1000<-resample(tmp, p=1000, q=Hz())
           time.1000<-0:(length(PPG.1000)-1)/1000
           rv$PPG.1000<-data.frame(PPG=PPG.1000, Time=time.1000)
@@ -621,8 +658,17 @@ server <- function(input, output) {
             size = 'm'
           ))
         }
+        else if(!is.numeric(PPG.file[,col.num()])==TRUE){
+          showModal(modalDialog(
+            title = 'Warning!',
+            'Data entered is non-numeric. Check header and column entry values. Select "OK" to reset.',
+            footer = modalButton('Dismiss')
+          ))
+        }
         else{
           tmp<-as.numeric(PPG.file[,col.num()])
+          tmp<-ts(tmp, frequency = Hz())
+          tmp<-bwfilter(tmp, from = 50/60, to = 150/60, bandpass = TRUE)
           PPG.1000<-resample(tmp, p=1000, q=Hz())
           time.1000<-0:(length(PPG.1000)-1)/1000
           rv$PPG.1000<-data.frame(PPG=PPG.1000, Time=time.1000)
@@ -633,6 +679,35 @@ server <- function(input, output) {
         }
       }
     }
+  })
+  
+  
+  observeEvent(input$reset, {
+    showModal(modalDialog(
+      title = 'Warning!',
+      'Resetting the program will lead to data loss. Be sure you have saved your work',
+      footer = tagList(modalButton('Cancel'), 
+                       actionButton('ok.reset', 'OK')
+      )
+    ))
+  })
+  
+  observeEvent(input$ok.reset, {
+    rv<-reactiveValues(
+      tot.edits=data.frame(),
+      base.on=0,
+      adv.on=0,
+      ppg.on = 0,
+      pred.seas=NULL,
+      select.on=0,
+      add.delete.on=0,
+      select.on2=0,
+      add.delete.on2=0,
+      start.time=NULL,
+      GP.impute.tab=NULL, 
+      IBI.temp=NULL
+    )
+    removeModal()
   })
   
   #=====================================================================================
@@ -1106,7 +1181,7 @@ server <- function(input, output) {
       )
     }
   })
-
+  
   output$GP.on<-renderUI({
     if(rv$adv.on==0){
       tags$button(id = 'GP.in',
@@ -1148,7 +1223,7 @@ server <- function(input, output) {
       )
     }
   })
-
+  
   output$select.on2<-renderUI({
     if(rv$select.on2==0){
       tags$button(id = 'select.in2',
@@ -1219,10 +1294,10 @@ server <- function(input, output) {
   output$IBI <- renderPlot({
     #browser()
     if(is.null(rv$IBI.edit)){
-        temp.df<-data.frame(x=c(-1,0,1), y=c(-1,0,1))
-        p.IBI<-ggplot(aes(x=x, y=y), data=temp.df)+
-          annotate('text', x=0, y=0, label='No Processed Data Provided')  
-      }
+      temp.df<-data.frame(x=c(-1,0,1), y=c(-1,0,1))
+      p.IBI<-ggplot(aes(x=x, y=y), data=temp.df)+
+        annotate('text', x=0, y=0, label='No Processed Data Provided')  
+    }
     else if(!is.null(rv$IBI.edit)){
       if(is.null(input$zoom_brush)){
         p.IBI<-ggplot(data = rv$IBI.edit, aes(x=Time, y=IBI))+
@@ -1251,19 +1326,18 @@ server <- function(input, output) {
           geom_vline(aes(xintercept=Time), data=IBI.tmp, color = 'red', lty='dashed', alpha=.25)+
           scale_y_continuous(limits = c(rv$y.axis.min, rv$y.axis.max))+
           scale_x_continuous(limits = c(time.min, time.max))
+        
         if(!is.null(rv$sub.time)){
           p.IBI<-p.IBI+geom_vline(aes(xintercept=Time, color=Task), data=rv$sub.time, show.legend = F)+
             geom_text(aes(x=Time, label=Label, color=Task, y=.25), data = rv$sub.time, show.legend = F,
                       angle = 60, hjust=0)
         }
+        
         if(rv$ppg.on==1){
           p.IBI<-p.IBI+geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray')
         }
       }
-      if(!is.null(input$select_cases)){
-        IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases)
-        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
-      } 
+      
       if(length(rv$IBI.edit$Vals[rv$IBI.edit$Vals=='Uneditable'])>0){
         p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=rv$IBI.edit[rv$IBI.edit$Vals=='Uneditable',], color='#58D3F7')
       }
@@ -1272,6 +1346,10 @@ server <- function(input, output) {
       if(length(edit.pnts[,1])>0){
         p.IBI<-p.IBI+geom_point(data=edit.pnts, aes(x=Time, y=IBI), color='#bb8fce')
       }
+      if(!is.null(input$select_cases)){
+        IBI.temp<-brushedPoints(df=rv$IBI.edit, input$select_cases)
+        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
+      } 
     }  
     p.IBI
   })
@@ -1313,7 +1391,7 @@ server <- function(input, output) {
         xlab('Time(s)')+
         ylab('IBI(s)')+
         geom_vline(aes(xintercept=Time), data=IBI.tmp, color = 'red', lty='dashed', alpha=.25)+
-        geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray80')+
+        geom_line(aes(x=Time, y=PPG), data=PPG.tmp, col='gray')+
         scale_y_continuous(limits = c(rv$y.axis.min, rv$y.axis.max))
       
       if(length(IBI.tmp$Vals[IBI.tmp$Vals=='Uneditable'])>0){
@@ -1328,12 +1406,38 @@ server <- function(input, output) {
                       angle = 60, hjust=0)
         }
       }
-      
       if(!is.null(input$select_cases2)){
+        #browser()
         IBI.temp<-brushedPoints(df=IBI.tmp, input$select_cases2)
-        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')
+        impute.win<-input$select_cases2$xmax - input$select_cases2$xmin
+        low.win<-c(input$select_cases2$xmin - impute.win*1.5, input$select_cases2$xmin)
+        upp.win<-c(input$select_cases2$xmax, input$select_cases2$xmax + impute.win*1.5)
+        p.IBI<-p.IBI+geom_point(aes(x=Time, y=IBI), data=IBI.temp, col='#82FA58')+
+          geom_rect(data = data.frame(xmin = low.win[1], 
+                                      xmax = low.win[2], 
+                                      ymin = -Inf, 
+                                      ymax = Inf), 
+                    aes(xmin=xmin, 
+                        xmax=xmax, 
+                        ymin=ymin, 
+                        ymax=ymax),
+                    fill = 'lightgreen',
+                    alpha = .4, 
+                    inherit.aes = F
+          )+
+          geom_rect(data = data.frame(xmin = upp.win[1], 
+                                      xmax = upp.win[2], 
+                                      ymin = -Inf, 
+                                      ymax = Inf), 
+                    aes(xmin=xmin, 
+                        xmax=xmax, 
+                        ymin=ymin, 
+                        ymax=ymax),
+                    fill = 'lightgreen',
+                    alpha = .4, 
+                    inherit.aes = F
+          )
       }
-      
       if(!is.null(rv$PPG.GP) & length(na.omit(rv$PPG.GP[,1]))>0){
         PPG.GP.tmp<-rv$PPG.GP[rv$PPG.GP$Time>=time.min & rv$PPG.GP$Time<=time.max,]
         if(length(na.omit(PPG.GP.tmp$PPG))>0){
@@ -1368,7 +1472,7 @@ server <- function(input, output) {
     temp.points<-nearPoints(df=rv$IBI.edit[,1:2], coordinfo = input$plot_hover, maxpoints = 1)
     mean.HR<-NA
     if(!is.null(rv$IBI.edit)){
-      mean.HR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'][5:length(rv$IBI.edit$IBI)-5])*60
+      mean.HR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'][5:length(rv$IBI.edit$IBI)-5], na.rm = T)*60
       names(mean.HR)<-'Est. Mean HR'
     }
     if(!is.null(input$plot_hover)){
@@ -1386,7 +1490,7 @@ server <- function(input, output) {
     temp.points<-nearPoints(df=rv$IBI.edit[,1:2], coordinfo = input$plot_hover2, maxpoints = 1)
     mean.HR<-NA
     if(!is.null(rv$IBI.edit)){
-      mean.HR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'][5:length(rv$IBI.edit$IBI)-5])*60
+      mean.HR<-1/mean(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable'][5:length(rv$IBI.edit$IBI)-5], na.rm=T)*60
       names(mean.HR)<-'Est. Mean HR'
     }
     if(!is.null(input$plot_hover2)){
@@ -1399,7 +1503,7 @@ server <- function(input, output) {
       mean.HR
     }
   })
-
+  
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   #Setting up default functions - Identifying Messy Data & restoring IBI values 
@@ -1441,13 +1545,13 @@ server <- function(input, output) {
         }
         IBI<-data.frame(IBI=IBI.tmp, 
                         Time=time.tmp, 
-                        Vals=rep('Orginal', length(time.tmp)), stringsAsFactors = F)
+                        Vals=rep('Original', length(time.tmp)), stringsAsFactors = F)
         rv$IBI.edit<-rbind(rv$IBI.edit, IBI)
         rv$IBI.edit<-rv$IBI.edit[order(rv$IBI.edit$Time, decreasing = F), ]
       }
     }
   })
-    
+  
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   #Setting up default functions - deleting and adding cases manually
@@ -1774,14 +1878,14 @@ server <- function(input, output) {
                    plot = F)
       min.R<-12/60/DS()
       max.R<-20/60/DS()
-
+      
       spec.trunc<-data.frame(freq=spec$freq[spec$freq>=min.R&spec$freq<=max.R],
                              spec=spec$spec[spec$freq>=min.R&spec$freq<=max.R])
       spec.trunc$prob<-spec.trunc$spec/sum(spec.trunc$spec)
       tmp.dist<-sample(spec.trunc$freq, size = 10000, replace = T, prob = spec.trunc$prob)*DS()
       mu_R<-mean(tmp.dist)
       sigma_R<-sd(tmp.dist)
-
+      
       #Data for stan model
       dat<-list(N1=N1,
                 N2=N2,
@@ -1792,7 +1896,7 @@ server <- function(input, output) {
                 mu_R=mu_R,
                 sigma_HR=sigma_HP, 
                 sigma_R=sigma_R
-                )
+      )
       
       pars.to.monitor<-c('HR','R', 'Ypred', paste0('a',1:4), paste0('r',1:7))
       
@@ -1808,11 +1912,11 @@ server <- function(input, output) {
                                       mu_R=mu_R),
                                  list(mu_HR=mu_HP,
                                       mu_R=mu_R)
-                                 ),
+                     ),
                      pars = pars.to.monitor,
                      control = list(adapt_delta = rv$delta, 
                                     max_treedepth = 12)
-                     )
+      )
       
       #browser()
       #------------------------------------------------------------
@@ -1826,7 +1930,7 @@ server <- function(input, output) {
       mu_HR2<-estimate_mode(HR.est$HR)
       R.est<-extract(fit.stan, 'R')
       mu_R2<-estimate_mode(R.est$R)
-
+      
       y_pred<-extract(fit.stan, 'Ypred')
       PPG.new<-colMeans(y_pred$Ypred)
       rv$PPG.proc2$PPG[rv$PPG.proc2$Time>time.min & rv$PPG.proc2$Time<time.max]<-PPG.new
@@ -1889,7 +1993,7 @@ server <- function(input, output) {
       sink()
     }
   })
-
+  
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   #Saving & Closing - Case Processing Summaries
@@ -1908,8 +2012,8 @@ server <- function(input, output) {
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
       edits.cnt<-length(rv$IBI.edit$IBI) - 
-        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable']) - 
-        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Original'])
+        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals=='Uneditable']) - 
+        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals=='Original'])
       orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit2$Time<=max(rv$sub.time$Time, na.rm=T)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits.cnt/fin.IBI
@@ -2089,7 +2193,7 @@ server <- function(input, output) {
         addParagraph(rtffile, paste('Edited by:', editor.id()))
         addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
         addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
-        addTable(rtffile, as.data.frame(round(rv$tab.comp, digits = 3)))
+        addTable(rtffile, as.data.frame(round(rv$tab.comp[1:15,], digits = 3)))
         addParagraph(rtffile, "\n\nTable 2:\n Samping Rate Summary")
         addTable(rtffile, sampling)
         addParagraph(rtffile, '\n\nTable 3:\nEditing Summary')
@@ -2142,8 +2246,8 @@ server <- function(input, output) {
       colnames(sampling)<-c('Original Hz', 'Down-sampled Hz')
       #--
       edits.cnt<-length(rv$IBI.edit$IBI) - 
-        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Uneditable']) - 
-        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals!='Original'])
+        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals=='Uneditable']) - 
+        length(rv$IBI.edit$IBI[rv$IBI.edit$Vals=='Original'])
       orig.IBI<-length(rv$IBI.edit2$IBI[rv$IBI.edit2$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit2$Time<=max(rv$sub.time$Time, na.rm=T)])
       fin.IBI<-length(rv$IBI.edit$IBI[rv$IBI.edit$Time>=min(rv$sub.time$Time, na.rm=T) & rv$IBI.edit$Time<=max(rv$sub.time$Time, na.rm=T)])
       p.new.edits<-edits.cnt/fin.IBI
@@ -2323,7 +2427,7 @@ server <- function(input, output) {
         addParagraph(rtffile, paste('Edited by:', editor.id()))
         addParagraph(rtffile, paste('\n\nIBI VizEdit Summary:', sub.id(), study.id(), time.id()))
         addParagraph(rtffile, "\n\nTable 1:\nPeak Detection Processing Summary")
-        addTable(rtffile, as.data.frame(round(rv$tab.comp, digits = 3)))
+        addTable(rtffile, as.data.frame(round(rv$tab.comp[1:15,], digits = 3)))
         addParagraph(rtffile, "\n\nTable 2:\n Samping Rate Summary")
         addTable(rtffile, sampling)
         addParagraph(rtffile, '\n\nTable 3:\nEditing Summary')

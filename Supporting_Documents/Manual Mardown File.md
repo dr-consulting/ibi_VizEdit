@@ -1,4 +1,8 @@
-#Overview of IBI VizEdit
+[TOC]
+
+#Overview of IBI VizEdit 
+
+*Matthew G. Barstead, Ph.D.*
 
 IBI VizEdit is a program built using RShiny. It is designed to assist in the manual editing of inter-beat interval files that are derived from photoplethysmogram (PPG) recordings. Unlike the electrocardiogram signal (EKG or ECG), PPG signals are characterized by a slow-moving waveform, which presents a different set of challenges when the true signal becomes contaminated with motion artifacts and other sources of noise. 
 
@@ -10,35 +14,31 @@ Please note that IBI VizEdit is beta software. It has not been fully tested, and
 
 Please cite as: 
 
-Barstead, M. G. (2018). IBI VizEdit v.1.2: An RShiny Application [Computer software]. University of Maryland.
+Barstead, M. G. (2018). IBI VizEdit v.1.2: An RShiny Application [Computer software]. University of Maryland. doi: 10.5281/zenodo.1209474
 
 ## Program Setup
 
-The program and all its necessary files can be found at the following [GitHub repository](https://github.com/matgbar/IBI_VizEdit). The critical files are the application itself which is `.R` in the main set of files and the folder labeled `IBI_VizEdit_stan`. This latter folder needs to be saved in your Documents (specifically the Documents folder associated with the specific user account logged in). 
+The program and all its necessary files can be found at the following [GitHub repository](https://github.com/matgbar/IBI_VizEdit). The critical files are the current version of the application itself which is `VizEdit_v1_2_3.R` (IMPORTANT: be sure not to download the file with `dev` in the filename as it is not a stable version of the program) and the folder labeled `IBI_VizEdit_stan`. This latter folder needs to be saved in your Documents folder (specifically the Documents folder associated with the specific user account logged in). 
 
 Be sure that you are using the most current version of R and RStudio. Update both programs if necessary prior to completing any other steps in setting up the program. 
 
 ###Stan and `rstan` in IBI VizEdit
 
-Your very first setup step is to install Stan and `rstan` onto your computer. Stan is a program external to R that allows researchers to easily and quickly implement a variety of Bayesian models.  As opposed to other Bayesian modeling software packages such as JAGS or BUGS, Stan runs its models in compiled C++.  This means that the first time a model is run requires that the relevant Stan code be compiled. As a result, the first imputation run will likely be a bit slower than subsequent runs. The increased speed in running a compiled program more than makes up for this minor inconvenience. 
+Your very first setup step is to install Stan and `rstan` onto your computer. Stan is a program external to R that allows researchers to easily and quickly implement a variety of Bayesian models.  As opposed to other Bayesian modeling software packages such as JAGS or BUGS, Stan runs its models in compiled C++.  This means that the first time a model is run the relevant Stan code will be compiled. As a result, the first imputation run will likely be a bit slower than subsequent runs. The increased speed in running a compiled program more than makes up for this minor inconvenience on the first initialization. 
 
-Stan has an active [developer community on GitHub](https://github.com/stan-dev), and more information can be found at [mc-stan.org](http://mc-stan.org/). Its incorporation into IBI VizEdit does require some additional setup, however. Detailed instructions for setting up Stan can be found [here](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows). Be sure to follow the instructions precisely in order to guarantee a clean setup. 
+Stan has an active [developer community on GitHub](https://github.com/stan-dev), and more information can be found at [mc-stan.org](http://mc-stan.org/). Detailed instructions for setting up Stan can be found [here](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows). Be sure to follow the instructions precisely in order to guarantee a clean setup. 
 
-As a reminder, the current version of IBI VizEdit is only supported on Windows 7/8/10. 
+As a reminder, the current version of IBI VizEdit is only supported on Windows 7/8/10 and Ubuntu 14.04+. The program may work on other operating systems, but there is no guarantee.  
 
 **IMPORTANT:** The Stan program incorporated into IBI VizEdit will not run if you do not properly setup Stan and if you do not include the `IBI_VizEdit_stan` folder in your documents folder (the filepath should be `~/Documents/IBI_VizEdit_stan`). This folder is available in the IBI VizEdit repository and **must be downloaded and saved** in the correct location for the program to work. 
 
-IF YOU USE LINUX: For Linux users the IBI_VizEdit_stan folder should be saved in your home directory (i.e., the path should be: `~/IBI_VizEdit_stan`). 
+**IF YOU USE LINUX**: For Linux users the IBI_VizEdit_stan folder should be saved in your home directory (i.e., the path should be: `~/IBI_VizEdit_stan`). IBI VizEdit has been tested on Ubuntu 14.04+. It is not known at this stage whether other Linux distributions (e.g., Mint, Redhat) will require modified setup approaches. 
 
 ### RStudio Setup
 
-Before you run IBI VizEdit for the first time, copy and paste the following line of code into your computer (you will need to be connected to the internet for this to work): 
+The first time IBI VizEdit is run on a computer, it will require the installation of a number of different R packages. This occurs automatically, but it does require an Internet connection the first time IBI VizEdit is run on a new computer. 
 
-```R
-install.packages('pacman')
-```
-
-Once installed, you can run IBI VizEdit. The first time you run the program will take some time as RStudio will likely need to fetch and install a number of dependent libraries IBI VizEdit requires to run properly. Check to make sure that each of these libraries has installed properly:  
+The list of packages required by VizEdit is below:
 
 ```
 shiny, 
@@ -59,7 +59,9 @@ MCMCvis,
 astsa, 
 parallel,
 benchmarkme,
-doParallel
+doParallel,
+imputeTS, 
+seewave
 ```
 
 
