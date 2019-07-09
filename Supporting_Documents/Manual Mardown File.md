@@ -423,16 +423,16 @@ Here are the results of the imputation - after 'cleaning' nearby data:
 
 ## Reporting Bugs in IBI VizEdit
 
-IBI VizEdit is open source, meaning that individuals have the ability to adjust the code to their liking should they want to customize certain features or change default settings to better align with their own lab's data. The developer, Matthew Barstead (contact: barstead@umd.edu), is happy to consult in these sorts of customizations, but is not responsible for the integrity of the program should others choose to change underlying aspects of the code. In short, bugs that result from user changes will not be addressed on the GitHub Issues reporting page in these instances. 
+IBI VizEdit is open source, meaning that individuals have the ability to adjust the code to their liking should they want to customize certain features or change default settings to better align with their own lab's data. The developer, Matthew Barstead (contact: mbarstead@gmail.com), is happy to consult in these sorts of customizations, but is not responsible for the integrity of the program should others choose to change underlying aspects of the code. In short, bugs that result from user changes will not be addressed on the GitHub Issues reporting page in these instances. 
 
 That being said, problems with the program are almost certain to arise as its use expands to new labs with differently formatted data. For users of the main program, as released in its original form, these issues should be submitted using the GitHub Issue tracker (https://github.com/matgbar/IBI_VizEdit/issues). To aid in addressing any problems that do arise in a timely fashion please ensure that your provide a precise description of the problem, including any actions you had recently taken that preceded the crash. 
 
 Oftentimes in the RStudio console window, you will see a warning displayed, which often contains very useful information in terms of identifying the source of the problem (see below).
 
-![GitHub_Issues](/home/mbarsted/GitHub/IBI_VizEdit/Supporting_Documents/GitHub_Issues.png) 
+![GitHub_Issues](GitHub_Issues.png)
 
 To render as code within the Issue tracking system (makes the information much more readable), begin by copying the relevant text from RStudio's console window. Then, with a new issue open (complete with an appropriately descriptive title) paste the text with ``` above and below the new text (see image below). 
 
-![GitHub_Code](/home/mbarsted/GitHub/IBI_VizEdit/Supporting_Documents/GitHub_Code.png)
+![GitHub_Code](GitHub_Code.png)
 
-Finally, the issue tracker built in to GitHub, can handle images and files, which depending on the nature of problem may be even more relevant to fixing the underlying bug that the specific warning messages rendered into the console. Just remember that more information is always better than less when trying debug a program remotely. 
+Finally, the issue tracker built into GitHub, can handle images and files, which depending on the nature of problem may be even more relevant to fixing the underlying bug. Just remember that more information is always better than less when trying debug a program remotely. 
