@@ -53,3 +53,14 @@ ini_global_reactive_values <- function(){
                              select.on2=0, add.delete.on2=0, start.time=NULL, GP.impute.tab=NULL, IBI.temp=NULL)
   return(rv_start)
 }
+
+
+#' Set min/max to 0/1.
+#'
+#' \code{range01} is an internal utility that takes a vector of values and returns a new vector with the same
+#' distribution, re-scaled to a range of 0 to 1.
+#'
+
+range01 <- function(x){
+  (x-min(x, na.rm = T))/(max(x, na.rm = T)-min(x, na.rm = T))
+}

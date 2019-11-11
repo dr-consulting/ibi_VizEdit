@@ -2,7 +2,7 @@
 % Please edit documentation in R/find_ibis.R
 \name{find_peaks}
 \alias{find_peaks}
-\title{General detection algorithm.}
+\title{General peak detection algorithm.}
 \usage{
 find_peaks(x, bw)
 }
