@@ -53,7 +53,7 @@ find_ibis <- function(x, ds){
 }
 
 
-#' General detection algorithm.
+#' General peak detection algorithm.
 #'
 #' \code{find_peaks} identifies the relative location of maximum values in periodic and quasi-peridodic univariate
 #' time-series. This original function was taken from https://github.com/stas-g/findPeaks/master/find_peaks.R.
