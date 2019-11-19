@@ -7,6 +7,6 @@
 out_text_time_file()
 }
 \description{
-\code{out_text_time_file} is an internal utility that provides a means of either printing a warning that a raw PPG file
-has not been selected or a message specifying the file path of the PPG file selected.
+\code{out_text_time_file} is an internal utility that provides a means of either printing a warning that a raw PPG
+file has not been selected or a message specifying the file path of the PPG file selected.
 }

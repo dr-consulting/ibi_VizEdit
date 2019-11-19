@@ -19,8 +19,8 @@ out_text_dir <- reactive({
 
 #' Shiny reactive object.
 #'
-#' \code{out_text_ppg_file} is an internal utility that provides a means of either printing a warning that a raw PPG file
-#' has not been selected or a message specifying the file path of the PPG file selected.
+#' \code{out_text_ppg_file} is an internal utility that provides a means of either printing a warning that a raw PPG
+#' file has not been selected or a message specifying the file path of the PPG file selected.
 #'
 
 out_text_ppg_file <- reactive({
@@ -36,8 +36,8 @@ out_text_ppg_file <- reactive({
 
 #' Shiny reactive object.
 #'
-#' \code{out_text_time_file} is an internal utility that provides a means of either printing a warning that a raw PPG file
-#' has not been selected or a message specifying the file path of the PPG file selected.
+#' \code{out_text_time_file} is an internal utility that provides a means of either printing a warning that a raw PPG
+#' file has not been selected or a message specifying the file path of the PPG file selected.
 #'
 
 out_text_time_file <- reactive({
