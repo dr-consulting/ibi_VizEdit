@@ -2,8 +2,8 @@ library(shiny)
 
 #' Shiny reactive object.
 #'
-#' \code{out_text_dir} is an internal utility that provides a means of either printing a warning that a working
-#' directory has not been selected or a message specifying the file path of the working directory selected.
+#' \code{out_text_dir} is an internal utility that prints either a warning that a working directory has not yet been
+#' selected or the file path of the working directory selected directly in the UI.
 #'
 
 out_text_dir <- reactive({
@@ -19,8 +19,8 @@ out_text_dir <- reactive({
 
 #' Shiny reactive object.
 #'
-#' \code{out_text_ppg_file} is an internal utility that provides a means of either printing a warning that a raw PPG
-#' file has not been selected or a message specifying the file path of the PPG file selected.
+#' \code{out_text_ppg_file} is an internal utility that prints either a warning that a raw PPG file has not yet been
+#' selected or the file path of the PPG file selected directly in the UI.
 #'
 
 out_text_ppg_file <- reactive({
@@ -36,8 +36,8 @@ out_text_ppg_file <- reactive({
 
 #' Shiny reactive object.
 #'
-#' \code{out_text_time_file} is an internal utility that provides a means of either printing a warning that a raw PPG
-#' file has not been selected or a message specifying the file path of the PPG file selected.
+#' \code{out_text_time_file} is an internal utility prints either a warning that a raw timing file has not yet been
+#' selected or the file path of the timing file directly in the UI.
 #'
 
 out_text_time_file <- reactive({

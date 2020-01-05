@@ -21,7 +21,7 @@ get_user_folder <- function(){
 #' The default is set to 150 MB. If this is too low in general or for a specific use case, it can be adjusted here.
 #'
 
-set_file_size_max <- function(size = 150){
+set_file_size_max <- function(size = 500){
   options(shiny.maxRequestSize=size*1024^2)
 }
 
