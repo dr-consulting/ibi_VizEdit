@@ -7,6 +7,6 @@
 out_text_dir()
 }
 \description{
-\code{out_text_dir} is an internal utility that provides a means of either printing a warning that a working
-directory has not been selected or a message specifying the file path of the working directory selected.
+\code{out_text_dir} is an internal utility that prints either a warning that a working directory has not yet been
+selected or the file path of the working directory selected directly in the UI.
 }

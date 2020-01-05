@@ -1,7 +1,7 @@
 Package: ibiVizEdit
 Type: Package
 Title: Open-Source Software for Processing and Editing Heart Rate Data
-Version: 2.0.0
+Version: 0.0.1
 Author: Matthew G. Barstead
 Maintainer: Matthew G. Barstead <mbarstead@deadreckoning.consulting>
 Description: ibiVizEdit allows users to process and edit heart rate data obtained via photoplethysmography (PPG).

@@ -4,7 +4,7 @@
 \alias{set_file_size_max}
 \title{Setting maximum file size}
 \usage{
-set_file_size_max(size = 150)
+set_file_size_max(size = 500)
 }
 \description{
 \code{set_file_size_max} is an internal utility that sets the maximum file size for an input data set in megabytes.
