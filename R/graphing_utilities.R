@@ -19,12 +19,12 @@ ppg_data_check_empty_plot <- function(){
 #' that the PPG data loading process was successful. The utility and resulting plot allow a user to visually inspect
 #' the imported signal based on settings defined on the UI Data Entry panel
 #'
-#'@param ppg_data is a \code{data.frame} that contains the processed PPG signal and a time variable.
-#'@param ppg_col is of type \code{character} and is the column name in the \code{ppg_data} that contains the PPG signal
-#'@param time_col is of type \code{character} and is the column name in the \code{ppg_data} that contains the time
-#'variable
+#' @param ppg_data is a \code{data.frame} that contains the processed PPG signal and a time variable.
+#' @param ppg_col is of type \code{character} and is the column name in the \code{ppg_data} that contains the PPG signal
+#' @param time_col is of type \code{character} and is the column name in the \code{ppg_data} that contains the time
+#' variable
 #'
-#'@export
+#' @export
 #'
 
 generate_ppg_data_check_plot <- function(ppg_data = NULL, ppg_col='PPG', time_col='Time'){
@@ -39,11 +39,11 @@ generate_ppg_data_check_plot <- function(ppg_data = NULL, ppg_col='PPG', time_co
 #'
 #' \code{generate_base_gui_plot} defines the base plot that forms the basis for interactively editing IBIs
 #'
-#'@param ibi_data is a \code{data.frame} that contains the IBI series being activel edited by the user during the
-#'session
-#'@param ibi_col is of type \code{character} and is the column name in the \code{ibi_data} that contains the IBI series
-#'@param time_col is of type \code{character} and is the column name in the \code{ppg_data} that contains the time
-#'variable
+#' @param ibi_data is a \code{data.frame} that contains the IBI series being activel edited by the user during the
+#' session
+#' @param ibi_col is of type \code{character} and is the column name in the \code{ibi_data} that contains the IBI series
+#' @param time_col is of type \code{character} and is the column name in the \code{ppg_data} that contains the time
+#' variable
 #'
 #'@export
 #'
