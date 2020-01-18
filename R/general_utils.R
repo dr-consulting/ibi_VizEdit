@@ -52,8 +52,8 @@ set_file_size_max <- function(size = 500){
 #'
 
 ini_global_reactive_values <- function(){
-  rv_start <- reactiveValues(tot.edits=data.frame(), base.on=0, adv.on=0, ppg.on=0, select.on=0, add.delete.on=0,
-                             select.on2=0, add.delete.on2=0, start.time=NULL, GP.impute.tab=NULL, IBI.temp=NULL)
+  rv_start <- reactiveValues(tot_edits=data.frame(), base_on=0, adv_on=0, ppg_on=0, select_on=0, add_delete_on=0,
+                             select_on2=0, add_delete_on2=0, start_time=NULL, GP_impute_tab=NULL, IBI_temp=NULL)
   return(rv_start)
 }
 
