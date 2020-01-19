@@ -89,8 +89,8 @@ estimate_mode <- function(x){
 #' Internal utility for deteming average respiration jointly using PPG and IBI signals
 #'
 
-estimate_avg_respiration <- function(ibi_data=NULL, ibi_col="IBI", time_col="Time", respiration_cat=NULL, ds = NULL,
-                                     respiration_mapping=AVERAGE_RESPIRATION_BY_AGE){
+estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL, ds = NULL,
+                                     respiration_mapping=AVERAGE_RESPIRATION_BY_AGE, ibi_col="IBI", time_col="Time"){
   respiration_bounds <- respiration_mapping[respiration_cat][[1]]/60/ds
   time_df <- data.frame(time_col=seq(min(ibi_data[time_col], na.rm = TRUE),
                                      max(ibi_data[time_col], na.rm = TRUE), by = .01))
@@ -112,6 +112,10 @@ estimate_avg_respiration <- function(ibi_data=NULL, ibi_col="IBI", time_col="Tim
   # Taking a weighted average using spectral density weights from each signal as weights of respiration frequency
   # Multiplying back out by ds (the downsampling rate) to return frequency to Hz
   mean_resp <- (spec_ibi$freq*spec$dens)/sum(spec_ibi$dens)*ds
+  wss <- (sum((spec_ibi$freq*ds - mean_resp)*spec_ibi$dens)^2)/sum(spec_ibi$dens)
+  sd_resp <- sqrt(wss)
+
+  resp_stats <- c(mean=mean_resp, sd=sd_resp)
 
   return(mean_resp)
 }

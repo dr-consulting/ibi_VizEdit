@@ -22,18 +22,17 @@
 #' @export
 #'
 
-generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NULL, ppg_col="PPG", time_col="Time",
-                                      expansion_factor=NULL, respiration_cycle_time=NULL, ds=NULL){
-  total_time <- 2*expansion_factor*respiration_cycle_time
-  input_bounds_list <- generate_imputation_input_windows(ppg_data[time_col], total_time, timen_min, time_max)
+generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NULL, total_time=NULL, ds=NULL,
+                                      input_windows=NULL, ppg_col="PPG", time_col="Time"){
+
   sample_rate <- round(ds/12)
 
   # Creating a basic set of guardails here to propagate forward presence/effects of NULL values
-  if(!is.null(input_bounds_list$pre) & !is.null(input_bounds_list$post)){
-    time_pre <- ppg_data[time_col][between(ppg_data[time_col], input_bounds_list$pre[1], input_bounds_list$pre[2])]
-    time_post <- ppg_data[time_col][between(ppg_data[time_col], input_bounds_list$post[1], input_bounds_list$post[2])]
-    ppg_pre <- ppg_data[ppg_col][between(ppg_data[time_col], input_bounds_list$pre[1], input_bounds_list$pre[2])]
-    ppg_post <- ppg_data[ppg_col][between(ppg_data[time_col], input_bounds_list$post[1], input_bounds_list$post[2])]
+  if(!is.null(input_windows$pre) & !is.null(input_windows$post)){
+    time_pre <- ppg_data[time_col][between(ppg_data[time_col], input_windows$pre[1], input_windows$pre[2])]
+    time_post <- ppg_data[time_col][between(ppg_data[time_col], input_windows$post[1], input_windows$post[2])]
+    ppg_pre <- ppg_data[ppg_col][between(ppg_data[time_col], input_windows$pre[1], input_windows$pre[2])]
+    ppg_post <- ppg_data[ppg_col][between(ppg_data[time_col], input_windows$post[1], input_windows$post[2])]
   }
 
   # Enforcing guardrails for processing steps that could return NULLs as invalid processing outputs
@@ -165,12 +164,27 @@ generate_imputation_input_windows <- function(time_vector, total_input_time, tar
 #'
 #'
 
-extract_valid_local_HP_stats <- function(boundary_list, ibi_data=NULL, ibi_col="IBI", time_col="Time",
-                                         selected_points=NULL){
-  pre_valid_ibis <- selected_points$IBI[between(selected_points$Time), boundary_list$pre[1], boundary_list$pre[2]]
-  post_valid_ibis <- selected_points$IBI[between(selected_points$Time), boundary_list$post[1], boundary_list$post[2]]
+extract_valid_local_HP_stats <- function(ibi_data=NULL, time_min=NULL, time_max=NULL, selected_points=NULL,
+                                         input_windows=NULL, ibi_col="IBI", time_col="Time"){
+  pre_valid_ibis <- selected_points$IBI[between(selected_points$Time), input_windows$pre[1], input_windows$pre[2]]
 
-  local_HP_stats <- c(mean = mean(c(pre_valid_ibis, post_valid_ibis)),
-                      sd = sd(c(pre_valid_ibis, post_valid_ibis)))
+  post_valid_ibis <- selected_points$IBI[between(selected_points$Time), input_windows$post[1], input_windows$post[2]]
+
+  valid_ibis <- c(pre_valid_ibis, post_valid_ibis)
+
+  local_HP_stats <- c(mean=mean(valid_ibis), sd=sd(valid_ibis))
+
   return(local_HP_stats)
+}
+
+
+#' Internal utility for defining time variable over which to impute
+#'
+#'
+
+generate_imputation_time <- function(ppg_data=NULL, time_min=NULL, time_max=NULL, ds=NULL, time_col="Time"){
+  sample_rate <- round(ds/24)
+  imputation_target_time <- ppg_data[time_col][between(ppg_data[time_col], time_min, time_max)]
+  imputation_target_time <- imputation_target_time[seq(1, length(imputation_target_time, by=sample_rate))]
+  return(imputation_target_time)
 }
