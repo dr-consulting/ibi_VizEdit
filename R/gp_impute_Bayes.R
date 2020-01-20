@@ -1,20 +1,16 @@
 #' Internal utility that aggregates data and settings needed to trigger an imputation model run
 #'
+#' @export
 
 gp_impute_driver <- function(iter=NULL, warmup=NULL, adapt_delta=NULL, time_min=NULL,time_max=NULL, ppg_data=NULL,
                              ibi_data=NULL, respiration_cat=NULL, ds=NULL, selected_ibis=NULL, ppg_col="PPG",
                              ibi_col="IBI", time_col="Time", expansion_factor=3){
 
   total_time <- average_respiration*expansion_factor*2
-
   respiration_stats <- estimate_avg_respiration(ibi_data, respiration_cat, ds, AVERAGE_RESPIRATION_BY_AGE)
-
   imputation_input_windows <- generate_imputation_input_windows(ppg_data[time_col], total_time, time_min, time_max)
-
   ppg_inputs <- generate_model_ppg_inputs(time_min, time_max, ppg_data, total_time, ds, imputation_input_windows)
-
   imputation_window_time_var <- generate_imputation_time(ppg_data, time_min, time_max, ds)
-
   local_HP_stats <- extract_valid_local_HP_stats(ibi_data, time_min, time_max, selected_ibis, imputation_input_windows)
 
   driver <- list()
@@ -28,6 +24,7 @@ gp_impute_driver <- function(iter=NULL, warmup=NULL, adapt_delta=NULL, time_min=
   driver$warmup <- warmup
   driver$adapt_delta <- adapt_delta
   driver$prediction_window <- c(time_min, time_max)
+  driver$ds <- ds
   # Initializing stan data list...
   driver$gp_data <- list()
   driver$gp_data$mu_R <- respiration_stats$mean
@@ -39,11 +36,14 @@ gp_impute_driver <- function(iter=NULL, warmup=NULL, adapt_delta=NULL, time_min=
   driver$gp_data$Y <- ppg_inputs$PPG
   driver$gp_data$Xp <- imputation_window_time_var
   driver$gp_data$N2 <- length(imputation_window_time_var)
+
+  return(driver)
 }
 
 
 #' Internal \code{ibiVizEdit} utility for running a Bayesian Gaussian process imputation model
 #'
+#' @export
 
 run_bayesian_gp <- function(gp_driver, imputation_model){
   pars_to_monitor <- c('HR','R', 'Ypred', paste0('a',1:3), paste0('r',1:5))
@@ -70,14 +70,22 @@ run_bayesian_gp <- function(gp_driver, imputation_model){
   }
   model_outputs$run_time_mins <- run_time
   model_outputs$fitted_model <- imputation_fit
-  model_outputs$imputation_window <- gp_driver$prediction_window
   model_outputs$model_pars_summary <- model_pars_summary
+  model_outputs <- add_MAP_summaries(model_outputs)
+  model_output$imputed_df <- generate_gp_ppg_predictions(model_outputs, gp_driver)
+  model_output$rhat_warning <- check_for_large_rhats(model_outputs$model_pars_summary)
 
   return(model_outputs)
 }
 
-#' Need a traceplot generation function
-#' Need a summary text file generation function
-#' Need an .RData save function
-#' Need an extract_predictions function
-#' Need a check Rhats function
+
+#' Internal \code{ibiVizEdit} function for replacing corrupted data with imputed data
+#'
+#' @export
+
+replace_w_imputed <- function(ppg_out=NULL, model_outputs=NULL, ppg_col="PPG", time_col="Time"){
+  ppg_out[ppg_col][ppg_out[time_col] %in% model_outputs$imputed_df[time_col]] <- model_outputs$imputed_df[ppg_col]
+
+  return(ppg_out)
+}
+

@@ -13,7 +13,6 @@
 #' of diagnostic information about the peak detection algorithm optimization parameters and summary statistics.
 #'
 #' @export
-#'
 
 find_ibis <- function(x, ds){
   require(psych)
@@ -65,7 +64,6 @@ find_ibis <- function(x, ds){
 #' @return Returns the sequentially ordered index values at which each "peak" is detected.
 #'
 #' @export
-#'
 
 find_peaks <- function (x, bw){
   shape <- diff(sign(diff(x, na.pad = FALSE)))
@@ -92,7 +90,6 @@ find_peaks <- function (x, bw){
 #' @return Returns the sequentially ordered index values at which each "peak" is detected.
 #'
 #' @export
-#'
 
 sum_rev <- function(x){
   Z<-rep(NA, length(x))

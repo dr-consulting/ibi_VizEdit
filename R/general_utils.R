@@ -2,6 +2,7 @@
 #'
 #' \code{get_user_folder} is designed to identify the home directory of the user who initiated the R session.
 #'
+#' @export
 
 get_user_folder <- function(){
   if(Sys.getenv('USERPROFILE')=="")
@@ -23,6 +24,7 @@ get_user_folder <- function(){
 #' @param size is the total size of the raw file in MB. Default for the program is 500 and can be reset by advanced
 #' users
 #'
+#' @export
 
 set_file_size_max <- function(size = 500){
   options(shiny.maxRequestSize=size*1024^2)
@@ -50,6 +52,7 @@ set_file_size_max <- function(size = 500){
 #' @param GP_impute_tab is used to store ongoing information about Gaussian imputation attempts. The table is included
 #' in the final output.
 #'
+#' @export
 
 ini_global_reactive_values <- function(){
   rv_start <- reactiveValues(tot_edits=data.frame(), base_on=0, adv_on=0, ppg_on=0, select_on=0, add_delete_on=0,
@@ -63,6 +66,7 @@ ini_global_reactive_values <- function(){
 #' \code{range01} is an internal utility that takes a vector of values and returns a new vector with the same
 #' distribution, re-scaled to a range of 0 to 1.
 #'
+#' @export
 
 range01 <- function(x){
   (x-min(x, na.rm = T))/(max(x, na.rm = T)-min(x, na.rm = T))
@@ -88,10 +92,13 @@ estimate_mode <- function(x){
 
 #' Internal utility for deteming average respiration jointly using PPG and IBI signals
 #'
+#' @export
 
 estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL, ds = NULL,
                                      respiration_mapping=AVERAGE_RESPIRATION_BY_AGE, ibi_col="IBI", time_col="Time"){
   respiration_bounds <- respiration_mapping[respiration_cat][[1]]/60/ds
+
+  # Upsampling the IBI signal to enable interpolation for additional processing.
   time_df <- data.frame(time_col=seq(min(ibi_data[time_col], na.rm = TRUE),
                                      max(ibi_data[time_col], na.rm = TRUE), by = .01))
   ibi_data <- merge(time_df, ibi_data, by=time_col, all=TRUE)
@@ -109,8 +116,7 @@ estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL, ds = N
                          dens = spec_ibi$spec[spec_ibi$freq >= respiration_bounds[1] &
                                                 spec_ibi$freq <= respiration_bounds[2]])
 
-  # Taking a weighted average using spectral density weights from each signal as weights of respiration frequency
-  # Multiplying back out by ds (the downsampling rate) to return frequency to Hz
+  # Attempting to analytically solve for a reasonable respiration priors based on subject file properties
   mean_resp <- (spec_ibi$freq*spec$dens)/sum(spec_ibi$dens)*ds
   wss <- (sum((spec_ibi$freq*ds - mean_resp)*spec_ibi$dens)^2)/sum(spec_ibi$dens)
   sd_resp <- sqrt(wss)
@@ -118,5 +124,37 @@ estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL, ds = N
   resp_stats <- c(mean=mean_resp, sd=sd_resp)
 
   return(mean_resp)
+}
+
+
+#' Internal \code{ibiVizEdit} utility for creating output directory inside working directory
+#'
+#' @export
+
+create_and_return_output_dir <- function(wd=NULL, sub_id=NULL, secondary_id=NULL, study_id=NULL){
+  out_folder_name <- paste(sub_id, secondary_id, study_id, "output", Sys.Date(), sep="_")
+  out_dir <- paste0(wd, "/", out_folder_name)
+
+  if(!dir.exists(out_dir)){
+    dir.create(out_dir)
+  }
+
+  return(out_dir)
+}
+
+#' Internal \code{ibiVizEdit} utility for creating an subdirectory for GP imputation model outputs
+#'
+#' @export
+
+create_and_return_gp_output_subdir <- function(out_dir, gp_driver){
+  gp_folder_name <- paste("GP_imputation_output", gp_driver$prediction_window[1], gp_driver$prediction_window[2],
+                          Sys.time(), sep="_")
+  gp_subdir <- paste0(out_dir, "/", gp_folder_name)
+
+  if(!dir.exists(gp_subdir)){
+    dir.create(gp_subdir)
+  }
+
+  return(gp_subdir)
 }
 
