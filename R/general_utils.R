@@ -28,6 +28,7 @@ get_user_folder <- function(){
 
 set_file_size_max <- function(size = 500){
   options(shiny.maxRequestSize=size*1024^2)
+  return(paste(size, "MB"))
 }
 
 
@@ -89,6 +90,20 @@ estimate_mode <- function(x){
   return(d$x[which.max(d$y)])
 }
 
+
+#' Internal utility for \code{ibiVizEdit} that generates a global estimated mean HR
+#'
+#' @export
+
+estimate_average_HR <- function(ibi_data=NULL, task_times=NULL, ibi_col="IBI",  time_col="Time"){
+  if(!is.null(task_times)){
+    ibi_trunc <- ibi_data[ibi_col][between(ibi_data[time_col], min(task_times[time_col]), max(task_times[time_col]))]
+  }
+  else{
+    ibi_trunc <- ibi_data[ibi_col][5:(nrow(ibi_data)-5)]
+  }
+  return(1/mean(ibi_trunc)*60)
+}
 
 #' Internal utility for deteming average respiration jointly using PPG and IBI signals
 #'

@@ -1,3 +1,18 @@
+#' UI utility for \code{ibiVizEdit} that adds static actionButton
+#'
+#' @export
+
+staticButton <- function(id=NULL, button_color=NULL, heading=NULL, msg=NULL){
+  TL <- tagList(tags$h4(heading),
+                actionButton(id, label="Load Configuration", style=button_color))
+
+  if(!is.null(msg)){
+    TL[[3]]<-tags$p(msg)
+  }
+  return(TL)
+}
+
+
 #' UI utility for \code{ibiVizEdit} that generates a series of file and director input objects
 #'
 #' @export
@@ -30,14 +45,12 @@ fileButtons <- function(id=NULL, button_color=NULL, label="Select File(s) & Work
 #'
 #' @export
 
-idNameFields <- function(id=NULL, label="File ID and Information:"){
-  ns <- NS(id)
-
-  tagList(tags$h2(label),
-          textInput(ns("sub_id"), "Subject ID:"),
-          textInput(ns("secondary_id"), "Time/Task ID:"),
-          textInput(ns("optional_id"), "(Optional) Study ID:"),
-          textInput(ns("editor"), "Editor Name:"))
+idNameFields <- function(heading="File ID and Information:"){
+  tagList(tags$h2(heading),
+          textInput("sub_id", "Subject ID:"),
+          textInput("secondary_id", "Time/Task ID:"),
+          textInput("optional_id", "(Optional) Study ID:"),
+          textInput("editor", "Editor Name:"))
 }
 
 
@@ -107,53 +120,134 @@ addMainFooter <- function(docs_link=NULL, repo_link=NULL, wiki_link=NULL){
 }
 
 
-#' UI utility for \code{ibiVizEdit} that adds "load current settings" actionButton
+#' UI utility for \code{ibiVizEdit} that renders a pair of stacked plots for signal inspection
 #'
 #' @export
 
-loadSettings <- function(id=NULL, button_color=NULL, label="Load Data Using Current Settings:"){
-  ns <- NS(id)
+basicDualPlots <- function(id=NULL, label=NULL, plot1_height=NULL, plot1_click=NULL, plot1_dbclick=NULL,
+                           plot1_hover=NULL, plot1_hoverDelay=NULL, plot1_hoverDelayType=NULL, plot1_brush=NULL,
+                           plot1_clickId=NULL, plot1_hoverId=NULL, plot2_height=NULL, plot2_click=NULL,
+                           plot2_dbclick=NULL, plot2_hover=NULL, plot2_hoverDelay=NULL, plot2_hoverDelayType=NULL,
+                           plot2_brush=NULL, plot2_clickId=NULL, plot2_hoverId=NULL){
+  ns<-NS(id)
 
   tagList(tags$h4(label),
-          actionButton(ns("load_settings"), label="Load Configuration", style=button_color),
-          tags$p("Click to load data with the settings above and begin your editing session."))
+          plotOutput(ns("main"), height=plot1_height, click=plot1_click, dblclick=plot1_dbclick, hover=plot1_hover,
+                     hoverDelay=plot1_hoverDelay, hoverDelayType=plot1_hoverDelayType, brush=plot1_brush,
+                     clickId=plot1_clickId, hoverId=plot1_hoverId),
+          plotOutput(ns("scroll_x"), height=plot2_height, click=plot2_click, dblclick=plot2_dbclick, hover=plot2_hover,
+                     hoverDelay=plot2_hoverDelay, hoverDelayType=plot2_hoverDelayType, brush=plot2_brush,
+                     clickId=plot2_clickId, hoverId=plot2_hoverId))
 }
 
 
-#' UI utility for \code{ibiVizEdit} that adds "save" actionButton
+#' UI utility for \code{ibiVizEdit} that renders an Rshiny tableOutput object
 #'
 #' @export
 
-saveProgress <- function(id=NULL, button_color=NULL, label="Save Progress:"){
-  ns <- NS(id)
+simpleTable <- function(id=NULL, label=NULL){
+  ns<-NS(id)
 
   tagList(tags$h4(label),
-          actionButton(ns("save_progress"), label="Save Progress", style=button_color),
-          tags$p("Click to save current progress in an .RData object that can be loaded later."))
+          tableOutput(ns("table")))
 }
 
-
-#' UI utility for \code{ibiVizEdit} that adds a "save and finalize" actionButton
+#' UI utility for \code{ibiVizEdit} that renders a footer for the processing panel
 #'
 #' @export
 
-saveFinalize <-function(id=NULL, button_color=NULL, label="Save and Finalize Outputs:"){
-  ns <- NS(id)
-
-  tagList(tags$h4(label),
-          actionButton(ns("save_finalize"), label="Save and Output", style=button_color),
-          tags$p("Click to save output in finalized format, including report generation, and summary data outputs."))
+addProcessingFooter <- function(label="Processing Panel Overview"){
+  tags$body(h4(label),
+            p(str_wrap("
+            The processing panel is the first stage of getting the input PPG data into a form suitable for summarizing
+            the timing, frequency, and variability in an individual's cardiac activity. The panel serves two main
+            functions. First, after you have loaded the data and configuration settings on the Data Entry tab, you will
+            be able to inspect the unprocessed signal in the plot that populates directly above. The lower plot controls
+            the section of the signal presented in the upper plot. Simply click and drag open a selection box and the
+            contents will display above. You should make sure that you have successfully imported your PPG data before
+            hitting the Process Data. If you do not have the desired data, go back to the Data Entry tab, hit Reset All
+            and attempt the import again. If you have provided a timing file that delineates tasks or conditions during
+            the observation windown it should populate above and to the right. Make sure the timing aligns with
+            expectations, and, if not, attempt the import again. The second function this tab performs is to provide a
+            basic readout of post-processing data, including the final results of the peak detection algorithm settings,
+            and initial estimates of heart rate and respiration. The former will be output in a final case processing
+            summary file so you do not need to worry about saving that information. The latter items may change
+            based on editing decisions you make by the time you are ready to generate the final outputs. Good luck!!
+            ")))
 }
 
 
-#' UI utility for \code{ibiVizEdit} that adds a "reset" actionButton
+#' UI utility for \code{ibiVizEdit} that serves as a basic wrapper and enables single actionButton generation.
 #'
 #' @export
 
-resetAll <- function(id=NULL, button_color=NULL, label="Return All Settings to Defaults"){
+dynamicButtonModUI <- function(id=NULL){
   ns <- NS(id)
-
-  tagList(tags$h4(label),
-          actionButton(ns("reset_all"), label="Reset Session", style=button_color),
-          tags$p("WARNING: Reset Session will return the session to its default state. All unsaved work will be lost."))
+  uiOutput(ns("rendered_button"))
 }
+
+
+#' Utility for \code{ibiVizEdit} that generates UI components for selection mode drag-select vs. click-and-point
+#'
+#' @export
+
+ibiEditingMode <- function(names=c("ibi_drag_select", "ibi_click_select"), label="Point Selection Mode:"){
+  tagList(tags$h4(label),
+          dynamicButtonModUI(names[1]),
+          dynamicButtonModUI(names[2]))
+}
+
+
+#' Utility for \code{ibiVizEdit} that generates UI components for basic IBI editing functions
+#'
+#' @export
+
+ibiEditingActions <- function(names=c("average", "combine", "divide"), heading="Base Editing Functions"){
+  tagList(tags$h4(heading),
+          dynamicButtonModUI(names[1]),
+          dynamicButtonModUI(names[2]),
+          dynamicButtonModUI(names[3]),
+          numericInput("divisor", label="Divide by:", min=1, max=6, value=2))
+}
+
+#' Utility for \code{ibiVizEdit} that generates UI components for summary text display
+#'
+#' @export
+
+summaryTextOutput <- function(id=NULL){
+
+}
+
+#' Utility for \code{ibiVizEdit} that generates UI components that govern plot display features
+#'
+#' @export
+
+
+#' Utility for \code{ibiVizEdit} that generates UI components for assigning uneditable status and restoring IBIs
+#'
+#' @export
+ibiSpecialActions <- function(names=c("uneditable", "restore"), heading="Special Actions:",
+                              button_color=BACKGROUND_COLORS["warning"]){
+  tagList(tags$h4(heading),
+          dynamicButtonModUI(names[1]),
+          actionButton(names[2], label="Restore IBI", style=button_color))
+}
+
+#' Utility for \code{ibiVizEdit} that generates UI components for PPG plot editing mode
+#'
+#' @export
+
+
+#' Utility for \code{ibiVizEdit} that generates UI for basic interporlation and imputation methods
+#'
+#' @export
+
+
+#' Utility for \code{ibiVizEdit} that generates UI components for GP Bayesian imputation model parameters
+#'
+#' @export
+
+
+#' Utility for \code{ibiVizEdit} that generates UI components for GP Maximum Likelihood imputation model settings
+#'
+#' @export

@@ -132,3 +132,6 @@ time_center <- function(x, time_col = 'Time', timing_series = NULL){
   }
   return(x)
 }
+
+
+#' Internal utility for \code{ibiVizEdit} that initializes the edited IBI data set for storate in EDIT_DATA
