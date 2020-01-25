@@ -7,8 +7,9 @@ library(shiny)
 
 ppg_data_check_empty_plot <- function(){
   df <- data.frame(x=c(-1,0,1), y=c(-1,0,1))
-  p <- ggplot(aes(x=x, y=y), data=df)+
-    annotate('text', x=0, y=0, label='No Processed Data Provided')
+  p <- ggplot(aes(x=x, y=y), data=df) +
+    annotate('text', x=0, y=0, label='No Processed Data Provided') +
+    theme_bw()
 
   return(p)
 }
@@ -30,8 +31,9 @@ ppg_data_check_empty_plot <- function(){
 generate_ppg_data_check_plot <- function(ppg_data = NULL, ppg_col='PPG', time_col='Time'){
   p <- ggplot(data=ppg_data)+
     geom_line(aes_string(x=time_col,
-                         y=ppg_col))+
-    labs(x="Time (s)", y="PPG (volts)")
+                         y=ppg_col)) +
+    labs(x="Time (s)", y="PPG (volts)") +
+    theme_bw()
   return(p)
 }
 

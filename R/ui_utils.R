@@ -1,94 +1,46 @@
-#' UI utility for \code{ibiVizEdit} that adds static actionButton
+#' UI Utility for \code{ibiVizEdit} that adds dynamic text fields that will update based on user entry
 #'
 #' @export
 
-staticButton <- function(id=NULL, button_color=NULL, heading=NULL, msg=NULL){
-  TL <- tagList(tags$h4(heading),
-                actionButton(id, label="Load Configuration", style=button_color))
-
-  if(!is.null(msg)){
-    TL[[3]]<-tags$p(msg)
-  }
-  return(TL)
-}
-
-
-#' UI utility for \code{ibiVizEdit} that generates a series of file and director input objects
-#'
-#' @export
-
-fileButtons <- function(id=NULL, button_color=NULL, label="Select File(s) & Working Directory"){
-  # Add option to load from partially processed data files...
+dynamicTextInputModUI <- function(id=NULL){
   ns <- NS(id)
-
-  tagList(tags$h2(label),
-          shinyDirButton(id=ns("wd_in"), label="Select Directory", title="Choose Your Working Directory",
-                         style=button_color),
-          tags$br(),
-          tags$p(textOutput(ns("wd_out"))),
-          shinyFilesButton(id=ns("ppg_in"), label="Choose PPG File", title="Select Raw PPG .txt File", multiple=FALSE,
-                           style=button_color),
-          tags$br(),
-          tags$p(textOutput(ns("ppg_filepath"))),
-          shinyFilesButton(id=ns("timing_in"), label="Select Timing File", title="Select (optional) Timing File",
-                           multiple=FALSE, style=button_color),
-          tags$br(),
-          tags$p(textOutput(ns("timing_filepath"))),
-          tags$hr(),
-          tags$h3("Or Load ibiVizEdit Input from .RData File:"),
-          shinyFilesButton(id=ns("rdata_in"), label="Select ibiVizEdit Input Data", title="Load ibiVizEdit .RData",
-                           multiple = FALSE, style=button_color))
+  uiOutput(ns("rendered_field"))
 }
 
-
-#' UI utility for \code{ibiVizEdit} that generates fields for ID, Study, and Editor Labels
+#' UI utility for \code{ibiVizEdit} that adds dynamic numeric input fields that can update based on user behavior
 #'
 #' @export
 
-idNameFields <- function(heading="File ID and Information:"){
-  tagList(tags$h2(heading),
-          textInput("sub_id", "Subject ID:"),
-          textInput("secondary_id", "Time/Task ID:"),
-          textInput("optional_id", "(Optional) Study ID:"),
-          textInput("editor", "Editor Name:"))
-}
-
-
-#' UI utility for \code{ibiVizEdit} that generates data entry fields for data properties; accepts user-defined defaults
-#'
-#' @export
-
-ppgDataPropertiesEntry <- function(id=NULL, age_cat_mapping=NULL, col_default=NULL, skip_default=NULL,
-                                   Hz_in_default=NULL, age_default=NULL,
-                                   label="Data Properties:"){
+dynamicNumInputModUI <- function(id=NULL){
   ns <- NS(id)
-
-  tagList(tags$h2(label),
-          numericInput(ns("ppg_col_select"), label="PPG Signal in Column:", min=1, max=999, value=col_default),
-          numericInput(ns("ppg_skip_lines"), label="Number of Head Lines:", min=0, max=999, value=skip_default),
-          numericInput(ns("Hz_input"), label="File Sampling Rate:", min=125, max=10000, value=Hz_in_default),
-          selectInput(ns("sub_age_cat"), label="Select Age Group:", choices=names(age_cat_mapping),
-                      selected=names(age_cat_mapping)[age_default]))
+  uiOutput(ns("rendered_field"))
 }
 
-
-#' UI utility for \code{ibiVizEdit} that generates dat entry fields for optional settings
+#' UI utility for \code{ibiVizEdit} that serves as a basic wrapper and enables single actionButton generation.
 #'
 #' @export
 
-optionalSettingsEntry <- function(id=NULL, peak_iter=NULL, epoch_lengths=NULL, epoch_default=NULL, Hz_edit_default,
-                                  label="Optional Settings:"){
+dynamicClrButtonModUI <- function(id=NULL){
   ns <- NS(id)
+  uiOutput(ns("rendered_button"))
+}
 
-  tagList(tags$h2(label),
-          numericInput(ns("find_ibi_iter"), label="Peak Detection Iterations:", min=10, max=500, value=peak_iter),
-          numericInput(ns("Hz_editing"), label="Signal Hz for Editing:", min=500, max=5000, value=Hz_edit_default),
-          awesomeCheckboxGroup(ns("epoch_in"), label="Output Epoch Lengths:", choices=paste0(epoch_lengths, "s"),
-                               selected=paste0(epoch_default, "s"), inline=FALSE),
-          tags$head(tags$style(HTML("
-                                    #checkbox :after, #checkbox :before{
-                                    background-color: #426ebd;
-                                    }"))))
+#' UI utility for \code{ibiVizEdit} that serves as a basic wrapper and enables dynamic updating of checkbox UI
+#'
+#' @export
+
+dynamicCheckBoxInputModUI <-function(id=NULL){
+  ns <- NS(id)
+  uiOutput(ns("rendered_checkbox"))
+}
+
+#' UI utility for \code{ibiVizEdit} that serves as a basic wrapper and enables dynamic updating of selectInput UI
+#'
+#' @export
+
+dynamicSelectInputModUI <- function(id=NULL){
+  ns <- NS(id)
+  uiOutput(ns("rendered_dropdown"))
 }
 
 #' UI utility for \code{ibiVizEdit} that renders the Dead Reckoning wide Logo
@@ -99,6 +51,90 @@ addLogo <- function(logo_filepath=NULL, url="https://www.deadreckoning.consultin
   tags$a(href=url, tags$img(src=logo_filepath))
 }
 
+#' UI utility for \code{ibiVizEdit} that generates a series of file and director input objects
+#'
+#' @export
+
+fileButtons <- function(button_color=BUTTON_COLORS['standard'], heading="Select File(s) & Working Directory"){
+  # Add option to load from partially processed data files...
+
+  tagList(tags$h2(heading),
+          shinyDirButton("wd_in", label="Select Directory", title="Choose Your Working Directory",
+                         style=button_color),
+          tags$br(),
+          tags$p(textOutput("wd_out")),
+          shinyFilesButton("ppg_in", label="Choose PPG File", title="Select Raw PPG .txt File", multiple=FALSE,
+                           style=button_color),
+          tags$br(),
+          tags$p(textOutput("ppg_filepath")),
+          shinyFilesButton("timing_in", label="Select Timing File", title="Select (optional) Timing File",
+                           multiple=FALSE, style=button_color),
+          tags$br(),
+          tags$p(textOutput("timing_filepath")),
+          tags$hr(),
+          tags$h3("Or Load ibiVizEdit Input from .RData File:"),
+          shinyFilesButton("rdata_in", label="Select ibiVizEdit Input Data", title="Load ibiVizEdit .RData",
+                           multiple = FALSE, style=button_color))
+}
+
+
+#' UI utility for \code{ibiVizEdit} that generates fields for ID, Study, and Editor Labels
+#'
+#' @export
+
+idNameFields <- function(heading="File ID and Information:"){
+  tagList(tags$h2(heading),
+          dynamicTextInputModUI("sub_id"),
+          dynamicTextInputModUI("secondary_id"),
+          dynamicTextInputModUI("optional_id"),
+          dynamicTextInputModUI("editor"))
+}
+
+
+#' UI utility for \code{ibiVizEdit} that generates data entry fields for data properties; accepts user-defined defaults
+#'
+#' @export
+
+ppgDataPropertiesEntry <- function(heading="Data Properties:"){
+
+  tagList(tags$h2(heading),
+          dynamicNumInputModUI("column_select"),
+          dynamicNumInputModUI("skip_rows"),
+          dynamicNumInputModUI("hz_input"),
+          dynamicSelectInputModUI("resp_age_grp"))
+}
+
+
+#' UI utility for \code{ibiVizEdit} that generates data entry fields for optional settings
+#'
+#' @export
+
+optionalSettingsEntry <- function(heading="Optional Settings:"){
+
+  tagList(tags$h2(heading),
+          dynamicNumInputModUI("peak_iter"),
+          dynamicNumInputModUI("hz_output"),
+          dynamicCheckBoxInputModUI("epoch_outputs"))
+}
+
+
+#' UI utility for \code{ibiVizEdit} that generates data entry actionButtons
+#'
+#' @export
+#'
+
+dataEntryActionButtons <- function(){
+  fluidRow(
+    column(3, dynamicClrButtonModUI("load"),
+           tags$p(LOAD_BUTTON_MESSAGE)),
+    column(3, dynamicClrButtonModUI("save_progress"),
+           tags$p(SAVE_PROG_BUTTON_MESSAGE)),
+    column(3, dynamicClrButtonModUI("save_output"),
+           tags$p(SAVE_OUT_BUTTON_MESSAGE)),
+    column(3, actionButton("hard_reset", label = "Reset Settings", style=BUTTON_COLORS["warning"]),
+           tags$p(RESET_ALL_MESSAGE))
+  )
+}
 
 #' UI utility for \code(ibiVizEdit) that adds a note about open-source nature of program and link to documentation
 #'
@@ -119,45 +155,12 @@ addMainFooter <- function(docs_link=NULL, repo_link=NULL, wiki_link=NULL){
             p(a(href=wiki_link, "Wiki Link (work in progress)")))
 }
 
-
-#' UI utility for \code{ibiVizEdit} that renders a pair of stacked plots for signal inspection
-#'
-#' @export
-
-basicDualPlots <- function(id=NULL, label=NULL, plot1_height=NULL, plot1_click=NULL, plot1_dbclick=NULL,
-                           plot1_hover=NULL, plot1_hoverDelay=NULL, plot1_hoverDelayType=NULL, plot1_brush=NULL,
-                           plot1_clickId=NULL, plot1_hoverId=NULL, plot2_height=NULL, plot2_click=NULL,
-                           plot2_dbclick=NULL, plot2_hover=NULL, plot2_hoverDelay=NULL, plot2_hoverDelayType=NULL,
-                           plot2_brush=NULL, plot2_clickId=NULL, plot2_hoverId=NULL){
-  ns<-NS(id)
-
-  tagList(tags$h4(label),
-          plotOutput(ns("main"), height=plot1_height, click=plot1_click, dblclick=plot1_dbclick, hover=plot1_hover,
-                     hoverDelay=plot1_hoverDelay, hoverDelayType=plot1_hoverDelayType, brush=plot1_brush,
-                     clickId=plot1_clickId, hoverId=plot1_hoverId),
-          plotOutput(ns("scroll_x"), height=plot2_height, click=plot2_click, dblclick=plot2_dbclick, hover=plot2_hover,
-                     hoverDelay=plot2_hoverDelay, hoverDelayType=plot2_hoverDelayType, brush=plot2_brush,
-                     clickId=plot2_clickId, hoverId=plot2_hoverId))
-}
-
-
-#' UI utility for \code{ibiVizEdit} that renders an Rshiny tableOutput object
-#'
-#' @export
-
-simpleTable <- function(id=NULL, label=NULL){
-  ns<-NS(id)
-
-  tagList(tags$h4(label),
-          tableOutput(ns("table")))
-}
-
 #' UI utility for \code{ibiVizEdit} that renders a footer for the processing panel
 #'
 #' @export
 
-addProcessingFooter <- function(label="Processing Panel Overview"){
-  tags$body(h4(label),
+addProcessingFooter <- function(heading="Processing Panel Overview"){
+  tags$body(h4(heading),
             p(str_wrap("
             The processing panel is the first stage of getting the input PPG data into a form suitable for summarizing
             the timing, frequency, and variability in an individual's cardiac activity. The panel serves two main
@@ -176,62 +179,30 @@ addProcessingFooter <- function(label="Processing Panel Overview"){
             ")))
 }
 
-
-#' UI utility for \code{ibiVizEdit} that serves as a basic wrapper and enables single actionButton generation.
+#' Utility for \code{ibiVizEdit} that defines plots for pre-processing tab
 #'
 #' @export
 
-dynamicButtonModUI <- function(id=NULL){
-  ns <- NS(id)
-  uiOutput(ns("rendered_button"))
+preProcessPlots <- function(heading="Visualize Pre-Processed PPG Data:"){
+  tagList(tags$h2(heading),
+          plotOutput("pre_process_ppg", height=500),
+          plotOutput("pre_process_scroll", height=125, brush=brushOpts("pre_process_x", direction="x")),
+          dynamicClrButtonModUI("process_ppg"))
 }
 
-
-#' Utility for \code{ibiVizEdit} that generates UI components for selection mode drag-select vs. click-and-point
+#' Utility for \code{ibiVizEdit} that defines tables for pre-processing tab
 #'
 #' @export
 
-ibiEditingMode <- function(names=c("ibi_drag_select", "ibi_click_select"), label="Point Selection Mode:"){
-  tagList(tags$h4(label),
-          dynamicButtonModUI(names[1]),
-          dynamicButtonModUI(names[2]))
+preProcessTables <- function(heading="Task Timing and Peak Detection Outputs:"){
+  tagList(tags$h2(heading),
+          tags$h4("Timing Data (if present)"),
+          tableOutput("task_times"),
+          tags$br(),
+          tags$h4("Peak Detection Optimization Settings:"),
+          tableOutput("peak_detect_tab"))
 }
 
-
-#' Utility for \code{ibiVizEdit} that generates UI components for basic IBI editing functions
-#'
-#' @export
-
-ibiEditingActions <- function(names=c("average", "combine", "divide"), heading="Base Editing Functions"){
-  tagList(tags$h4(heading),
-          dynamicButtonModUI(names[1]),
-          dynamicButtonModUI(names[2]),
-          dynamicButtonModUI(names[3]),
-          numericInput("divisor", label="Divide by:", min=1, max=6, value=2))
-}
-
-#' Utility for \code{ibiVizEdit} that generates UI components for summary text display
-#'
-#' @export
-
-summaryTextOutput <- function(id=NULL){
-
-}
-
-#' Utility for \code{ibiVizEdit} that generates UI components that govern plot display features
-#'
-#' @export
-
-
-#' Utility for \code{ibiVizEdit} that generates UI components for assigning uneditable status and restoring IBIs
-#'
-#' @export
-ibiSpecialActions <- function(names=c("uneditable", "restore"), heading="Special Actions:",
-                              button_color=BACKGROUND_COLORS["warning"]){
-  tagList(tags$h4(heading),
-          dynamicButtonModUI(names[1]),
-          actionButton(names[2], label="Restore IBI", style=button_color))
-}
 
 #' Utility for \code{ibiVizEdit} that generates UI components for PPG plot editing mode
 #'

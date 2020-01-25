@@ -1,39 +1,90 @@
 # Will need to have functionality to auto populate fields when existing data are loaded
 # Probably want a modal dialog box that says something like "Import Settings"
 
+#' Server-side utiltiy for \code{ibiVizEdit} that dynamically updates data entry options on UI, starts with defaults
+#'
+#' @export
+
+dynamicTextInputMod <- function(input, output, session, label=NULL, value=NULL){
+  output$rendered_field <- renderUI({
+    textInput("text_in", label=label, value=value)
+  })
+}
+
+#' Sever-side utility for \code{ibiVizEdit} that dynamically updates data entry options on UI, starts with defaults
+#'
+#' @export
+
+dynamicNumInputMod <- function(input, output, session, label=NULL, value=NULL){
+  output$rendered_field <- renderUI({
+    numericInput("numeric_in", label=label, value=value)
+  })
+}
+
+#' Sever-side utility for \code{ibiVizEdit} that dynamically produces an awesomeCheckboxGroup with pre-selections
+#'
+#' @export
+
+dynamicCheckBoxInputMod <- function(input, output, session, label=NULL, choices=NULL, selected=NULL, paste_char=NULL){
+  output$rendered_checkbox <- renderUI({
+    if(!is.null(paste_char)){
+      choices = paste0(choices, paste_char)
+      selected = paste0(slected, paste_char)
+    }
+    tagList(awesomeCheckboxGroup("checbox_in", label=label, choices=choices, selected=selected),
+            tags$head(tags$style(HTML("
+                                    #checkbox :after, #checkbox :before{
+                                    background-color: #426ebd;
+                                    }"))))
+
+  })
+}
+
+#' Sever-side utility for \code{ibiVizEdit} that dynamically produces a selectInput Field
+#'
+#' @export
+
+
+dynamicSelectInputMod <- function(input, output, session, label=NULL, choices=NULL, choice_index=NULL){
+  output$rendered_dropdown <- renderUI({
+    selectInput("dropdown_in", label=label, choices=names(choices), selected=names(choices)[choice_index])
+  })
+}
+
 #' Server-side utility for \code{ibiVizEdit} that dynamically switches actionButton UIs based on color
 #'
 #' @export
 
-dynamicButtonMod <- function(active=FALSE, label=NULL, input_name=NULL, active_color=BACKGROUND_COLORS["standard"],
-                             inactive_color=BACKGROUND_COLORS["inactive"], input, output, session){
-  output$rendered_button <- renderUI({
-    color_arg <- inactive_color
-    if(active) color_arg <- active_color
+dynamicClrButtonMod <- function(input, output, session, active=FALSE, label=NULL,
+                                active_color=BUTTON_COLORS["standard"],
+                                inactive_color=BUTTON_COLORS["inactive"]){
 
-    actionButton(session$ns(input_name), label=label, style=color_arg)
+  output$rendered_button <- renderUI({
+    #browser()
+    color_arg <- inactive_color
+    if(active){
+      color_arg <- active_color
+    }
+    actionButton("click_in", label=label, style=color_arg)
   })
 }
 
-#' Server-side utility for \code{ibiVizEdit} that tracks button status as a set of reactive values
+
+#' Server-side utility for \code{ibiVizEdit} that dynamically updates pre-processing PPG plot
 #'
 #' @export
 
-
-#' Server-side utility for \code{ibiVizEdit} that generates a warning if an input expected to be an integer is not
-#'
-#' @export
-
-raise_not_integer <- function(input_val=NULL, input_name=NULL, lower_bound=NULL, upper_bound=NULL){
-  if(input_val %% 1 != 0){
-    msg <- "The input value of {input_val} for {input_name} must be an integer"
-    if(!is.null(lower_bound) & !is.null(upper_bound)){
-      msg <- paste(msg, "between {lower_bound} and {upper_bound}")
-    }
-    msg <- glue(msg)
-    warning(msg)
-    return(msg)
+basic_ppg <- function(ppg_data=NULL, brush_in=NULL){
+  if(is.null(ppg_data)){
+    p <- ppg_data_check_empty_plot()
   }
+  else{
+    p <- generate_ppg_data_check_plot(ppg_data=ppg_data)
+    if(!is.null(brush_in)){
+      p <- p + coord_cartesian(xlim=c(brush_in$xmin, brush_in$xmax))
+    }
+  }
+  return(p)
 }
 
 

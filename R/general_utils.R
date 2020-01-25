@@ -55,7 +55,7 @@ set_file_size_max <- function(size = 500){
 #'
 #' @export
 
-ini_global_reactive_values <- function(){
+ibi_global_reactive_values <- function(){
   rv_start <- reactiveValues(tot_edits=data.frame(), base_on=0, adv_on=0, ppg_on=0, select_on=0, add_delete_on=0,
                              select_on2=0, add_delete_on2=0, start_time=NULL, GP_impute_tab=NULL, IBI_temp=NULL)
   return(rv_start)
@@ -173,3 +173,19 @@ create_and_return_gp_output_subdir <- function(out_dir, gp_driver){
   return(gp_subdir)
 }
 
+
+#' Internal \code{ibiVizEdit} utility that generates a warning if an input expected to be an integer is not
+#'
+#' @export
+
+raise_not_integer <- function(input_val=NULL, input_name=NULL, lower_bound=NULL, upper_bound=NULL){
+  if(input_val %% 1 != 0){
+    msg <- "The input value of {input_val} for {input_name} must be an integer"
+    if(!is.null(lower_bound) & !is.null(upper_bound)){
+      msg <- paste(msg, "between {lower_bound} and {upper_bound}")
+    }
+    msg <- glue(msg)
+    warning(msg)
+    return(msg)
+  }
+}
