@@ -69,6 +69,26 @@ dynamicClrButtonMod <- function(input, output, session, active=FALSE, label=NULL
   })
 }
 
+#' Server-side utility for \code{ibiVizEdit} that dynamically switches actionButton UIs and Text Labels
+#'
+#' @export
+
+dynamicClrTxtButtonMod <- function(input, output, session, active=FALSE, default_display=TRUE, default_text=NULL,
+                                   updated_text=NULL, inactive_color=BUTTON_COLORS["inactive"],
+                                   default_color=BUTTON_COLORS["standard"], updated_color=BUTTON_COLORS["warning"]){
+  output$rendered_button <- renderUI({
+    color_arg <- inactive_color
+    label_arg <- default_text
+    if(active){
+      color_arg <- default_color
+      if(!default_display){
+        color_arg <- updated_color
+        label_arg <- updated_text
+      }
+    }
+    actionButton("click_in", label=label_arg, style=color_arg)
+  })
+}
 
 #' Server-side utility for \code{ibiVizEdit} that dynamically updates pre-processing PPG plot
 #'
@@ -113,17 +133,19 @@ ibi_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
 #'
 #' @export
 
-headUpInfo <- function(input, output, session){
-  req(EDIT_DATA[["edited_IBI"]], SUMMARY_STATS[[c("mean_HR", "mean_R")]])
+headsUpInfo <- function(input, output, session){
 
   temp_point <- reactive({
-    nearPoints(EDIT_DATA[["edited_IBI"]][c("IBI", "Time")], coordinfo=input$hover_main, maxpoints=1)
+    req(DYNAMIC_DATA[["edited_IBI"]], SUMMARY_STATS[[c("mean_HR", "mean_R")]])
+    nearPoints(DYNAMIC_DATA[["edited_IBI"]][c("IBI", "Time")], coordinfo=input$hover_main, maxpoints=1)
   })
 
   output$heads_up <- renderPrint({
     cat("Average HR & Resp:\n")
     cat("HR BPM:", "\t\t\t", round(SUMMARY_STATS[["mean_HR"]], 2))
     cat("Resp per min:", "\t", round(SUMMARY_STATS[["mean_R"]], 2))
+    cat("Total IBIs:", "\t\t", nrow(DYNAMIC_DATA[["edited_ibi"]]))
+    cat("Edited IBIs:", "\t", paste0(round(SUMMARY_STATS[["tot_edits"]]/nrow(DYNAMIC_DATA[["edited_ibi"]]), 2), "%"))
     cat("\nNear Point:\n")
     temp_point()
   })

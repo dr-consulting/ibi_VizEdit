@@ -115,7 +115,7 @@ add_ppg_waveform <- function(base_plot=NULL, ppg_data=NULL, show_ppg=FALSE, time
 #'
 #' @export
 
-highlight_ibis <-function(base_plot=NULL, selected_points=NULL, time_col="Time", ibi_col="IBI"){
+highlight_ibis <- function(base_plot=NULL, selected_points=NULL, time_col="Time", ibi_col="IBI"){
   if(!is.null(selected_points)){
     p <- base_plot +
       geom_point(data=selected_points,

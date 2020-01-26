@@ -20,10 +20,21 @@ dynamicNumInputModUI <- function(id=NULL){
 #'
 #' @export
 
-dynamicClrButtonModUI <- function(id=NULL){
+dynamicClrButtonModUI <- function(id=NULL, inline=FALSE){
   ns <- NS(id)
-  uiOutput(ns("rendered_button"))
+  uiOutput(ns("rendered_button"), inline=inline)
 }
+
+
+#' UI utility for \code{ibiVizEdit} that serves as a basic wrapper and enables single actionButton generation.
+#'
+#' @export
+
+dynamicClrTxtButtonModUI <- function(id=NULL, inline=FALSE){
+  ns <- NS(id)
+  uiOutput(ns("rendered_button"), inline=inline)
+}
+
 
 #' UI utility for \code{ibiVizEdit} that serves as a basic wrapper and enables dynamic updating of checkbox UI
 #'
@@ -204,10 +215,42 @@ preProcessTables <- function(heading="Task Timing and Peak Detection Outputs:"){
 }
 
 
-#' Utility for \code{ibiVizEdit} that generates UI components for PPG plot editing mode
+#' Utility for \code{ibiVizEdit} that gemerates UI settings components for ibi editing panel
 #'
 #' @export
 
+ibiEditingTools <- function(){
+  tagList(tags$h4("Heads Up Display:"),
+          verbatimTextOutput("heads_up"),
+          tags$hr(),
+          tags$h4("Plot Settings"),
+          sliderInput("y_axis_range", label="Set y-axis min/max:", min=-5, max=5, value=c(0, 2), step=.25),
+          fluidRow(
+            dynamicClrButtonModUI("set_y_axis", inline=TRUE),
+            dynamicClrButtonModUI("show_ppg", inline=TRUE)
+          ),
+          tags$hr(),
+          tags$h4("Editing Mode:"),
+          fluidRow(
+            dynamicClrButtonModUI("ibi_drag_select", inline=TRUE),
+            dynamicClrButtonModUI("ibi_click_select", inline=TRUE)
+          ),
+          tags$hr(),
+          tags$h4("Editing Actions:"),
+          fluidRow(
+            dynamicClrButtonModUI("average", inline=TRUE),
+            dynamicClrButtonModUI("combine", inline=TRUE),
+            dynamicClrButtonModUI("divide", inline=TRUE)
+          ),
+          numericInput("denom", label="Divide by:", min=2, max=6, value=2),
+          tags$hr(),
+          tags$h4("Special Functions:"),
+          fluidRow(
+            actionButton("uneditable", label="Unetibale", icon=icon("exclamation-triangle")),
+            actionButton("undo", label="Restore IBIs", icon=icon("undo")),
+            actionButton("snapshot", label="Take Screenshot", icon=icon("camera"))
+          ))
+}
 
 #' Utility for \code{ibiVizEdit} that generates UI for basic interporlation and imputation methods
 #'

@@ -67,6 +67,19 @@ server <- function(input, output, session){
   # --------------------------------------------------------------------------------------------------------------------
   # IBI Editing Tab
   # --------------------------------------------------------------------------------------------------------------------
+  callModule(headsUpInfo, "heads_up")
+  callModule(dynamicClrButtonMod, "set_y_axis", active=as.logical(BUTTON_STATUS[["set_y_axis"]]), label="Set y-axis")
+  callModule(dynamicClrTxtButtonMod, "show_ppg", active=as.logical(BUTTON_STATUS[["show_ppg"]]),
+             default_display=BUTTON_STATUS[["show_ppg_default"]], default_text="Show PPG", updated_text="Remove PPG")
+  callModule(dynamicClrButtonMod, "ibi_drag_select", active=as.logical(BUTTON_STATUS[["ibi_drag_select"]]),
+             label="Select Mode")
+  callModule(dynamicClrButtonMod, "ibi_click_select", active=as.logical(BUTTON_STATUS[["ibi_click_select"]]),
+             label="Click Mode")
+  callModule(dynamicClrButtonMod, "average", active=as.logical(BUTTON_STATUS[["average"]]), label="Average")
+  callModule(dynamicClrButtonMod, "combine", active=as.logical(BUTTON_STATUS[["combine"]]), label="Combine")
+  callModule(dynamicClrButtonMod, "divide", active=as.logical(BUTTON_STATUS[["divide"]]), label="Divide")
+
+
 
   # Creating dynamic, updating values for check box...
 

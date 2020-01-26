@@ -79,13 +79,15 @@ BUTTON_STATUS <- reactiveValues(
   save_progress=0,
   save_output=0,
   process_ppg=0,
+  set_y_axis=0,
   show_ppg=0,
+  show_ppg_default=1,
   ibi_drag_select=0,
-  ibi_click_select=1,
-  average=1,
-  combine=1,
-  divide=1,
-  uneditable=1
+  ibi_click_select=0,
+  average=0,
+  combine=0,
+  divide=0,
+  uneditable=0
 )
 
 SUMMARY_STATS <- reactiveValues(
@@ -106,8 +108,8 @@ STATIC_DATA <- reactiveValues(
 )
 
 DYNAMIC_DATA <- reactiveValues(
-  edited_PPG=NULL,
-  edited_IBI=NULL,
+  edited_ppg=NULL,
+  edited_ibi=NULL,
   selected_points=NULL
 )
 
