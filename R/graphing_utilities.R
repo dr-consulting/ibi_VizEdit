@@ -50,12 +50,13 @@ generate_ppg_data_check_plot <- function(ppg_data = NULL, ppg_col='PPG', time_co
 #'@export
 #'
 
-generate_base_gui_plot <- function(ibi_data=NULL, ibi_col="IBI", time_col='Time'){
+generate_base_gui_plot <- function(ibi_data=NULL, color_map=NULL, ibi_col="IBI", time_col='Time'){
   p <- ggplot(data=ibi_data,
-              aes_string(x=Time, y=IBI))+
-      geom_point(color="red")+
-      geom_line(color="black")+
-      labs(x="Time (s)", y="IBI (s)")
+              aes_string(x=Time, y=IBI)) +
+    geom_point(aes(color=pnt_type)) +
+    geom_line(color="black") +
+    scale_color_manual(values=color_map)
+    labs(x="Time (s)", y="IBI (s)")
   return(p)
 }
 
@@ -83,5 +84,48 @@ add_task_v_lines <- function(base_plot=NULL, timing_data=NULL, time_col='Time', 
                             color=task_col),
                  show.legend = FALSE)
     return(p)
+  }
+  else{
+    return(base_plot)
+  }
+}
+
+
+#' Internal \code{ibiVizEdit} utility that adds PPG to plot
+#'
+#' @export
+
+add_ppg_waveform <- function(base_plot=NULL, ppg_data=NULL, show_ppg=FALSE, time_col="Time", ppg_col="PPG"){
+  if(show_ppg & !is.null(ppg_data)){
+    p <- base_plot +
+      geom_line(data=ppg_data,
+                aes_string(x=time_col,
+                           y=ppg_col),
+                inherit.aes=FALSE,
+                alpha=.75,
+                color="grey")
+    return(p)
+  }
+  else{
+    return(base_plot)
+  }
+}
+
+#' Internal \code{ibiVizEdit} utility that enables dynamic color selection based on selected points
+#'
+#' @export
+
+highlight_ibis <-function(base_plot=NULL, selected_points=NULL, time_col="Time", ibi_col="IBI"){
+  if(!is.null(selected_points)){
+    p <- base_plot +
+      geom_point(data=selected_points,
+                 aes_string(x=time_col,
+                            y=ibi_col),
+                 inherit.aes=FALSE,
+                 color="#8fff00")
+    return(p)
+  }
+  else{
+    return(base_plot)
   }
 }

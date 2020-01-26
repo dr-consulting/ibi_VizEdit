@@ -88,6 +88,27 @@ basic_ppg <- function(ppg_data=NULL, brush_in=NULL){
 }
 
 
+#' Server-side utility for \code{ibiVizEdit} that dynamically updates full IBI + PPG combo plots
+#'
+#' @export
+
+ibi_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NULL){
+  if(is.null(ibi_data)){
+    p <- ppg_data_check_empty_plot()
+  }
+  else{
+    p <- generate_base_gui_plot(ibi_data=ibi_data, color_map=IBI_POINT_COLORS)
+    if(!is.null(brush_in)){
+      p <- p + coord_cartesian(xlim=c(brush_in$xmin, brush_in$xmax))
+    }
+    p <- add_task_v_lines(base_plot=p, timing_data=STATIC_DATA[["task_times"]])
+    p <- add_ppg_waveform(base_plot=p, ppg_data=STATIC_DATA[["ppg100"]],
+                          show_ppg=as.logical(BUTTON_STATUS[["show_ppg"]]))
+    p <- highlight_ibis(base_plot=p, selected_points=DYNAMIC_DATA[["selected_points"]])
+  }
+  return(p)
+}
+
 #' Server-side utility for \code{ibiVizEdit} that updates summary stats displayed in text window
 #'
 #' @export

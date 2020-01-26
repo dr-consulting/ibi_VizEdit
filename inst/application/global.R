@@ -22,6 +22,10 @@ AVERAGE_RESPIRATION_BY_AGE <- list(`Young Infant (<1 yr)`=c(30,60),
 
 EPOCH_CHOICES <- c(10, 15, 20, 30, 45)
 EPOCH_SELECTED <- c(10, 15, 20, 30, 45)
+IBI_POINT_COLORS <- c("edited"="#7d3c98",
+                      "original"="#426ebd",
+                      "uneditable"="#c0392b")
+
 # Global variables to be used on both UI and Server Side
 
 COLUMN_DEFAULT <- 1
@@ -75,6 +79,7 @@ BUTTON_STATUS <- reactiveValues(
   save_progress=0,
   save_output=0,
   process_ppg=0,
+  show_ppg=0,
   ibi_drag_select=0,
   ibi_click_select=1,
   average=1,
@@ -94,13 +99,15 @@ STATIC_DATA <- reactiveValues(
   edit_Hz=NULL,
   orig_ppg=NULL,
   processed_ppg=NULL,
+  ppg100=NULL,
   orig_ibi=NULL,
   task_times=NULL,
   peak_detect_tab=NULL
 )
 
-SIGNAL_DATA <- reactiveValues(
+DYNAMIC_DATA <- reactiveValues(
   edited_PPG=NULL,
-  edited_IBI=NULL
+  edited_IBI=NULL,
+  selected_points=NULL
 )
 
