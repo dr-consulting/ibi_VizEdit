@@ -170,7 +170,7 @@ addMainFooter <- function(docs_link=NULL, repo_link=NULL, wiki_link=NULL){
 #'
 #' @export
 
-addProcessingFooter <- function(heading="Processing Panel Overview"){
+addProcessingFooter <- function(heading="Processing Tab Overview"){
   tags$body(h4(heading),
             p(str_wrap("
             The processing panel is the first stage of getting the input PPG data into a form suitable for summarizing
@@ -215,7 +215,7 @@ preProcessTables <- function(heading="Task Timing and Peak Detection Outputs:"){
 }
 
 
-#' Utility for \code{ibiVizEdit} that gemerates UI settings components for ibi editing panel
+#' Utility for \code{ibiVizEdit} that gemerates UI components for ibi editing tab tools
 #'
 #' @export
 
@@ -224,9 +224,9 @@ ibiEditingTools <- function(){
           verbatimTextOutput("heads_up"),
           tags$hr(),
           tags$h4("Plot Settings"),
-          sliderInput("y_axis_range", label="Set y-axis min/max:", min=-5, max=5, value=c(0, 2), step=.25),
+          sliderInput("ibi_y_axis", label="Set y-axis min/max:", min=-5, max=5, value=c(0, 2), step=.25),
           fluidRow(
-            dynamicClrButtonModUI("set_y_axis", inline=TRUE),
+            dynamicClrButtonModUI("set_ibi_y_axis", inline=TRUE),
             dynamicClrButtonModUI("show_ppg", inline=TRUE)
           ),
           tags$hr(),
@@ -247,21 +247,122 @@ ibiEditingTools <- function(){
           tags$h4("Special Functions:"),
           fluidRow(
             actionButton("uneditable", label="Unetibale", icon=icon("exclamation-triangle")),
-            actionButton("undo", label="Restore IBIs", icon=icon("undo")),
-            actionButton("snapshot", label="Take Screenshot", icon=icon("camera"))
+            actionButton("undo_ibi", label="Restore IBIs", icon=icon("undo")),
+            actionButton("snapshot_ibi", label="Take Screenshot", icon=icon("camera"))
           ))
 }
 
-#' Utility for \code{ibiVizEdit} that generates UI for basic interporlation and imputation methods
+
+#' Utility for \code{ibiVizEdit} that generates main editing plots for IBI tab
 #'
 #' @export
 
+ibiEditingPlots <- function(){
+  tagList(plotOutput("ibi_main_plot", height=600, brush=brushOpts("select_ibis", direction="x"),
+                     hover=hoverOpts("hover_ibi", delay=250), click="click_ibis", dblclick="clear_ibis"),
+          plotOutput("ibi_main_scroll", height=125, brush=brushOpts("editing_scroll_x", direction="x")))
+}
 
-#' Utility for \code{ibiVizEdit} that generates UI components for GP Bayesian imputation model parameters
+
+#' Utility for \code{ibiVizEdit} that generates footer note at the bottom of the IBI tab
 #'
 #' @export
 
+addIbiFooter <- function(heading="IBI Tab Overview"){
+  tags$body(h4(heading),
+            p(str_wrap("
+            The IBI Editing Tab is the primary interface for you to make adjustments to the interbeat intervals
+            returned by the peak detection algorithm. To briefly review each component, the Heads Up Display provides
+            summary information about the current editing session and the participants' cardiac activity. You can also
+            view specific IBI values by hovering over points in the top window. In the Plot Settings section, you can
+            adjust the y-axis to ensure that you edits are made under consistent conditions. You can also choose to
+            view a downsampled version of the PPG signal to inform your editing decisions. For Editing Mode, you can
+            choose 'Select Mode', in which you target points to edit by clicking and opening selection boxes, or 'Click
+            Mode', in which you target points by clicking on them. You can de-select points by double-clicking or
+            performing an Editing Action. Editing Actions include Average, Combine, and Divide. Consult the manual and
+            Wiki for examples of each. Lastly, you have available a set of special functions, that include marking a
+            section of IBIs as 'Uneditable', choosing to 'Restore IBIs' in a portion of the file, or using the 'Take
+            Screenshot' button to save an image to file of the current plot window. This latter function was included
+            to make it easier to circulate tough editing decisions with colleagues and come to a collective decision.
+            ")))
+}
 
-#' Utility for \code{ibiVizEdit} that generates UI components for GP Maximum Likelihood imputation model settings
+
+#' Utility for \code{ibiVizEdit} that generates UI components for ibi editing tab tools
 #'
 #' @export
+
+ppgEditingTools <- function(){
+  tagList(tags$h4("Plot Settings"),
+          sliderInput("ppg_y_axis", label="Set y-axis min/max:", min=-5, max=5, value=c(0, 2), step=.25),
+          fluidRow(
+            dynamicClrButtonModUI("set_y_axis")
+            ),
+          tags$hr(),
+          tags$h4("Editing Mode:"),
+          fluidRow(
+            dynamicClrButtonModUI("ppg_edit_mode", inline=TRUE),
+            dynamicClrButtonModUI("ppg_imp_mode", inline=TRUE)
+            ),
+          tags$hr(),
+          tags$h4("Editing Actions:"),
+          fluidRow(
+            dynamicClrButtonModUI("insert", inline=TRUE),
+            dynamicClrButtonModUI("remove", inline=TRUE)
+          ),
+          tags$hr(),
+          tags$h4("Imuputation Input Data Tools:"),
+          fluidRow(
+            dynamicClrButtonModUI("erase_ppg", inline=TRUE),
+            dynamicClrButtonModUI("set_impute_window", inline=TRUE),
+            dynamicClrButtonModUI("set_valid_ibis", inline=TRUE)
+          ),
+          tags$hr(),
+          tags$h4("Imputation Model Settings:"),
+          numericInput("n_iter", label="Total Iterations:", min=1500, max=10000, value=3000),
+          numericInput("n_warmup", label="Warmup Iterations:", min=1000, max=9750, value=2500),
+          numericInput("adapt_delta", label="Stan `adapt_delta`:", min=.80, max=.999, value=.95),
+          tags$p("Consult documentation for use"),
+          dynamicClrButtonModUI("gp_impute"),
+          tags$hr(),
+          fluidRow(
+            actionButton("undo_ppg", label="Restore PPG", icon=icon("undo")),
+            actionButton("snapshot_ppg", label="Take Screenshot", icon=icon("camera"))
+            )
+          )
+}
+
+
+#' Utility for \code{ibiVizEdit} that generates main editing plots for PPG tab
+#'
+#' @export
+
+ppgEditingPlots <- function(){
+  tagList(plotOutput("ppg_main_plot", height=600, brush=brushOpts("select_ppg", direction="x"), click="click_ppg",
+                     dblclick="dbclick_ppg"),
+          plotOutput("ppg_main_scroll", height=125, brush=brushOpts("editing_scroll_x", direction="x")))
+}
+
+
+#' Utility for \code{ibiVizEdit} that generates footer note at the bottom of the PPG tab
+#'
+#' @export
+
+addPpgFooter <- function(heading="PPG Tab Overview"){
+  tags$body(h4(heading),
+            p(str_wrap("
+            The PPG editing enables two main editing functions. The first is that you can engage 'Insert/Remove' mode
+            and manually add in valid IBIs using the PPG waveform as a guide. Simply click as near as possible to a peak
+            to add an IBI at that point or double-click on an IBI value present in the series to remove it. The second,
+            more advanced tool you can use on this tab is the built-in Gaussian Process imputation model. This tool is
+            still in development, so you are advised to use it at your own risk. There are three main steps to using
+            the tool currently. First, you need to select the window you want to impute. Then you need to cleanup the
+            surrounding signal, using PPG erase to remove any section highlighted in green that does not include
+            reliable/valid PPG signal (i.e., any portion that is contaminate by artifacts). Finally, you will have to
+            (de-)select all IBIs using a single left-click that fall within the green section you believe are valid. By
+            default, `ibiVizEdit`` will select all IBIs within the imputation input range. Once you have finished with
+            these steps, you can tweak the imputation model settings (see documentation for more details) and hit 'Run
+            Bayesian GPM'. Then kick-back, relax, and wait for the model to run (can range from minutes to hours - as a
+            general rule of thumb try not to impute sections longer than 12 seconds).
+            ")))
+}

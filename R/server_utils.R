@@ -137,7 +137,7 @@ headsUpInfo <- function(input, output, session){
 
   temp_point <- reactive({
     req(DYNAMIC_DATA[["edited_IBI"]], SUMMARY_STATS[[c("mean_HR", "mean_R")]])
-    nearPoints(DYNAMIC_DATA[["edited_IBI"]][c("IBI", "Time")], coordinfo=input$hover_main, maxpoints=1)
+    nearPoints(DYNAMIC_DATA[["edited_IBI"]][c("IBI", "Time")], coordinfo=input$hover_ibi, maxpoints=1)
   })
 
   output$heads_up <- renderPrint({
@@ -151,7 +151,24 @@ headsUpInfo <- function(input, output, session){
   })
 }
 
-#' Sever-side utility for \code{ibiVizEdit} that generates a warning when using a function when precondition(s) not met
+
+#' Server-side utility for \code{ibiVizEdit} that defines main PPG plot for GUI editing
 #'
-#' Goal should be to make this as general as possible. Specifically thought of a situation when trying to use the
-#' "Restore IBI" but but being on click-select instead of drag-select mode
+#' @export
+
+ppg_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NULL){
+  if(is.null(ibi_data)){
+    p <- ppg_data_check_empty_plot()
+  }
+  else{
+    p <- generate_base_gui_plot(ibi_data=ibi_data, color_map=IBI_POINT_COLORS)
+    if(!is.null(brush_in)){
+      p <- p + coord_cartesian(xlim=c(brush_in$xmin, brush_in$xmax))
+    }
+    p <- add_task_v_lines(base_plot=p, timing_data=STATIC_DATA[["task_times"]])
+    p <- add_ppg_waveform(base_plot=p, ppg_data=DYNAMIC_DATA[["edited_ppg"]],
+                          show_ppg=TRUE)
+    p <- highlight_ibis(base_plot=p, selected_points=DYNAMIC_DATA[["selected_points"]])
+  }
+  return(p)
+}

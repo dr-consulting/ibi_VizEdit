@@ -79,7 +79,7 @@ BUTTON_STATUS <- reactiveValues(
   save_progress=0,
   save_output=0,
   process_ppg=0,
-  set_y_axis=0,
+  set_ibi_y_axis=0,
   show_ppg=0,
   show_ppg_default=1,
   ibi_drag_select=0,
@@ -87,7 +87,16 @@ BUTTON_STATUS <- reactiveValues(
   average=0,
   combine=0,
   divide=0,
-  uneditable=0
+  uneditable=0,
+  set_ppg_y_axis=0,
+  ppg_edit_mode=0,
+  ppg_imp_mode=0,
+  insert=0,
+  remove=0,
+  erase_ppg=0,
+  set_impute_window=0,
+  set_valid_ibis=0,
+  gp_impute=0
 )
 
 SUMMARY_STATS <- reactiveValues(

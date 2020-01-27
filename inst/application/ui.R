@@ -25,9 +25,18 @@ fluidPage(theme=shinytheme("cosmo"),
                       tabPanel(title="IBI Editing Tab",
                                wellPanel(fluidRow(
                                  column(3, ibiEditingTools()),
-                                 column(9, )))),
+                                 column(9, ibiEditingPlots())
+                                 )),
+                               fluidRow(
+                                 column(3, addLogo(WIDE_LOGO)),
+                                 column(9, addIbiFooter()))
+                               ),
                       tabPanel(title="PPG Editing Tab",
                                wellPanel(fluidRow(
-                                 column(3, ),
-                                 column(9, ))))
+                                 column(3, ppgEditingTools()),
+                                 column(9, ppgEditingPlots())
+                                 )),
+                               fluidRow(
+                                 column(3, addLogo(WIDE_LOGO)),
+                                 column(9, addPpgFooter())))
                       ))

@@ -100,7 +100,8 @@ add_ppg_waveform <- function(base_plot=NULL, ppg_data=NULL, show_ppg=FALSE, time
     p <- base_plot +
       geom_line(data=ppg_data,
                 aes_string(x=time_col,
-                           y=ppg_col),
+                           y=ppg_col,
+                           color="pnt_type"),
                 inherit.aes=FALSE,
                 alpha=.75,
                 color="grey")

@@ -53,7 +53,7 @@ server <- function(input, output, session){
   })
 
   output$pre_process_scroll <- renderPlot({
-    basic_ppg(ppg_data=STATIC_DATA[["orig_ppg"]])
+    basic_ppg(ppg_data=STATIC_DATA[["ppg100"]])
   })
 
   output$task_times <- renderTable({
@@ -68,7 +68,8 @@ server <- function(input, output, session){
   # IBI Editing Tab
   # --------------------------------------------------------------------------------------------------------------------
   callModule(headsUpInfo, "heads_up")
-  callModule(dynamicClrButtonMod, "set_y_axis", active=as.logical(BUTTON_STATUS[["set_y_axis"]]), label="Set y-axis")
+  callModule(dynamicClrButtonMod, "ibi_y_axis", active=as.logical(BUTTON_STATUS[["set_ibi_y_axis"]]),
+             label="Set y-axis")
   callModule(dynamicClrTxtButtonMod, "show_ppg", active=as.logical(BUTTON_STATUS[["show_ppg"]]),
              default_display=BUTTON_STATUS[["show_ppg_default"]], default_text="Show PPG", updated_text="Remove PPG")
   callModule(dynamicClrButtonMod, "ibi_drag_select", active=as.logical(BUTTON_STATUS[["ibi_drag_select"]]),
@@ -79,33 +80,42 @@ server <- function(input, output, session){
   callModule(dynamicClrButtonMod, "combine", active=as.logical(BUTTON_STATUS[["combine"]]), label="Combine")
   callModule(dynamicClrButtonMod, "divide", active=as.logical(BUTTON_STATUS[["divide"]]), label="Divide")
 
+  output$ibi_main_plot <- renderPlot({
+    ibi_editing_plot(brush_in=input$editing_scroll_x)
+  })
 
+  output$ibi_main_scroll <- renderPlot({
+    basic_ppg(ppg_data=STATIC_DATA[["ppg100"]])
+  })
 
-  # Creating dynamic, updating values for check box...
+  # --------------------------------------------------------------------------------------------------------------------
+  # PPG Editing Tab
+  # --------------------------------------------------------------------------------------------------------------------
+  callModule(dynamicClrButtonMod, "ppg_y_axis", active=as.logical(BUTTON_STATUS[["set_ppg_y_axis"]]),
+             label="Set y-axis")
+  callModule(dynamicClrButtonMod, "ppg_edit_mode", active=as.logical(BUTTON_STATUS[["ppg_edit_mode"]]),
+             label="Insert/Remove")
+  callModule(dynamicClrButtonMod, "ppg_imp_mode", active=as.logical(BUTTON_STATUS[["ppg_imp_mode"]]),
+             label="Imputation Mode")
+  callModule(dynamicClrButtonMod, "insert", active=as.logical(BUTTON_STATUS[["insert"]]),
+             label="Insert")
+  callModule(dynamicClrButtonMod, "remove", active=as.logical(BUTTON_STATUS[["remove"]]),
+             label="Remove")
+  callModule(dynamicClrButtonMod, "erase_ppg", active=as.logical(BUTTON_STATUS[["erase_ppg"]]),
+             label="Erase PPG")
+  callModule(dynamicClrButtonMod, "set_impute_window", active=as.logical(BUTTON_STATUS[["set_impute_window"]]),
+             label="Lock Window")
+  callModule(dynamicClrButtonMod, "set_valid_ibis", active=as.logical(BUTTON_STATUS[["set_valid_ibis"]]),
+             label="Lock IBIs")
+  callModule(dynamicClrButtonMod, "gp_impute", active=as.logical(BUTTON_STATUS[["gp_impute"]]),
+             label="Run Bayesian GPM")
 
+  output$ppg_main_plot <- renderPlot({
+    ppg_editing_plot(brush_in=input$editing_scroll_x)
+  })
 
-  # Dynamically Modified Action Button Settings:
-#  callModule(dynamicButtonMod, "process_ppg", active=as.logical(BUTTON_STATUS[["process_ppg"]]), label="Process PPG",
-#             input_name="process_ppg")
-
-#  callModule(dynamicButtonMod, "ibi_drag_select", active=as.logical(BUTTON_STATUS[["ibi_drag_select"]]),
-#             label="Drag Select", input_name="ibi_drag_select")
-
-#  callModule(dynamicButtonMod, "ibi_click_select", active=as.logical(BUTTON_STATUS[["ibi_click_select"]]),
-#             label="Click Select", input_name="ibi_click_select")
-
-#  callModule(dynamicButtonMod, "average", active=as.logical(BUTTON_STATUS[["average"]]), label="Average",
-#             input_name="average")
-
-#  callModule(dynamicButtonMod, "combine", active=as.logical(BUTTON_STATUS[["combine"]]), label="Combine",
-#             input_name="combine")
-
-#  callModule(dynamicButtonMod, "divide", active=as.logical(BUTTON_STATUS[["divide"]]), label="Divide",
-#             input_name="divde")
-
-#  callModule(dynamicButtonMod, "uneditable", active=as.logical(BUTTON_STATUS[["uneditable"]]), label="Uneditable",
-#             input_name="uneditable")
-
-#  callModule(headUpInfo, "ibi_plots")
+  output$ppg_main_scroll <- renderPlot({
+    basic_ppg(ppg_data=STATIC_DATA[["ppg100"]])
+  })
 
 }
