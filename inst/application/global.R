@@ -45,6 +45,9 @@ BUTTON_COLORS <- c(standard="background-color: #426ebd; border-color: #000000; c
                    inactive="background-color: #a0a9c3; border-color: #000000; color: #FFFFFF;",
                    warning="background-color: #c0392b; border-color: #000000; color: #FFFFFF;")
 
+
+EDIT_BUTTON_CLICKS <- c(a=65, c=67, d=68)
+
 # Server-side reactive variables and data_sets
 PROCESSING_SETTINGS <- reactiveValues(
   column_select=1,

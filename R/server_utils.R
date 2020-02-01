@@ -55,8 +55,8 @@ dynamicSelectInputMod <- function(input, output, session, label=NULL, choices=NU
 #'
 #' @export
 
-dynamicClrButtonMod <- function(input, output, session, active=FALSE, label=NULL,
-                                active_color=BUTTON_COLORS["standard"],
+dynamicClrButtonMod <- function(input, output, session, active=FALSE, label=NULL, hotkey=NULL, hotkey_map=NULL,
+                                button_name="click_in", active_color=BUTTON_COLORS["standard"],
                                 inactive_color=BUTTON_COLORS["inactive"]){
 
   output$rendered_button <- renderUI({
@@ -65,9 +65,15 @@ dynamicClrButtonMod <- function(input, output, session, active=FALSE, label=NULL
     if(active){
       color_arg <- active_color
     }
-    actionButton("click_in", label=label, style=color_arg)
+
+    if(!is.null(hotkey) & !is.null(hotkey_map)){
+      tags$script(HTML(track_hotkey_presses(key=hotkey, key_map=hotkey_map, button_name=button_name)))
+    }
+
+    actionButton(button_name, label=label, style=color_arg)
   })
 }
+
 
 #' Server-side utility for \code{ibiVizEdit} that dynamically switches actionButton UIs and Text Labels
 #'

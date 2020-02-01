@@ -1,4 +1,4 @@
-library(shiny)
+library(glue)
 
 #' Internal utility to enable hotkey functionality during an editing session
 #'
@@ -7,26 +7,23 @@ library(shiny)
 #' and here:
 #' https://stackoverflow.com/questions/44500617/r-shiny-key-and-actionbutton-binding-to-reactive-values
 #'
+#' @export
 
-track_hotkey_presses <- function(){
+track_hotkey_presses <- function(key=NULL, key_map=NULL, button_name=NULL){
   # look-up codes here: http://keycode.info/
-  # a = average, c = combine, d = divide, i = insert, r = remove
+  # a = average, c = combine, d = divide, r = remove
+  js_button_code <- key_map[[key]]
   js_code <- "
-  $(function(){
-    $(document).keydown(function(e){
-      if (e.keyCode == 65){
-        $('#average').click();
-      } else if (e.keyCode == 67){
-        $('#combine').click();
-      } else if (e.keyCode == 68){
-        $('#divide').click();
-      } else if (e.keyCode == 73){
-        $('#insert').click();
-      } else if (e.keyCode == 82){
-        $('#remove').click();
-      }
-    });
-  })
+  $(function(){{
+    $(document).keydown(function(e){{
+      if (e.keyCode == {js_button_code}){{
+        $('#{button_name}').click();
+      }}
+    }});
+  }})
   "
-  return(js_code)
+
+  out_js_code <- glue(js_code)
+
+  return(out_js_code)
 }

@@ -76,9 +76,12 @@ server <- function(input, output, session){
              label="Select Mode")
   callModule(dynamicClrButtonMod, "ibi_click_select", active=as.logical(BUTTON_STATUS[["ibi_click_select"]]),
              label="Click Mode")
-  callModule(dynamicClrButtonMod, "average", active=as.logical(BUTTON_STATUS[["average"]]), label="Average")
-  callModule(dynamicClrButtonMod, "combine", active=as.logical(BUTTON_STATUS[["combine"]]), label="Combine")
-  callModule(dynamicClrButtonMod, "divide", active=as.logical(BUTTON_STATUS[["divide"]]), label="Divide")
+  callModule(dynamicClrButtonMod, "average", active=as.logical(BUTTON_STATUS[["average"]]), label="Average", hotkey="a",
+             hotkey_map=EDIT_BUTTON_CLICKS)
+  callModule(dynamicClrButtonMod, "combine", active=as.logical(BUTTON_STATUS[["combine"]]), label="Combine", hotkey="c",
+             hotkey_map=EDIT_BUTTON_CLICKS)
+  callModule(dynamicClrButtonMod, "divide", active=as.logical(BUTTON_STATUS[["divide"]]), label="Divide", hotkey="d",
+             hotkey_map=EDIT_BUTTON_CLICKS)
 
   output$ibi_main_plot <- renderPlot({
     ibi_editing_plot(brush_in=input$editing_scroll_x)
