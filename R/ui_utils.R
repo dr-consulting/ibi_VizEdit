@@ -95,10 +95,10 @@ fileButtons <- function(button_color=BUTTON_COLORS['standard'], heading="Select 
 
 idNameFields <- function(heading="File ID and Information:"){
   tagList(tags$h2(heading),
-          dynamicTextInputModUI("sub_id"),
-          dynamicTextInputModUI("secondary_id"),
-          dynamicTextInputModUI("optional_id"),
-          dynamicTextInputModUI("editor"))
+          textInput("sub_id", "Subject ID:"),
+          textInput("secondary_id", "Time/Task ID:"),
+          textInput("optional_id", "(Optional) Study ID:"),
+          textInput("editor", "Editor Name:"))
 }
 
 

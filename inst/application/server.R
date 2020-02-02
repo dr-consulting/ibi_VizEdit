@@ -26,17 +26,18 @@ server <- function(input, output, session){
   output$timing_file <-generate_path_messages(default_text="Please select a timing file (optional)",
                                               msg_part1="Timing File:", obj_name="timing_file")
 
-  #
   # --------------------------------------------------------------------------------------------------------------------
   # Button status reactivity
   # --------------------------------------------------------------------------------------------------------------------
-
+  # Track text-field entry
+  track_data_text_entry(input)
+  turn_on_load_button()
 
   # --------------------------------------------------------------------------------------------------------------------
   # Data Entry Tab
   # --------------------------------------------------------------------------------------------------------------------
   # Creating dynamic, updating values for text entry (enables easier load-from-file functionality)
-  callModule(dynamicTextInputMod, "sub_id", label="Subect ID:", value=META_DATA[["sub_id"]])
+
   callModule(dynamicTextInputMod, "secondary_id", label="Time/Task ID:", value=META_DATA[["secondary_id"]])
   callModule(dynamicTextInputMod, "optional_id", label="(Optional) Study ID:", value=META_DATA[["optional_id"]])
   callModule(dynamicTextInputMod, "editor", label="Editor Name:", value=META_DATA[["editor"]])

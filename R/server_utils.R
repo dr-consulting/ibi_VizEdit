@@ -43,7 +43,6 @@ store_raw_data_filepath <- function(input, input_name=NULL){
 
 generate_path_messages <- function(default_text=NULL, msg_part1=NULL, obj_name=NULL){
   renderText({
-    browser()
     msg_object <- FILE_SETTINGS[[obj_name]]
     txt <- default_text
     if(!is.null(msg_object)){
@@ -53,14 +52,30 @@ generate_path_messages <- function(default_text=NULL, msg_part1=NULL, obj_name=N
   })
 }
 
+
+#' Server-side utility for \code{ibiVizEdit} that tracks and updates text field data entry
+#'
+#' @export
+track_data_text_entry <- function(input){
+  sub_id <- reactive({input[["sub_id"]]})
+  observe({
+    browser()
+    if(isTruthy(sub_id())){
+      META_DATA[["sub_id"]] <- input[["sub_id"]]
+    }
+  })
+}
+
+
 #' Server-side utility for \code{ibiVizEdit} that turns on "load" button
 #'
 #' @export
 
 turn_on_load_button <- function(){
-  BUTTON_STATUS[["load"]] <- observe({
-    ifelse(!is.null(FILE_SETTINGS[["wd"]]) & !is.null(FILE_SETTINGS[["ppg_file"]]) & !is.null(META_DATA[["sub_id"]]),
-           1, 0)
+  observe({
+    browser()
+    BUTTON_STATUS[["load"]] <- ifelse(!is.null(FILE_SETTINGS[["wd"]]) & !is.null(FILE_SETTINGS[["ppg_file"]]) &
+                                        !is.null(META_DATA[["sub_id"]]), 1, 0)
   })
 }
 
