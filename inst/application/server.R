@@ -36,11 +36,6 @@ server <- function(input, output, session){
   # --------------------------------------------------------------------------------------------------------------------
   # Data Entry Tab
   # --------------------------------------------------------------------------------------------------------------------
-  # Creating dynamic, updating values for text entry (enables easier load-from-file functionality)
-
-  callModule(dynamicTextInputMod, "secondary_id", label="Time/Task ID:", value=META_DATA[["secondary_id"]])
-  callModule(dynamicTextInputMod, "optional_id", label="(Optional) Study ID:", value=META_DATA[["optional_id"]])
-  callModule(dynamicTextInputMod, "editor", label="Editor Name:", value=META_DATA[["editor"]])
 
   # Creating dynamic, updating values for numeric entry (enables easier load-from-file functionality)
   callModule(dynamicNumInputMod, "column_select", label="Column Index", value=PROCESSING_SETTINGS[["column_select"]])
@@ -58,11 +53,9 @@ server <- function(input, output, session){
              choices=PROCESSING_SETTINGS[["epoch_choices"]], selected=PROCESSING_SETTINGS[["epoch_selected"]])
 
   # Creating Dynamic buttons for the data entry tab action buttons:
-  callModule(dynamicClrButtonMod, "load", active=as.logical(BUTTON_STATUS[["load"]]), label="Load Settings")
-  callModule(dynamicClrButtonMod, "save_progress", active=as.logical(BUTTON_STATUS[["save_progress"]]),
-                                                                     label="Save Progress")
-  callModule(dynamicClrButtonMod, "save_output", active=as.logical(BUTTON_STATUS[["save_output"]]),
-                                                                   label="Save Outputs")
+  callModule(dynamicClrButtonMod, "load", status_name="load", label="Load Settings")
+  callModule(dynamicClrButtonMod, "save_progress", status_name="save_progress", label="Save Progress")
+  callModule(dynamicClrButtonMod, "save_output", status_name="save_output", label="Save Outputs")
 
   # --------------------------------------------------------------------------------------------------------------------
   # Processing Tab

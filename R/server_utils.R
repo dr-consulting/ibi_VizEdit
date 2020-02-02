@@ -57,13 +57,23 @@ generate_path_messages <- function(default_text=NULL, msg_part1=NULL, obj_name=N
 #'
 #' @export
 track_data_text_entry <- function(input){
-  sub_id <- reactive({input[["sub_id"]]})
-  observe({
-    browser()
-    if(isTruthy(sub_id())){
-      META_DATA[["sub_id"]] <- input[["sub_id"]]
-    }
-  })
+    observe({
+      if(isTruthy(input[["sub_id"]])){
+        META_DATA[["sub_id"]] <- input[["sub_id"]]
+      }
+
+      if(isTruthy(input[["secondary_id"]])){
+        META_DATA[["secondary_id"]] <- input[["secondary_id"]]
+      }
+
+      if(isTruthy(input[["optional_id"]])){
+        META_DATA[["optional_id"]] <- input[["optional_id"]]
+      }
+
+      if(isTruthy(input[["editor"]])){
+        META_DATA[["editor"]] <- input[["editor"]]
+      }
+    })
 }
 
 
@@ -73,11 +83,13 @@ track_data_text_entry <- function(input){
 
 turn_on_load_button <- function(){
   observe({
-    browser()
+    # browser()
     BUTTON_STATUS[["load"]] <- ifelse(!is.null(FILE_SETTINGS[["wd"]]) & !is.null(FILE_SETTINGS[["ppg_file"]]) &
-                                        !is.null(META_DATA[["sub_id"]]), 1, 0)
+                                        !is.null(META_DATA[["sub_id"]]) & !is.null(META_DATA[["secondary_id"]]) &
+                                        !is.null(META_DATA[["editor"]]), 1, 0)
   })
 }
+
 
 #' Server-side utility for \code(ibiVizEdit) that monitors data entry values and updates them accordingly
 #'
@@ -143,13 +155,14 @@ dynamicSelectInputMod <- function(input, output, session, label=NULL, choices=NU
 #'
 #' @export
 
-dynamicClrButtonMod <- function(input, output, session, active=FALSE, label=NULL, hotkey=NULL, hotkey_map=NULL,
+dynamicClrButtonMod <- function(input, output, session, status_name=NULL, label=NULL, hotkey=NULL, hotkey_map=NULL,
                                 button_name="click_in", active_color=BUTTON_COLORS["standard"],
                                 inactive_color=BUTTON_COLORS["inactive"]){
 
   output$rendered_button <- renderUI({
-    #browser()
+    active <- as.logical(BUTTON_STATUS[[status_name]])
     color_arg <- inactive_color
+
     if(active){
       color_arg <- active_color
     }
