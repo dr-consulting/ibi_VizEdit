@@ -1,6 +1,79 @@
 # Will need to have functionality to auto populate fields when existing data are loaded
 # Probably want a modal dialog box that says something like "Import Settings"
 
+#' Sever-side utility for \code{ibiVizEdit} that observes and updates directory information
+#'
+#' @export
+
+get_working_directory <- function(input, input_name=NULL){
+  observeEvent(input[[input_name]], {
+    root_opts <- c(User=FILE_SETTINGS[["user_dir"]])
+    dir_placeholder <- parseDirPath(roots=root_opts, input[[input_name]])
+
+    if(length(dir_placeholder) != 0){
+      FILE_SETTINGS[[input_name]] <- dir_placeholder
+      root_opts <- c(wd=dir_placeholder)
+    }
+
+    shinyFileChoose(input, "ppg_file", roots=root_opts)
+    shinyFileChoose(input, "timing_file", roots=root_opts)
+  })
+}
+
+#' Server-side utility for \code{ibiVizEdit} that observes and updates raw data paths file paths
+#'
+#' @export
+
+store_raw_data_filepath <- function(input, input_name=NULL){
+  observeEvent(input[[input_name]], {
+    if(!is.null(FILE_SETTINGS[["wd"]])){
+      tmp_filepath_obj <- parseFilePaths(roots=c(wd=FILE_SETTINGS[["wd"]], User=FILE_SETTINGS[["user_dir"]]),
+                                         input[[input_name]])
+      if(nrow(tmp_filepath_obj) > 0){
+        FILE_SETTINGS[[input_name]] <- as.character(tmp_filepath_obj$datapath)
+      }
+    }
+  })
+}
+
+
+#' Server-side utility for \code{ibiVizEdit} that outputs relevant file and directory information when submitted
+#'
+#' @export
+
+generate_path_messages <- function(default_text=NULL, msg_part1=NULL, obj_name=NULL){
+  renderText({
+    browser()
+    msg_object <- FILE_SETTINGS[[obj_name]]
+    txt <- default_text
+    if(!is.null(msg_object)){
+      txt <- paste(msg_part1, msg_object)
+    }
+    txt
+  })
+}
+
+#' Server-side utility for \code{ibiVizEdit} that turns on "load" button
+#'
+#' @export
+
+turn_on_load_button <- function(){
+  BUTTON_STATUS[["load"]] <- observe({
+    ifelse(!is.null(FILE_SETTINGS[["wd"]]) & !is.null(FILE_SETTINGS[["ppg_file"]]) & !is.null(META_DATA[["sub_id"]]),
+           1, 0)
+  })
+}
+
+#' Server-side utility for \code(ibiVizEdit) that monitors data entry values and updates them accordingly
+#'
+#' @export
+
+processing_settings_observer <- function(input_name){
+  PROCESSING_SETTINGS[[input_name]] <- observe({
+    PROCESSING_SETTINGS[[input_name]] <- input[["input_name"]]
+  })
+}
+
 #' Server-side utiltiy for \code{ibiVizEdit} that dynamically updates data entry options on UI, starts with defaults
 #'
 #' @export

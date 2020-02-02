@@ -4,15 +4,16 @@
 #'
 #' @export
 
-get_user_folder <- function(){
+get_user_folder <- function(input){
   if(Sys.getenv('USERPROFILE')=="")
-    user_folder<-"~"
+    user_dir<-"~"
   else if(Sys.getenv("HOMEPATH")!="")
-    user_folder<-Sys.getenv('USERPROFILE')
+    user_dir<-Sys.getenv('USERPROFILE')
   else
-    user_folder<-'C:/'
+    user_dir<-'C:/'
 
-  return(user_folder)
+  shinyDirChoose(input, "wd", roots=c(User=user_dir))
+  return(user_dir)
 }
 
 

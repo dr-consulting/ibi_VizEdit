@@ -9,8 +9,28 @@ server <- function(input, output, session){
   META_DATA[["sys_start_time"]] <- Sys.time()
 
   # Aquiring correct directory for user folder - intended to be invariant to system
-  FILE_SETTINGS[["user_dir"]] <- get_user_folder()
+  FILE_SETTINGS[["user_dir"]] <- get_user_folder(input)
   FILE_SETTINGS[["max_file"]] <- set_file_size_max()
+
+  # Set working directory and make available for other utilities
+  get_working_directory(input, "wd")
+  output$wd_out <- generate_path_messages(default_text="Please select a working directory",
+                                          msg_part1="Working Directory:", obj_name="wd")
+
+  # Set filepaths for raw data and make available for other utilities
+  store_raw_data_filepath(input, "ppg_file")
+  output$ppg_file <-generate_path_messages(default_text="Please select a PPG data file",
+                                           msg_part1="PPG File:", obj_name="ppg_file")
+
+  store_raw_data_filepath(input, "timing_file")
+  output$timing_file <-generate_path_messages(default_text="Please select a timing file (optional)",
+                                              msg_part1="Timing File:", obj_name="timing_file")
+
+  #
+  # --------------------------------------------------------------------------------------------------------------------
+  # Button status reactivity
+  # --------------------------------------------------------------------------------------------------------------------
+
 
   # --------------------------------------------------------------------------------------------------------------------
   # Data Entry Tab

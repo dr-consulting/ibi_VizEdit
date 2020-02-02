@@ -22,20 +22,11 @@ AVERAGE_RESPIRATION_BY_AGE <- list(`Young Infant (<1 yr)`=c(30,60),
 
 EPOCH_CHOICES <- c(10, 15, 20, 30, 45)
 EPOCH_SELECTED <- c(10, 15, 20, 30, 45)
-IBI_POINT_COLORS <- c("edited"="#7d3c98",
-                      "original"="#426ebd",
-                      "uneditable"="#c0392b")
+IBI_POINT_COLORS <- c(edited="#7d3c98",
+                      original="#426ebd",
+                      uneditable="#c0392b")
 
 # Global variables to be used on both UI and Server Side
-
-COLUMN_DEFAULT <- 1
-SKIP_DEFAULT <- 15
-HZ_INPUT_DEFAULT <- 2000
-HZ_OUTPUT_DEFAULT <- 1000
-DEFAULT_AGE_GROUP <- 3
-DEFAULT_PEAK_ITER <- 200
-EPOCH_LENGTHS <- c(10, 15, 20, 30, 45)
-EPOCH_SELECTED <- EPOCH_LENGTHS # Default is to select all - user could change if they want
 WIDE_LOGO <- "dr_logo_wide_33.png"
 THUMB_LOGO <- "dr_logo_thumb.png"
 DOCS_LINK <- "https://github.com/matgbar/IBI_VizEdit/blob/master/IBI%20VizEdit%20Manual%20v1_2_3.pdf"
@@ -59,7 +50,7 @@ PROCESSING_SETTINGS <- reactiveValues(
   epoch_choices=EPOCH_CHOICES,
   epoch_selected=EPOCH_SELECTED,
   resp_age_grp_opts = AVERAGE_RESPIRATION_BY_AGE,
-  resp_age_grp = 3
+  resp_age_grp = NULL
 )
 
 META_DATA <- reactiveValues(
@@ -74,7 +65,10 @@ META_DATA <- reactiveValues(
 
 FILE_SETTINGS <- reactiveValues(
   user_dir=NULL,
-  max_file=NULL
+  max_file=NULL,
+  wd=NULL,
+  ppg_file=NULL,
+  timing_file=NULL
 )
 
 BUTTON_STATUS <- reactiveValues(
