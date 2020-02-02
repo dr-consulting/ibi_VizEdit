@@ -48,7 +48,7 @@ server <- function(input, output, session){
              value=PROCESSING_SETTINGS[["epoch_selected"]])
   callModule(dynamicSelectInputMod, "resp_age_grp", label="Select Age Group:",
              choices=PROCESSING_SETTINGS[["resp_age_grp_opts"]],
-             choice_index=PROCESSING_SETTINGS[["resp_age_grp"]])
+             choice_index=PROCESSING_SETTINGS[["age_group_select"]])
   callModule(dynamicCheckBoxInputMod, "epoch_outputs", label="Select Output Epochs",
              choices=PROCESSING_SETTINGS[["epoch_choices"]], selected=PROCESSING_SETTINGS[["epoch_selected"]])
 

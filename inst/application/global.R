@@ -40,7 +40,7 @@ BUTTON_COLORS <- c(standard="background-color: #426ebd; border-color: #000000; c
 EDIT_BUTTON_CLICKS <- c(a=65, c=67, d=68)
 
 # Server-side reactive variables and data_sets
-PROCESSING_SETTINGS <- reactiveValues(
+PROCESSING_DEFAULTS <- reactiveValues(
   column_select=1,
   skip_rows=15,
   hz_input=2000,
@@ -49,8 +49,7 @@ PROCESSING_SETTINGS <- reactiveValues(
   peak_iter=200,
   epoch_choices=EPOCH_CHOICES,
   epoch_selected=EPOCH_SELECTED,
-  resp_age_grp_opts = AVERAGE_RESPIRATION_BY_AGE,
-  resp_age_grp = NULL
+  resp_age_grp_opts = AVERAGE_RESPIRATION_BY_AGE
 )
 
 META_DATA <- reactiveValues(
@@ -103,8 +102,12 @@ SUMMARY_STATS <- reactiveValues(
 )
 
 STATIC_DATA <- reactiveValues(
-  orig_Hz=NULL,
-  edit_Hz=NULL,
+  column_select=NULL,
+  skip_rows=NULL,
+  hz_input=NULL,
+  hz_output=NULL,
+  resp_age_grp=NULL,
+  peak_iter=NULL,
   orig_ppg=NULL,
   processed_ppg=NULL,
   ppg100=NULL,

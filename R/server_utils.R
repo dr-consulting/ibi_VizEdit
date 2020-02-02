@@ -91,6 +91,34 @@ turn_on_load_button <- function(){
 }
 
 
+#' Server-side utility for \code{ibiVizEdit} that loads data using specifications set in Data Entry tab
+#'
+#' @export
+
+load_files_and_settings <- function(input){
+  observeEvent(input[["load"]], {
+    if(BUTTON_STATUS[["load"]] == 1){
+      req(input[["column_select"]], input[["skip_rows"]], input[["hz_input"]], input[["hz_output"]],
+          input[["resp_age_grp"]], input[["peak_iter"]])
+
+      STATIC_DATA[["column_select"]] <- input[["column_select"]]
+      STATIC_DATA[["skip_rows"]] <- input[["skip_rows"]]
+      STATIC_DATA[["hz_input"]] <- input[["hz_input"]]
+      STATIC_DATA[["hz_output"]] <- input[["hz_output"]]
+
+      # Pick up here...
+
+      if(file.exists(FILE_SETTINGS[["ppg_file"]])){
+
+      }
+    }
+
+    else{
+      warning("You have not entered enough information to process the data yet")
+    }
+  })
+}
+
 #' Server-side utility for \code(ibiVizEdit) that monitors data entry values and updates them accordingly
 #'
 #' @export
