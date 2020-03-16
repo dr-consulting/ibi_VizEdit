@@ -19,12 +19,12 @@ server <- function(input, output, session){
 
   # Set filepaths for raw data and make available for other utilities
   store_raw_data_filepath(input, "ppg_file")
-  output$ppg_file <-generate_path_messages(default_text="Please select a PPG data file",
-                                           msg_part1="PPG File:", obj_name="ppg_file")
+  output$ppg_file <- generate_path_messages(default_text="Please select a PPG data file",
+                                            msg_part1="PPG File:", obj_name="ppg_file")
 
   store_raw_data_filepath(input, "timing_file")
-  output$timing_file <-generate_path_messages(default_text="Please select a timing file (optional)",
-                                              msg_part1="Timing File:", obj_name="timing_file")
+  output$timing_file <- generate_path_messages(default_text="Please select a timing file (optional)",
+                                               msg_part1="Timing File:", obj_name="timing_file")
 
   # --------------------------------------------------------------------------------------------------------------------
   # Button status reactivity
@@ -37,31 +37,19 @@ server <- function(input, output, session){
   # Data Entry Tab
   # --------------------------------------------------------------------------------------------------------------------
 
-  # Creating dynamic, updating values for numeric entry (enables easier load-from-file functionality)
-  callModule(dynamicNumInputMod, "column_select", label="Column Index", value=PROCESSING_SETTINGS[["column_select"]])
-  callModule(dynamicNumInputMod, "skip_rows", label="Header Lines:", value=PROCESSING_SETTINGS[["skip_rows"]])
-  callModule(dynamicNumInputMod, "hz_input", label="Input Hz", value=PROCESSING_SETTINGS[["hz_input"]])
-  callModule(dynamicNumInputMod, "hz_output", label="Output Hz:",  value=PROCESSING_SETTINGS[["hz_output"]])
-  callModule(dynamicNumInputMod, "peak_iter", label="Processing Iterations:",
-             value=PROCESSING_SETTINGS[["peak_iter"]])
-  callModule(dynamicNumInputMod, "epoch_selected", label="Select Output Epochs:",
-             value=PROCESSING_SETTINGS[["epoch_selected"]])
-  callModule(dynamicSelectInputMod, "resp_age_grp", label="Select Age Group:",
-             choices=PROCESSING_SETTINGS[["resp_age_grp_opts"]],
-             choice_index=PROCESSING_SETTINGS[["age_group_select"]])
-  callModule(dynamicCheckBoxInputMod, "epoch_outputs", label="Select Output Epochs",
-             choices=PROCESSING_SETTINGS[["epoch_choices"]], selected=PROCESSING_SETTINGS[["epoch_selected"]])
-
   # Creating Dynamic buttons for the data entry tab action buttons:
   callModule(dynamicClrButtonMod, "load", status_name="load", label="Load Settings")
   callModule(dynamicClrButtonMod, "save_progress", status_name="save_progress", label="Save Progress")
   callModule(dynamicClrButtonMod, "save_output", status_name="save_output", label="Save Outputs")
 
+  # Load files - Should only work if correct settings identified in advance
+  callModule(eventObserverMod, "load", func=load_files_and_settings, input_id="click_in")
+
   # --------------------------------------------------------------------------------------------------------------------
   # Processing Tab
   # --------------------------------------------------------------------------------------------------------------------
   # Server-Side of PPG Processing Tab:
-  callModule(dynamicClrButtonMod, "process_ppg", active=as.logical(BUTTON_STATUS[["process_ppg"]]), label="Process PPG")
+  callModule(dynamicClrButtonMod, "process_ppg", status_name="process_ppg", label="Process PPG")
   output$pre_process_ppg <- renderPlot({
     basic_ppg(ppg_data=STATIC_DATA[["orig_ppg"]], brush_in=input$pre_process_x)
   })
@@ -82,19 +70,16 @@ server <- function(input, output, session){
   # IBI Editing Tab
   # --------------------------------------------------------------------------------------------------------------------
   callModule(headsUpInfo, "heads_up")
-  callModule(dynamicClrButtonMod, "ibi_y_axis", active=as.logical(BUTTON_STATUS[["set_ibi_y_axis"]]),
-             label="Set y-axis")
-  callModule(dynamicClrTxtButtonMod, "show_ppg", active=as.logical(BUTTON_STATUS[["show_ppg"]]),
-             default_display=BUTTON_STATUS[["show_ppg_default"]], default_text="Show PPG", updated_text="Remove PPG")
-  callModule(dynamicClrButtonMod, "ibi_drag_select", active=as.logical(BUTTON_STATUS[["ibi_drag_select"]]),
-             label="Select Mode")
-  callModule(dynamicClrButtonMod, "ibi_click_select", active=as.logical(BUTTON_STATUS[["ibi_click_select"]]),
-             label="Click Mode")
-  callModule(dynamicClrButtonMod, "average", active=as.logical(BUTTON_STATUS[["average"]]), label="Average", hotkey="a",
+  callModule(dynamicClrButtonMod, "ibi_y_axis", status_name="set_ibi_y_axis", label="Set y-axis")
+  callModule(dynamicClrButtonMod, "show_ppg", status_name="show_ppg", label="Show PPG", updated_label="Remove PPG",
+             default_display_name="show_ppg_default")
+  callModule(dynamicClrButtonMod, "ibi_drag_select", status_name="ibi_drag_select", label="Select Mode")
+  callModule(dynamicClrButtonMod, "ibi_click_select", status_name="ibi_click_select", label="Click Mode")
+  callModule(dynamicClrButtonMod, "average", status_name="average", label="Average", hotkey="a",
              hotkey_map=EDIT_BUTTON_CLICKS)
-  callModule(dynamicClrButtonMod, "combine", active=as.logical(BUTTON_STATUS[["combine"]]), label="Combine", hotkey="c",
+  callModule(dynamicClrButtonMod, "combine", status_name="combine", label="Combine", hotkey="c",
              hotkey_map=EDIT_BUTTON_CLICKS)
-  callModule(dynamicClrButtonMod, "divide", active=as.logical(BUTTON_STATUS[["divide"]]), label="Divide", hotkey="d",
+  callModule(dynamicClrButtonMod, "divide", status_name="divide", label="Divide", hotkey="d",
              hotkey_map=EDIT_BUTTON_CLICKS)
 
   output$ibi_main_plot <- renderPlot({
@@ -108,24 +93,15 @@ server <- function(input, output, session){
   # --------------------------------------------------------------------------------------------------------------------
   # PPG Editing Tab
   # --------------------------------------------------------------------------------------------------------------------
-  callModule(dynamicClrButtonMod, "ppg_y_axis", active=as.logical(BUTTON_STATUS[["set_ppg_y_axis"]]),
-             label="Set y-axis")
-  callModule(dynamicClrButtonMod, "ppg_edit_mode", active=as.logical(BUTTON_STATUS[["ppg_edit_mode"]]),
-             label="Insert/Remove")
-  callModule(dynamicClrButtonMod, "ppg_imp_mode", active=as.logical(BUTTON_STATUS[["ppg_imp_mode"]]),
-             label="Imputation Mode")
-  callModule(dynamicClrButtonMod, "insert", active=as.logical(BUTTON_STATUS[["insert"]]),
-             label="Insert")
-  callModule(dynamicClrButtonMod, "remove", active=as.logical(BUTTON_STATUS[["remove"]]),
-             label="Remove")
-  callModule(dynamicClrButtonMod, "erase_ppg", active=as.logical(BUTTON_STATUS[["erase_ppg"]]),
-             label="Erase PPG")
-  callModule(dynamicClrButtonMod, "set_impute_window", active=as.logical(BUTTON_STATUS[["set_impute_window"]]),
-             label="Lock Window")
-  callModule(dynamicClrButtonMod, "set_valid_ibis", active=as.logical(BUTTON_STATUS[["set_valid_ibis"]]),
-             label="Lock IBIs")
-  callModule(dynamicClrButtonMod, "gp_impute", active=as.logical(BUTTON_STATUS[["gp_impute"]]),
-             label="Run Bayesian GPM")
+  callModule(dynamicClrButtonMod, "ppg_y_axis", status_name="set_ppg_y_axis", label="Set y-axis")
+  callModule(dynamicClrButtonMod, "ppg_edit_mode", status_name="ppg_edit_mode", label="Insert/Remove")
+  callModule(dynamicClrButtonMod, "ppg_imp_mode", status_name="ppg_imp_mode", label="Imputation Mode")
+  callModule(dynamicClrButtonMod, "insert", status_name="insert", label="Insert")
+  callModule(dynamicClrButtonMod, "remove", status_name="remove", label="Remove")
+  callModule(dynamicClrButtonMod, "erase_ppg", status_name="erase_ppg", label="Erase PPG")
+  callModule(dynamicClrButtonMod, "set_impute_window", status_name="set_impute_window", label="Lock Window")
+  callModule(dynamicClrButtonMod, "set_valid_ibis", status_name="set_valid_ibis", label="Lock IBIs")
+  callModule(dynamicClrButtonMod, "gp_impute", status_name="gp_impute",label="Run Bayesian GPM")
 
   output$ppg_main_plot <- renderPlot({
     ppg_editing_plot(brush_in=input$editing_scroll_x)

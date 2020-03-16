@@ -2,6 +2,7 @@ source("~/GitHub/IBI_VizEdit/R/ui_utils.R")
 source("~/GitHub/IBI_VizEdit/R/server_utils.R")
 source("~/GitHub/IBI_VizEdit/R/general_utils.R")
 source("~/GitHub/IBI_VizEdit/R/graphing_utilities.R")
+source("~/GitHub/IBI_VizEdit/R/input_and_process.R")
 
 if(!require('pacman')) install.packages('pacman')
 pacman::p_load(shiny, shinythemes, tidyverse, shinyFiles, shinyWidgets)
@@ -40,7 +41,7 @@ BUTTON_COLORS <- c(standard="background-color: #426ebd; border-color: #000000; c
 EDIT_BUTTON_CLICKS <- c(a=65, c=67, d=68)
 
 # Server-side reactive variables and data_sets
-PROCESSING_DEFAULTS <- reactiveValues(
+PROCESSING_DEFAULTS <- list(
   column_select=1,
   skip_rows=15,
   hz_input=2000,
@@ -49,7 +50,7 @@ PROCESSING_DEFAULTS <- reactiveValues(
   peak_iter=200,
   epoch_choices=EPOCH_CHOICES,
   epoch_selected=EPOCH_SELECTED,
-  resp_age_grp_opts = AVERAGE_RESPIRATION_BY_AGE
+  resp_age_grp_opts=AVERAGE_RESPIRATION_BY_AGE
 )
 
 META_DATA <- reactiveValues(
@@ -106,6 +107,7 @@ STATIC_DATA <- reactiveValues(
   skip_rows=NULL,
   hz_input=NULL,
   hz_output=NULL,
+  case_id=NULL,
   resp_age_grp=NULL,
   peak_iter=NULL,
   orig_ppg=NULL,

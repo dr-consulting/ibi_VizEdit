@@ -96,27 +96,23 @@ turn_on_load_button <- function(){
 #' @export
 
 load_files_and_settings <- function(input){
-  observeEvent(input[["load"]], {
-    if(BUTTON_STATUS[["load"]] == 1){
-      req(input[["column_select"]], input[["skip_rows"]], input[["hz_input"]], input[["hz_output"]],
-          input[["resp_age_grp"]], input[["peak_iter"]])
+  if(BUTTON_STATUS[["load"]] == 1){
+    browser()
+    STATIC_DATA[["column_select"]] <- input[["column_select"]]
+    STATIC_DATA[["skip_rows"]] <- input[["skip_rows"]]
+    STATIC_DATA[["hz_input"]] <- input[["hz_input"]]
+    STATIC_DATA[["hz_output"]] <- input[["hz_output"]]
+    STATIC_DATA[["case_id"]] <- paste(input[["sub_id"]], input[["secondary_id"]], sep="_")
+    STATIC_DATA[["orig_ppg"]] <- load_ppg(FILE_SETTINGS[["ppg_file"]], skip_lines=STATIC_DATA[["skip_rows"]],
+                                          column=STATIC_DATA[["column_select"]],
+                                          sampling_rate=STATIC_DATA[["hz_input"]])
 
-      STATIC_DATA[["column_select"]] <- input[["column_select"]]
-      STATIC_DATA[["skip_rows"]] <- input[["skip_rows"]]
-      STATIC_DATA[["hz_input"]] <- input[["hz_input"]]
-      STATIC_DATA[["hz_output"]] <- input[["hz_output"]]
+    STATIC_DATA[["task_times"]] <- load_timing_data(FILE_SETTINGS[["timing_file"]], case_id=STATIC_DATA[["case_id"]])
+  }
 
-      # Pick up here...
-
-      if(file.exists(FILE_SETTINGS[["ppg_file"]])){
-
-      }
-    }
-
-    else{
-      warning("You have not entered enough information to process the data yet")
-    }
-  })
+  else{
+    warning("You have not entered enough information to process the data yet")
+  }
 }
 
 #' Server-side utility for \code(ibiVizEdit) that monitors data entry values and updates them accordingly
@@ -184,12 +180,18 @@ dynamicSelectInputMod <- function(input, output, session, label=NULL, choices=NU
 #' @export
 
 dynamicClrButtonMod <- function(input, output, session, status_name=NULL, label=NULL, hotkey=NULL, hotkey_map=NULL,
-                                button_name="click_in", active_color=BUTTON_COLORS["standard"],
-                                inactive_color=BUTTON_COLORS["inactive"]){
+                                updated_label=NULL, default_display_name=NULL, button_name="click_in",
+                                active_color=BUTTON_COLORS["standard"], inactive_color=BUTTON_COLORS["inactive"],
+                                updated_color=BUTTON_COLORS["warning"]){
 
   output$rendered_button <- renderUI({
     active <- as.logical(BUTTON_STATUS[[status_name]])
+    default_display <- TRUE
     color_arg <- inactive_color
+
+    if(!is.null(default_display_name)){
+      default_display <- as.logical(BUTTON_STATUS[[default_display_name]])
+    }
 
     if(active){
       color_arg <- active_color
@@ -199,29 +201,11 @@ dynamicClrButtonMod <- function(input, output, session, status_name=NULL, label=
       tags$script(HTML(track_hotkey_presses(key=hotkey, key_map=hotkey_map, button_name=button_name)))
     }
 
-    actionButton(button_name, label=label, style=color_arg)
-  })
-}
-
-
-#' Server-side utility for \code{ibiVizEdit} that dynamically switches actionButton UIs and Text Labels
-#'
-#' @export
-
-dynamicClrTxtButtonMod <- function(input, output, session, active=FALSE, default_display=TRUE, default_text=NULL,
-                                   updated_text=NULL, inactive_color=BUTTON_COLORS["inactive"],
-                                   default_color=BUTTON_COLORS["standard"], updated_color=BUTTON_COLORS["warning"]){
-  output$rendered_button <- renderUI({
-    color_arg <- inactive_color
-    label_arg <- default_text
-    if(active){
-      color_arg <- default_color
-      if(!default_display){
-        color_arg <- updated_color
-        label_arg <- updated_text
-      }
+    if(!default_display){
+      label <- updated_label
     }
-    actionButton("click_in", label=label_arg, style=color_arg)
+
+    actionButton(session$ns(button_name), label=label, style=color_arg)
   })
 }
 
@@ -306,4 +290,20 @@ ppg_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
     p <- highlight_ibis(base_plot=p, selected_points=DYNAMIC_DATA[["selected_points"]])
   }
   return(p)
+}
+
+
+#' Server-side utility for \code{ibiVizEdit} that enables Event Observation from action buttons inside modules
+#'
+#' Note that currently the logic on whether a function (func) should run needs to be contained inside that function
+#'
+#' @export
+
+eventObserverMod <- function(input, output, session, func=NULL, input_id=NULL){
+  observeEvent(input[[input_id]], {
+    browser()
+    if(!is.null(func)){
+      func(input)
+    }
+  })
 }

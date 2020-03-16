@@ -1,36 +1,8 @@
-#' UI Utility for \code{ibiVizEdit} that adds dynamic text fields that will update based on user entry
-#'
-#' @export
-
-dynamicTextInputModUI <- function(id=NULL){
-  ns <- NS(id)
-  uiOutput(ns("rendered_field"))
-}
-
-#' UI utility for \code{ibiVizEdit} that adds dynamic numeric input fields that can update based on user behavior
-#'
-#' @export
-
-dynamicNumInputModUI <- function(id=NULL){
-  ns <- NS(id)
-  uiOutput(ns("rendered_field"))
-}
-
 #' UI utility for \code{ibiVizEdit} that serves as a basic wrapper and enables single actionButton generation.
 #'
 #' @export
 
 dynamicClrButtonModUI <- function(id=NULL, inline=FALSE){
-  ns <- NS(id)
-  uiOutput(ns("rendered_button"), inline=inline)
-}
-
-
-#' UI utility for \code{ibiVizEdit} that serves as a basic wrapper and enables single actionButton generation.
-#'
-#' @export
-
-dynamicClrTxtButtonModUI <- function(id=NULL, inline=FALSE){
   ns <- NS(id)
   uiOutput(ns("rendered_button"), inline=inline)
 }
@@ -45,14 +17,6 @@ dynamicCheckBoxInputModUI <-function(id=NULL){
   uiOutput(ns("rendered_checkbox"))
 }
 
-#' UI utility for \code{ibiVizEdit} that serves as a basic wrapper and enables dynamic updating of selectInput UI
-#'
-#' @export
-
-dynamicSelectInputModUI <- function(id=NULL){
-  ns <- NS(id)
-  uiOutput(ns("rendered_dropdown"))
-}
 
 #' UI utility for \code{ibiVizEdit} that renders the Dead Reckoning wide Logo
 #'
@@ -109,10 +73,10 @@ idNameFields <- function(heading="File ID and Information:"){
 ppgDataPropertiesEntry <- function(heading="Data Properties:"){
 
   tagList(tags$h2(heading),
-          dynamicNumInputModUI("column_select"),
-          dynamicNumInputModUI("skip_rows"),
-          dynamicNumInputModUI("hz_input"),
-          dynamicSelectInputModUI("resp_age_grp"))
+          numericInput("column_select", label="PPG Data in Column:", value=PROCESSING_DEFAULTS[["column_select"]]),
+          numericInput("skip_rows", label="Number of Header Rows:", value=PROCESSING_DEFAULTS[["skip_rows"]]),
+          numericInput("hz_input", label="Original Sampling Rate:", value=PROCESSING_DEFAULTS[["hz_input"]]),
+          selectInput("resp_age_grp", label="Age Group:", choices=names(PROCESSING_DEFAULTS[["resp_age_grp_opts"]])))
 }
 
 
@@ -123,9 +87,12 @@ ppgDataPropertiesEntry <- function(heading="Data Properties:"){
 optionalSettingsEntry <- function(heading="Optional Settings:"){
 
   tagList(tags$h2(heading),
-          dynamicNumInputModUI("peak_iter"),
-          dynamicNumInputModUI("hz_output"),
-          dynamicCheckBoxInputModUI("epoch_outputs"))
+          tags$style(HTML("#checkbox :after, #checkbox :before{background-color: #426ebd;}")),
+          numericInput("peak_iter", label="Peak Detection Iterations:", value=PROCESSING_DEFAULTS[["peak_iter"]]),
+          numericInput("hz_output", label="Hz Output (1000 recomnended):", value=PROCESSING_DEFAULTS[["hz_output"]]),
+          awesomeCheckboxGroup("epoch_outputs", label="Select Output Epochs:",
+                               choices=PROCESSING_DEFAULTS[["epoch_choices"]],
+                               selected=PROCESSING_DEFAULTS[["epoch_selected"]]))
 }
 
 
