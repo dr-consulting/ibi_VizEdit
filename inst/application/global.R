@@ -1,8 +1,8 @@
-source("~/GitHub/IBI_VizEdit/R/ui_utils.R")
-source("~/GitHub/IBI_VizEdit/R/server_utils.R")
-source("~/GitHub/IBI_VizEdit/R/general_utils.R")
-source("~/GitHub/IBI_VizEdit/R/graphing_utilities.R")
-source("~/GitHub/IBI_VizEdit/R/input_and_process.R")
+source("~/dr-consulting_GH/ibi_VizEdit/R/ui_utils.R")
+source("~/dr-consulting_GH/ibi_VizEdit/R/server_utils.R")
+source("~/dr-consulting_GH/ibi_VizEdit/R/general_utils.R")
+source("~/dr-consulting_GH/ibi_VizEdit/R/graphing_utilities.R")
+source("~/dr-consulting_GH/ibi_VizEdit/R/input_and_process.R")
 
 if(!require('pacman')) install.packages('pacman')
 pacman::p_load(shiny, shinythemes, tidyverse, shinyFiles, shinyWidgets)
@@ -96,6 +96,10 @@ BUTTON_STATUS <- reactiveValues(
   gp_impute=0
 )
 
+TRIGGERS <- reactiveValues(
+  load=0
+)
+
 SUMMARY_STATS <- reactiveValues(
   tot_edits=0,
   mean_bpm=NULL,
@@ -121,6 +125,7 @@ STATIC_DATA <- reactiveValues(
 DYNAMIC_DATA <- reactiveValues(
   edited_ppg=NULL,
   edited_ibi=NULL,
-  selected_points=NULL
+  selected_points=NULL,
+  action_log=NULL
 )
 

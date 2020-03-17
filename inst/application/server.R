@@ -1,5 +1,5 @@
-source("~/GitHub/IBI_VizEdit/R/server_utils.R")
-source("~/GitHub/IBI_VizEdit/R/general_utils.R")
+source("~/dr-consulting_GH/ibi_VizEdit/R/server_utils.R")
+source("~/dr-consulting_GH/ibi_VizEdit/R/general_utils.R")
 
 server <- function(input, output, session){
   # --------------------------------------------------------------------------------------------------------------------
@@ -43,7 +43,14 @@ server <- function(input, output, session){
   callModule(dynamicClrButtonMod, "save_output", status_name="save_output", label="Save Outputs")
 
   # Load files - Should only work if correct settings identified in advance
-  callModule(eventObserverMod, "load", func=load_files_and_settings, input_id="click_in")
+  callModule(eventTriggerMod, "load", input_id="click_in", trigger_items=reactive({BUTTON_STATUS[["load"]]}),
+             trigger_values=TRUE, trigger_object=TRIGGERS, trigger_id="load")
+
+  observeEvent(TRIGGERS[["load"]], {
+    if(TRIGGERS[["load"]] == TRUE){
+      load_files_and_settings(input)
+    }
+  })
 
   # --------------------------------------------------------------------------------------------------------------------
   # Processing Tab

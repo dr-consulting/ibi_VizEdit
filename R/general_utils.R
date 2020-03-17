@@ -190,3 +190,20 @@ raise_not_integer <- function(input_val=NULL, input_name=NULL, lower_bound=NULL,
     return(msg)
   }
 }
+
+
+#' Internal \code{ibiVizEdit} utility that creates a running log of user actions
+#'
+#' @export
+
+user_action_log <- function(button_name){
+  tmp_dat <- data.frame(Timestamp=Sys.time(), action=button_name, stringsAsFactors = FALSE)
+
+  if(is.null(DYNAMIC_DATA[["action_log"]])){
+    DYNAMIC_DATA[["action_log"]] <- tmp_dat
+  }
+
+  else{
+    DYNAMIC_DATA[["action_log"]] <- rbind(DYNAMIC_DATA[["action_log"]], tmp_dat)
+  }
+}

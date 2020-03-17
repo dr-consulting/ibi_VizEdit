@@ -96,8 +96,8 @@ turn_on_load_button <- function(){
 #' @export
 
 load_files_and_settings <- function(input){
+  browser()
   if(BUTTON_STATUS[["load"]] == 1){
-    browser()
     STATIC_DATA[["column_select"]] <- input[["column_select"]]
     STATIC_DATA[["skip_rows"]] <- input[["skip_rows"]]
     STATIC_DATA[["hz_input"]] <- input[["hz_input"]]
@@ -299,11 +299,13 @@ ppg_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
 #'
 #' @export
 
-eventObserverMod <- function(input, output, session, func=NULL, input_id=NULL){
+eventTriggerMod <- function(input, output, session, input_id=NULL, trigger_items=NULL, trigger_values=NULL,
+                            trigger_object=NULL, trigger_id=NULL){
   observeEvent(input[[input_id]], {
-    browser()
-    if(!is.null(func)){
-      func(input)
+    trigger_object[[trigger_id]] <- FALSE
+
+    if(trigger_items() == trigger_values){
+      trigger_object[[trigger_id]] <- TRUE
     }
   })
 }

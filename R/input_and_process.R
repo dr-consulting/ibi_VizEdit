@@ -17,8 +17,9 @@
 
 load_ppg <- function(file_name=NULL, skip_lines=NULL, column=NULL, sampling_rate=NULL){
   if(file.exists(file_name)){
-    parsed_file_name <- strsplit(file_name, '.')
-    file_extension <- parsed_file_name[[length(parsed_file_name)]]
+    parsed_file_name <- strsplit(file_name, '.', fixed=TRUE)
+    file_extension <- parsed_file_name[[1]][length(parsed_file_name[[1]])]
+
     if(file_extension != "txt"){
       warning(paste("ibiVizEdit does not support", file_extension, "PPG file formats.", "\n",
                     "Your raw PPG data must be in a tab-delimited .txt file.", "\n",
@@ -28,7 +29,7 @@ load_ppg <- function(file_name=NULL, skip_lines=NULL, column=NULL, sampling_rate
       ppg_file <- read.table(file = file_name, skip = skip_lines, sep='\t')
       ppg_df <- data.frame(PPG = ppg_file[,column],
                            Time = (0:(nrow(ppg_file)-1))/sampling_rate)
-      reutrn(ppg_df)
+      return(ppg_df)
     }
   }
   else{
@@ -55,10 +56,10 @@ load_ppg <- function(file_name=NULL, skip_lines=NULL, column=NULL, sampling_rate
 
 load_timing_data <- function(file_name=NULL, case_id=NULL){
   if(file.exists(file_name) & !is.null(case_id)){
-    parsed_file_name <- strsplit(file_name, '.')
-    file_extension <- parsed_file_name[[length(parsed_file_name)]]
-
+    parsed_file_name <- strsplit(file_name, '.', fixed=TRUE)
+    file_extension <- parsed_file_name[[1]][length(parsed_file_name[[1]])]
     timing_data <- NULL
+
     if(file_extension == 'txt'){
       timing_data <- read.table(file_name, header=TRUE, sep='\t')
     }
@@ -134,4 +135,4 @@ time_center <- function(x, time_col = 'Time', timing_series = NULL){
 }
 
 
-#' Internal utility for \code{ibiVizEdit} that initializes the edited IBI data set for storate in EDIT_DATA
+#' Internal utility for \code{ibiVizEdit} that triggers
