@@ -52,6 +52,12 @@ server <- function(input, output, session){
     }
   })
 
+  # Save progress - will need to complete and test after all other parts integrated
+  #   - Key addition is going to be to save partially completed file into an importable .RData object
+
+  # Save outputs - also needs to be completed when rest of the GUI structure is built out
+
+
   # --------------------------------------------------------------------------------------------------------------------
   # Processing Tab
   # --------------------------------------------------------------------------------------------------------------------
@@ -66,7 +72,7 @@ server <- function(input, output, session){
   })
 
   output$task_times <- renderTable({
-    STATIC_DATA[["task_times"]]
+    STATIC_DATA[["display_task_times"]]
   })
 
   output$peak_detect_tab <- renderTable({

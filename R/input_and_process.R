@@ -82,6 +82,33 @@ load_timing_data <- function(file_name=NULL, case_id=NULL){
   }
 }
 
+
+#' Utility function for transforming timing file inputs into stacked display-friendly table
+#'
+#' There needs to be a lot of data formatting checks/errors raised here - lots of unit testing as a result too
+#'
+#' One check is to make sure that the columns appear arranged in order (may just want a separate format utility to run)
+#'
+#' @export
+#'
+
+create_gui_timing_table <- function(df=NULL){
+  if(!is.null(df)){
+    task <- c()
+    start <- c()
+    stop <- c()
+    for(i in 1:ncol(df)){
+      if(i%%2 == 0){
+        task <- c(task, colnames(df)[i])
+        start <- c(start, df[1,i])
+        stop <- c(stop, df[1, i+1])
+      }
+    }
+    display_df <- data.frame(Task=task, Start=start, Stop=stop)
+    return(display_df)
+  }
+}
+
 #' Integrated function for generating IBIs matched with a timing variable
 #'
 #' \code{generate_ibis_w_timing} integrates other \code{ibi_VizEdit} functions \code{iter_IBI} and \code{sum_rev} to

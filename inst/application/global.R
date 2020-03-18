@@ -119,6 +119,7 @@ STATIC_DATA <- reactiveValues(
   ppg100=NULL,
   orig_ibi=NULL,
   task_times=NULL,
+  display_task_times=NULL,
   peak_detect_tab=NULL
 )
 

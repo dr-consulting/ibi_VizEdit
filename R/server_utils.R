@@ -96,7 +96,6 @@ turn_on_load_button <- function(){
 #' @export
 
 load_files_and_settings <- function(input){
-  browser()
   if(BUTTON_STATUS[["load"]] == 1){
     STATIC_DATA[["column_select"]] <- input[["column_select"]]
     STATIC_DATA[["skip_rows"]] <- input[["skip_rows"]]
@@ -108,6 +107,8 @@ load_files_and_settings <- function(input){
                                           sampling_rate=STATIC_DATA[["hz_input"]])
 
     STATIC_DATA[["task_times"]] <- load_timing_data(FILE_SETTINGS[["timing_file"]], case_id=STATIC_DATA[["case_id"]])
+
+    STATIC_DATA[["display_task_times"]] <- create_gui_timing_table(STATIC_DATA[["task_times"]])
   }
 
   else{
