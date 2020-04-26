@@ -38,7 +38,7 @@ find_ibis <- function(ppg_signal, sampling_rate, min_time, peak_iter){
   colnames(Z) <- c('BW', 'SD', 'Range', 'RMSSD', 'AC', 'BW(s)')
   Z <- Z[order(Z$RMSSD, decreasing = FALSE),]
   IBI_pos <- find_peaks(ppg_signal, bw=Z[1,1])-1
-  IBI_time <- IBI_pos/sampling_rate + min_time
+  IBI_time <- IBI_pos/sampling_rate + min_time - 3 # for built in buffers
   IBI_vals <- time_sum(IBI_pos)/sampling_rate
   IBI_out <- data.frame(IBI=IBI_vals, Time=IBI_time)
   IBI_comp <- list(IBI_out, Z)

@@ -207,6 +207,7 @@ dynamicClrButtonMod <- function(input, output, session, status_name=NULL, label=
 
     if(!default_display){
       label <- updated_label
+      color_arg <- updated_color
     }
 
     actionButton(session$ns(button_name), label=label, style=color_arg)
@@ -241,12 +242,21 @@ ibi_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
   }
   else{
     p <- generate_base_gui_plot(ibi_data=ibi_data, color_map=IBI_POINT_COLORS)
+
     if(!is.null(brush_in)){
-      p <- p + coord_cartesian(xlim=c(brush_in$xmin, brush_in$xmax))
+      if(!is.null(TEMP_GRAPHICS_SETTINGS[["ymin"]])){
+        p <- p + coord_cartesian(xlim=c(brush_in$xmin, brush_in$xmax),
+                                 ylim=c(TEMP_GRAPHICS_SETTINGS[["ymin"]], TEMP_GRAPHICS_SETTINGS[["ymax"]]))
+      }
+
+      else{
+        p <- p + coord_cartesian(xlim=c(brush_in$xmin, brush_in$xmax))
+      }
     }
+
     p <- add_task_v_lines(base_plot=p, timing_data=STATIC_DATA[["display_task_times"]])
     p <- add_ppg_waveform(base_plot=p, ppg_data=STATIC_DATA[["processed_ppg100"]],
-                          show_ppg=as.logical(BUTTON_STATUS[["show_ppg"]]))
+                          show_ppg=as.logical(TEMP_GRAPHICS_SETTINGS[["show_ppg"]]))
     p <- highlight_ibis(base_plot=p, selected_points=DYNAMIC_DATA[["selected_points"]])
   }
   return(p)

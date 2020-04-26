@@ -144,6 +144,10 @@ server <- function(input, output, session){
       if(is.null(DYNAMIC_DATA[["edited_ibi"]])){
         DYNAMIC_DATA[["edited_ibi"]] <- STATIC_DATA[["orig_ibi"]]
       }
+
+      BUTTON_STATUS[["set_ibi_y_axis"]] <- TRUE
+      BUTTON_STATUS[["show_ppg"]] <- TRUE
+      BUTTON_STATUS[["ibi_drag_select"]] <- TRUE
     }
   })
 
@@ -152,7 +156,7 @@ server <- function(input, output, session){
   # IBI Editing Tab
   # --------------------------------------------------------------------------------------------------------------------
   callModule(headsUpInfo, "heads_up")
-  callModule(dynamicClrButtonMod, "ibi_y_axis", status_name="set_ibi_y_axis", label="Set y-axis")
+  callModule(dynamicClrButtonMod, "set_ibi_y_axis", status_name="set_ibi_y_axis", label="Set y-axis")
   callModule(dynamicClrButtonMod, "show_ppg", status_name="show_ppg", label="Show PPG", updated_label="Remove PPG",
              default_display_name="show_ppg_default")
   callModule(dynamicClrButtonMod, "ibi_drag_select", status_name="ibi_drag_select", label="Select Mode")
@@ -163,6 +167,60 @@ server <- function(input, output, session){
              hotkey_map=EDIT_BUTTON_CLICKS)
   callModule(dynamicClrButtonMod, "divide", status_name="divide", label="Divide", hotkey="d",
              hotkey_map=EDIT_BUTTON_CLICKS)
+
+  # Enable reactivity with the set_ibi_y_axis button
+  callModule(eventTriggerMod, "set_ibi_y_axis", input_id="click_in",
+             trigger_items=reactive({BUTTON_STATUS[["set_ibi_y_axis"]]}), trigger_values=TRUE, trigger_object=TRIGGERS,
+             trigger_id="set_ibi_y_axis")
+
+  observeEvent(TRIGGERS[["set_ibi_y_axis"]], {
+    if(TRIGGERS[["set_ibi_y_axis"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ibi"]])){
+      TEMP_GRAPHICS_SETTINGS[["ymin"]] <- input$ibi_y_axis[1]
+      TEMP_GRAPHICS_SETTINGS[["ymax"]] <- input$ibi_y_axis[2]
+    }
+  })
+
+  # Enable reactivity using the show_ppg button
+  callModule(eventTriggerMod, "show_ppg", input_id="click_in", trigger_items=reactive({BUTTON_STATUS[["show_ppg"]]}),
+             trigger_values=TRUE, trigger_object=TRIGGERS, trigger_id="show_ppg")
+
+  observeEvent(TRIGGERS[["show_ppg"]], {
+    if(TRIGGERS[["show_ppg"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ibi"]]) &
+       !is.null(DYNAMIC_DATA[["edited_ppg"]])){
+      BUTTON_STATUS[["show_ppg_default"]] <- ifelse(BUTTON_STATUS[["show_ppg_default"]], FALSE, TRUE)
+      TEMP_GRAPHICS_SETTINGS[["show_ppg"]] <- ifelse(TEMP_GRAPHICS_SETTINGS[["show_ppg"]], FALSE, TRUE)
+    }
+  })
+
+  # Enable reactivity using the ibi_drag_select button
+  callModule(eventTriggerMod, "ibi_drag_select", input_id="click_in",
+             trigger_items=reactive({BUTTON_STATUS[["ibi_click_select"]]}), trigger_values=TRUE, trigger_object=TRIGGERS,
+             trigger_id="ibi_drag_select")
+
+  observeEvent(TRIGGERS[["ibi_drag_select"]], {
+    if(TRIGGERS[["ibi_drag_select"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ibi"]])){
+      if(TEMP_GRAPHICS_SETTINGS[["select_mode"]] != "drag"){
+        TEMP_GRAPHICS_SETTINGS[["select_mode"]] <- "drag"
+        BUTTON_STATUS[["ibi_click_select"]] <- FALSE
+      }
+    }
+  })
+
+  # Enable reactivity using the ibi_click_select_button
+  callModule(eventTriggerMod, "ibi_click_select", input_id="click_in",
+             trigger_items=reactive({BUTTON_STATUS[["ibi_drag_select"]]}), trigger_values=TRUE,
+             trigger_object=TRIGGERS, trigger_id="ibi_click_select")
+
+  observeEvent(TRIGGERS[["ibi_click_select"]], {
+    if(TRIGGERS[["ibi_click_select"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ibi"]])){
+      if(TEMP_GRAPHICS_SETTINGS[["select_mode"]] != "click"){
+        TEMP_GRAPHICS_SETTINGS[["select_mode"]] <- "click"
+        BUTTON_STATUS[["ibi_drag_select"]] <- FALSE
+      }
+    }
+  })
+
+
 
   output$ibi_main_plot <- renderPlot({
     ibi_editing_plot(brush_in=input$editing_scroll_x)

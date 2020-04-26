@@ -80,7 +80,7 @@ BUTTON_STATUS <- reactiveValues(
   process_ppg=0,
   set_ibi_y_axis=0,
   show_ppg=0,
-  show_ppg_default=1,
+  show_ppg_default=TRUE,
   ibi_drag_select=0,
   ibi_click_select=0,
   average=0,
@@ -100,7 +100,11 @@ BUTTON_STATUS <- reactiveValues(
 
 TRIGGERS <- reactiveValues(
   load=0,
-  process_ppg=0
+  process_ppg=0,
+  set_ibi_y_axis=0,
+  show_ppg=0,
+  ibi_drag_select=0,
+  ibi_click_select=0
 )
 
 SUMMARY_STATS <- reactiveValues(
@@ -135,3 +139,9 @@ DYNAMIC_DATA <- reactiveValues(
   action_log=NULL
 )
 
+TEMP_GRAPHICS_SETTINGS <- reactiveValues(
+  ymin=NULL,
+  ymax=NULL,
+  show_ppg=FALSE,
+  select_mode="drag"
+)

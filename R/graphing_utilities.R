@@ -86,10 +86,9 @@ add_task_v_lines <- function(base_plot=NULL, timing_data=NULL, time_col='Time', 
     timing_data$labels <- paste(timing_data[[task_col]], timing_data[["labels"]], sep="-")
 
     p <- base_plot +
-      geom_vline(data=timing_data, aes_string(xintercept=time_col), show.legend = FALSE,
-                 inherit.aes=FALSE, color=label_color)+
-      geom_text(data=timing_data, aes_string(x=time_col, label="labels", y=.20), show.legend=FALSE,
-                angle=60, hjust=0, color=label_color)
+      geom_vline(data=timing_data, aes_string(xintercept=time_col), show.legend = FALSE, color=label_color)+
+      geom_text(data=timing_data, aes_string(x=time_col, label="labels", y=.20), show.legend=FALSE, angle=60, hjust=0,
+                color=label_color)
     return(p)
   }
   else{
@@ -109,7 +108,6 @@ add_ppg_waveform <- function(base_plot=NULL, ppg_data=NULL, show_ppg=FALSE, time
                 aes_string(x=time_col,
                            y=ppg_col,
                            color="pnt_type"),
-                inherit.aes=FALSE,
                 alpha=.75,
                 color="grey")
     return(p)
@@ -129,7 +127,6 @@ highlight_ibis <- function(base_plot=NULL, selected_points=NULL, time_col="Time"
       geom_point(data=selected_points,
                  aes_string(x=time_col,
                             y=ibi_col),
-                 inherit.aes=FALSE,
                  color="#8fff00")
     return(p)
   }
