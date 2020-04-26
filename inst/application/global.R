@@ -3,9 +3,11 @@ source("~/dr-consulting_GH/ibi_VizEdit/R/server_utils.R")
 source("~/dr-consulting_GH/ibi_VizEdit/R/general_utils.R")
 source("~/dr-consulting_GH/ibi_VizEdit/R/graphing_utilities.R")
 source("~/dr-consulting_GH/ibi_VizEdit/R/input_and_process.R")
+source("~/dr-consulting_GH/ibi_VizEdit/R/hotkey_utils.R")
+source("~/dr-consulting_GH/ibi_VizEdit/R/find_ibis.R")
 
 if(!require('pacman')) install.packages('pacman')
-pacman::p_load(shiny, shinythemes, tidyverse, shinyFiles, shinyWidgets)
+pacman::p_load(shiny, shinythemes, tidyverse, shinyFiles, shinyWidgets, signal, seewave, oce, psych)
 
 # Standard Text Output in UI - Only short, easy to map snippets
 CURRENT_NAME_VERSION <- 'ibiVizEdit 0.0.1'
@@ -97,7 +99,8 @@ BUTTON_STATUS <- reactiveValues(
 )
 
 TRIGGERS <- reactiveValues(
-  load=0
+  load=0,
+  process_ppg=0
 )
 
 SUMMARY_STATS <- reactiveValues(
@@ -114,9 +117,11 @@ STATIC_DATA <- reactiveValues(
   case_id=NULL,
   resp_age_grp=NULL,
   peak_iter=NULL,
+  epoch_outputs=NULL,
   orig_ppg=NULL,
+  orig_ppg100=NULL,
   processed_ppg=NULL,
-  ppg100=NULL,
+  processed_ppg100=NULL,
   orig_ibi=NULL,
   task_times=NULL,
   display_task_times=NULL,

@@ -14,14 +14,8 @@
 #'
 #' @export
 
-find_ibis <- function(x, ds){
-  require(psych)
-  x.smooth <- as.numeric(smooth(x))
-  x.smooth <- na.omit(x.smooth)
-  TIME <- 0:(length(x.smooth)-1)
-  x.smooth <- x.smooth-predict(lm(x.smooth~TIME))
-  x.smooth <- smooth.spline(x.smooth, nknots = 10000)$y
-  s <- round(seq(round(ds/50), round(ds/2), length.out = peak.iter()))
+find_ibis <- function(ppg_signal, sampling_rate, min_time, peak_iter){
+  s <- round(seq(round(sampling_rate/8), round(sampling_rate/2), length.out = peak_iter))
   Z <- data.frame(rep(NA, length(s)),
                   rep(NA, length(s)),
                   rep(NA, length(s)),
@@ -30,25 +24,26 @@ find_ibis <- function(x, ds){
                   rep(NA, length(s)))
   withProgress(message = 'Finding Peaks', value = 0,{
     for(i in 1:length(s)){
-      IBI <- find_peaks(x.smooth, s[i])
-      time <- time.sum(IBI)/ds
+      IBI_pos <- find_peaks(ppg_signal, s[i])
+      IBI_vals <- time_sum(IBI_pos)/sampling_rate
       Z[i,1] <- s[i]
-      Z[i,2] <- sd(time)
-      Z[i,3] <- max(time)-min(time)
-      Z[i,4] <- rmssd(time)
-      Z[i,5] <- mean(acf(time, lag.max = length(time)/20, plot = F)$acf)
-      Z[i,6] <- s[i]/ds
-      incProgress(1/length(s), detail = paste("Pass", i, 'out of', length(s)))
+      Z[i,2] <- sd(IBI_vals)
+      Z[i,3] <- max(IBI_vals)-min(IBI_vals)
+      Z[i,4] <- rmssd(IBI_vals)
+      Z[i,5] <- mean(acf(IBI_vals, lag.max = length(IBI_vals)/20, plot = FALSE)$acf)
+      Z[i,6] <- s[i]/sampling_rate
+      incProgress(1/length(s), detail = "Peak Detection Progress")
     }
   })
   colnames(Z) <- c('BW', 'SD', 'Range', 'RMSSD', 'AC', 'BW(s)')
-  Z <- Z[order(Z$RMSSD, decreasing = F),]
-  IBI.fin <- find_peaks(x.smooth, m=Z[1,1])-1
-  IBI.fin <- IBI.fin/ds
-  IBI.done <- diff(IBI.fin)
-  IBI.comp <- list(IBI.done, Z)
-  names(IBI.comp) <- c('IBI.done', 'Z')
-  return(IBI.comp)
+  Z <- Z[order(Z$RMSSD, decreasing = FALSE),]
+  IBI_pos <- find_peaks(ppg_signal, bw=Z[1,1])-1
+  IBI_time <- IBI_pos/sampling_rate + min_time
+  IBI_vals <- time_sum(IBI_pos)/sampling_rate
+  IBI_out <- data.frame(IBI=IBI_vals, Time=IBI_time)
+  IBI_comp <- list(IBI_out, Z)
+  names(IBI_comp) <- c('IBI_out', 'detection_settings')
+  return(IBI_comp)
 }
 
 
@@ -72,7 +67,7 @@ find_peaks <- function (x, bw){
     z <- ifelse(z > 0, z, 1)
     w <- i + bw + 1
     w <- ifelse(w < length(x), w, length(x))
-    if(all(x[c(z : i, (i + 2) : w)] <= x[i + 1])) return(i + 1) else return(nubweric(0))
+    if(all(x[c(z : i, (i + 2) : w)] <= x[i + 1])) return(i + 1) else return(numeric(0))
   })
   pks <- unlist(pks)
   pks
@@ -95,6 +90,20 @@ sum_rev <- function(x){
   Z<-rep(NA, length(x))
   for(i in 1:length(x)){
     Z[i]<-ifelse(i==1, x[i], sum(x[1:(i-1)])+x[i])
+  }
+  return(Z)
+}
+
+
+#' Internal utility that creates IBI values from the find_peaks output
+#'
+#' @export
+#'
+
+time_sum<-function(x){
+  Z<-rep(NA, length(x))
+  for(i in 1:length(x)){
+    Z[i]<-ifelse(i==1, x[i], x[i]-x[i-1])
   }
   return(Z)
 }

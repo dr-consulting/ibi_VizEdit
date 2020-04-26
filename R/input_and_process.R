@@ -37,6 +37,57 @@ load_ppg <- function(file_name=NULL, skip_lines=NULL, column=NULL, sampling_rate
   }
 }
 
+
+#' Internal utility that creates a down-sampled data.frame of the ppg signal
+#'
+#' @export
+#'
+
+downsample_ppg_data <- function(ppg_data, sampling_rate, downsampled_rate=100, ppg_col="PPG", time_col="Time"){
+  ds_ppg <- signal::resample(ppg_data[[ppg_col]], p=downsampled_rate, q=sampling_rate)
+  ds_time <- seq(min(ppg_data[[time_col]]), max(ppg_data[[time_col]]), length.out = length(ds_ppg))
+  df <- data.frame(PPG=ds_ppg, Time=ds_time)
+  return(df)
+}
+
+
+#' Internal utility that attempts to maximize raw signal properties to generate more reliable peak locations
+#'
+#' @export
+#'
+
+filter_ppg <- function(ppg_data, sampling_rate, ppg_col="PPG", time_col="Time"){
+  ppg_sig <- ppg_data[[ppg_col]]
+  tmp_time <- 1:length(ppg_sig)
+  ppg_sig <- as.numeric(ppg_sig)
+  ppg_sig <- ppg_sig - predict(lm(ppg_sig~tmp_time))
+  ppg_sig <- smooth.spline(ppg_sig, nknots=10*sampling_rate)$y
+  ppg_sig <- ts(ppg_sig, frequency = sampling_rate)
+
+  # Hz using bpm for heart rate
+  ppg_filtered <- seewave::bwfilter(ppg_sig, from=50/60, to=180/60, bandpass=TRUE, f=sampling_rate)
+
+
+  df <- data.frame(PPG = ppg_filtered,
+                   Time = ppg_data[[time_col]])
+
+  return(df)
+}
+
+
+#' Internal utility that trims down the time range of the PPG signal used to edit the data
+#'
+#' @export
+#'
+
+trim_ppg_window <- function(ppg_data, timing_data, time_col="Time"){
+  # Taking the min and max and adding a 3 second-buffer before the start and after the end of the observation period
+  min_time <- min(timing_data[["Start"]]) - 3
+  max_time <- max(timing_data[["Stop"]]) + 3
+  df <- ppg_data[between(ppg_data[[time_col]], min_time, max_time),]
+  return(df)
+}
+
 #' Internal utility for loading timing file
 #'
 #' \code{load_timing_data} loads the selected timing information for the targeted file. The timing file must be
@@ -160,6 +211,3 @@ time_center <- function(x, time_col = 'Time', timing_series = NULL){
   }
   return(x)
 }
-
-
-#' Internal utility for \code{ibiVizEdit} that triggers

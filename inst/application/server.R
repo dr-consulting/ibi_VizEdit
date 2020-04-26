@@ -48,7 +48,24 @@ server <- function(input, output, session){
 
   observeEvent(TRIGGERS[["load"]], {
     if(TRIGGERS[["load"]] == TRUE){
+
+      showModal(modalDialog(
+        title = 'Loading Files',
+        'Your files are currently being loaded. Large files may take longer.',
+        size = 'm'
+      ))
+
       load_files_and_settings(input)
+
+      removeModal()
+
+      if(is.null(STATIC_DATA[["ppg100"]]) & !is.null(STATIC_DATA[["orig_ppg"]])){
+        STATIC_DATA[["ppg100"]] <- downsample_ppg_data(STATIC_DATA[["orig_ppg"]], STATIC_DATA[["hz_input"]])
+      }
+
+      if(!is.null(STATIC_DATA[["orig_ppg"]])){
+        BUTTON_STATUS[["process_ppg"]] <- 1
+      }
     }
   })
 
@@ -64,7 +81,7 @@ server <- function(input, output, session){
   # Server-Side of PPG Processing Tab:
   callModule(dynamicClrButtonMod, "process_ppg", status_name="process_ppg", label="Process PPG")
   output$pre_process_ppg <- renderPlot({
-    basic_ppg(ppg_data=STATIC_DATA[["orig_ppg"]], brush_in=input$pre_process_x)
+    basic_ppg(ppg_data=STATIC_DATA[["ppg100"]], brush_in=input$pre_process_x)
   })
 
   output$pre_process_scroll <- renderPlot({
@@ -78,6 +95,58 @@ server <- function(input, output, session){
   output$peak_detect_tab <- renderTable({
     STATIC_DATA[["peak_detect_tab"]]
   })
+
+  # Processing the data - setting up reactivity based on this button click
+  callModule(eventTriggerMod, "process_ppg", input_id="click_in",
+             trigger_items=reactive({BUTTON_STATUS[["process_ppg"]]}), trigger_values=TRUE, trigger_object=TRIGGERS,
+             trigger_id="process_ppg")
+
+  observeEvent(TRIGGERS[["process_ppg"]], {
+    if(TRIGGERS[["process_ppg"]] == TRUE){
+      # Downsample the data
+      STATIC_DATA[["processed_ppg"]] <- downsample_ppg_data(ppg_data=STATIC_DATA[["orig_ppg"]],
+                                                            sampling_rate=STATIC_DATA[["hz_input"]],
+                                                            downsampled_rate=STATIC_DATA[["hz_output"]])
+
+      # Trim file to focus on the target observation period
+      STATIC_DATA[["processed_ppg"]] <- trim_ppg_window(ppg_data=STATIC_DATA[["processed_ppg"]],
+                                                        timing_data=STATIC_DATA[["display_task_times"]])
+
+      # Perform basic filtering and pre-processing of the signal
+      STATIC_DATA[["processed_ppg"]] <- filter_ppg(ppg_data=STATIC_DATA[["processed_ppg"]],
+                                                   sampling_rate=STATIC_DATA[["hz_output"]])
+      STATIC_DATA[["processed_ppg"]][["pnt_type"]] <- "original"
+
+
+      # Save downsampled version of ppg signal for the "scroll" plot
+      STATIC_DATA[["processed_ppg100"]] <- downsample_ppg_data(ppg_data=STATIC_DATA[["processed_ppg"]],
+                                                               sampling_rate=STATIC_DATA[["hz_output"]])
+
+      # Grab the list output from findpeaks
+      ibi_output_list <- find_ibis(ppg_signal=STATIC_DATA[["processed_ppg"]][["PPG"]],
+                                   sampling_rate=STATIC_DATA[["hz_output"]],
+                                   min_time=min(STATIC_DATA[["display_task_times"]][["Start"]]),
+                                   peak_iter=STATIC_DATA[["peak_iter"]])
+
+      # Save the original set of IBIs detetectd at the start of the program run to a static data location
+      STATIC_DATA[["orig_ibi"]] <- ibi_output_list[["IBI_out"]]
+      STATIC_DATA[["orig_ibi"]][["pnt_type"]] <- "original"
+
+      # Get the top row to display in the processing tab
+      STATIC_DATA[["peak_detect_tab"]] <- head(ibi_output_list[["detection_settings"]], 3)
+
+      # Generate the editable ppg data set
+      if(is.null(DYNAMIC_DATA[["edited_ppg"]])){
+        DYNAMIC_DATA[["edited_ppg"]] <- STATIC_DATA[["orig_ppg"]]
+      }
+
+      # Generate the editable ibi data set
+      if(is.null(DYNAMIC_DATA[["edited_ibi"]])){
+        DYNAMIC_DATA[["edited_ibi"]] <- STATIC_DATA[["orig_ibi"]]
+      }
+    }
+  })
+
 
   # --------------------------------------------------------------------------------------------------------------------
   # IBI Editing Tab
@@ -100,7 +169,7 @@ server <- function(input, output, session){
   })
 
   output$ibi_main_scroll <- renderPlot({
-    basic_ppg(ppg_data=STATIC_DATA[["ppg100"]])
+    basic_ppg(ppg_data=STATIC_DATA[["processed_ppg100"]])
   })
 
   # --------------------------------------------------------------------------------------------------------------------
@@ -121,7 +190,6 @@ server <- function(input, output, session){
   })
 
   output$ppg_main_scroll <- renderPlot({
-    basic_ppg(ppg_data=STATIC_DATA[["ppg100"]])
+    basic_ppg(ppg_data=STATIC_DATA[["processed_ppg100"]])
   })
-
 }

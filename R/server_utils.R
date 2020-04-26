@@ -101,6 +101,9 @@ load_files_and_settings <- function(input){
     STATIC_DATA[["skip_rows"]] <- input[["skip_rows"]]
     STATIC_DATA[["hz_input"]] <- input[["hz_input"]]
     STATIC_DATA[["hz_output"]] <- input[["hz_output"]]
+    STATIC_DATA[["resp_age_group"]] <- input[["resp_age_grp"]]
+    STATIC_DATA[["peak_iter"]] <- input[["peak_iter"]]
+    STATIC_DATA[["epoch_outputs"]] <- input[["epoch_outputs"]]
     STATIC_DATA[["case_id"]] <- paste(input[["sub_id"]], input[["secondary_id"]], sep="_")
     STATIC_DATA[["orig_ppg"]] <- load_ppg(FILE_SETTINGS[["ppg_file"]], skip_lines=STATIC_DATA[["skip_rows"]],
                                           column=STATIC_DATA[["column_select"]],
@@ -241,8 +244,8 @@ ibi_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
     if(!is.null(brush_in)){
       p <- p + coord_cartesian(xlim=c(brush_in$xmin, brush_in$xmax))
     }
-    p <- add_task_v_lines(base_plot=p, timing_data=STATIC_DATA[["task_times"]])
-    p <- add_ppg_waveform(base_plot=p, ppg_data=STATIC_DATA[["ppg100"]],
+    p <- add_task_v_lines(base_plot=p, timing_data=STATIC_DATA[["display_task_times"]])
+    p <- add_ppg_waveform(base_plot=p, ppg_data=STATIC_DATA[["processed_ppg100"]],
                           show_ppg=as.logical(BUTTON_STATUS[["show_ppg"]]))
     p <- highlight_ibis(base_plot=p, selected_points=DYNAMIC_DATA[["selected_points"]])
   }

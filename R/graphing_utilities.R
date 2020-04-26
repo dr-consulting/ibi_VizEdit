@@ -47,16 +47,17 @@ generate_ppg_data_check_plot <- function(ppg_data = NULL, ppg_col='PPG', time_co
 #' @param time_col is of type \code{character} and is the column name in the \code{ppg_data} that contains the time
 #' variable
 #'
-#'@export
+#' @export
 #'
 
 generate_base_gui_plot <- function(ibi_data=NULL, color_map=NULL, ibi_col="IBI", time_col='Time'){
   p <- ggplot(data=ibi_data,
-              aes_string(x=Time, y=IBI)) +
-    geom_point(aes(color=pnt_type)) +
+              aes_string(x=time_col, y=ibi_col)) +
+    geom_point(aes(color=pnt_type), show.legend=FALSE) +
     geom_line(color="black") +
-    scale_color_manual(values=color_map)
-    labs(x="Time (s)", y="IBI (s)")
+    scale_color_manual(values=color_map) +
+    labs(x="Time (s)", y="IBI (s)") +
+    theme_bw()
   return(p)
 }
 
@@ -76,13 +77,19 @@ generate_base_gui_plot <- function(ibi_data=NULL, color_map=NULL, ibi_col="IBI",
 #' @export
 #'
 
-add_task_v_lines <- function(base_plot=NULL, timing_data=NULL, time_col='Time', task_col="Task"){
+add_task_v_lines <- function(base_plot=NULL, timing_data=NULL, time_col='Time', task_col="Task",
+                             label_color=IBI_POINT_COLORS["original"]){
   if(!is.null(timing_data) & !is.null(plot)){
+    timing_data <- timing_data %>%
+      pivot_longer(-task_col, names_to = "labels", values_to = time_col)
+
+    timing_data$labels <- paste(timing_data[[task_col]], timing_data[["labels"]], sep="-")
+
     p <- base_plot +
-      geom_vline(data=rv$timing_data,
-                 aes_string(xintercept=time_col,
-                            color=task_col),
-                 show.legend = FALSE)
+      geom_vline(data=timing_data, aes_string(xintercept=time_col), show.legend = FALSE,
+                 inherit.aes=FALSE, color=label_color)+
+      geom_text(data=timing_data, aes_string(x=time_col, label="labels", y=.20), show.legend=FALSE,
+                angle=60, hjust=0, color=label_color)
     return(p)
   }
   else{
