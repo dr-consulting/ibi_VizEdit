@@ -110,7 +110,9 @@ TRIGGERS <- reactiveValues(
 SUMMARY_STATS <- reactiveValues(
   tot_edits=0,
   mean_bpm=NULL,
-  mean_resp=NULL
+  mean_resp=NULL,
+  mean_HR_Hz=NULL,
+  mean_resp_Hz=NULL
 )
 
 STATIC_DATA <- reactiveValues(

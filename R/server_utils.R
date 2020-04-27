@@ -83,7 +83,6 @@ track_data_text_entry <- function(input){
 
 turn_on_load_button <- function(){
   observe({
-    # browser()
     BUTTON_STATUS[["load"]] <- ifelse(!is.null(FILE_SETTINGS[["wd"]]) & !is.null(FILE_SETTINGS[["ppg_file"]]) &
                                         !is.null(META_DATA[["sub_id"]]) & !is.null(META_DATA[["secondary_id"]]) &
                                         !is.null(META_DATA[["editor"]]), 1, 0)
@@ -266,22 +265,16 @@ ibi_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
 #'
 #' @export
 
-headsUpInfo <- function(input, output, session){
-
-  temp_point <- reactive({
-    req(DYNAMIC_DATA[["edited_IBI"]], SUMMARY_STATS[[c("mean_HR", "mean_R")]])
-    nearPoints(DYNAMIC_DATA[["edited_IBI"]][c("IBI", "Time")], coordinfo=input$hover_ibi, maxpoints=1)
-  })
-
-  output$heads_up <- renderPrint({
-    cat("Average HR & Resp:\n")
-    cat("HR BPM:", "\t\t\t", round(SUMMARY_STATS[["mean_HR"]], 2))
-    cat("Resp per min:", "\t", round(SUMMARY_STATS[["mean_R"]], 2))
-    cat("Total IBIs:", "\t\t", nrow(DYNAMIC_DATA[["edited_ibi"]]))
-    cat("Edited IBIs:", "\t", paste0(round(SUMMARY_STATS[["tot_edits"]]/nrow(DYNAMIC_DATA[["edited_ibi"]]), 2), "%"))
-    cat("\nNear Point:\n")
-    temp_point()
-  })
+generate_heads_up_info <- function(input, hover_id=NULL, ibi_data=NULL){
+  req(ibi_data)
+  SUMMARY_STATS[["mean_HR"]] <- estimate_average_HR(ibi_data)
+  tmp_point <- nearPoints(DYNAMIC_DATA[["edited_ibi"]], coordinfo = input[[hover_id]])
+  cat("Average HR (BPM):\n")
+  cat(round(SUMMARY_STATS[["mean_HR"]], 2))
+  cat("\nNear Point:\n")
+  if(nrow(tmp_point)){
+    round(tmp_point[,c("IBI", "Time")], digits = 3)
+  }
 }
 
 
@@ -386,3 +379,43 @@ click_point_selection <- function(input, click_id, dbl_click_id, valid_status="c
     }
   })
 }
+
+
+#' Server side function that tracks and updates the status of the editing functions
+#'
+#' @export
+#'
+
+track_editing_options <- function(){
+  observeEvent(DYNAMIC_DATA[["selected_points"]], {
+    if(!is.null(DYNAMIC_DATA[["selected_points"]])){
+
+      if(nrow(DYNAMIC_DATA[["selected_points"]]) == 1){
+        BUTTON_STATUS[["divide"]] <- TRUE
+      }
+
+      else if(nrow(DYNAMIC_DATA[["selected_points"]]) > 1){
+        BUTTON_STATUS[["average"]] <- TRUE
+        BUTTON_STATUS[["combine"]] <- TRUE
+      }
+    }
+
+    else{
+      BUTTON_STATUS[["divide"]] <- FALSE
+      BUTTON_STATUS[["average"]] <- FALSE
+      BUTTON_STATUS[["combine"]] <- FALSE
+    }
+  }, ignoreNULL = FALSE)
+}
+
+#' Server side function to facilitate combining multiple points
+#'
+#' @export
+#'
+
+#' Server side function to factiliate averaging mulitple points
+#'
+#' @export
+#'
+
+#' Server side function to facilitate division of a single point

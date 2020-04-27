@@ -155,7 +155,9 @@ server <- function(input, output, session){
   # --------------------------------------------------------------------------------------------------------------------
   # IBI Editing Tab
   # --------------------------------------------------------------------------------------------------------------------
-  callModule(headsUpInfo, "heads_up")
+  output$heads_up <- renderPrint({
+    generate_heads_up_info(input, hover_id="hover_ibi", ibi_data=DYNAMIC_DATA[["edited_ibi"]])
+  })
   callModule(dynamicClrButtonMod, "set_ibi_y_axis", status_name="set_ibi_y_axis", label="Set y-axis")
   callModule(dynamicClrButtonMod, "show_ppg", status_name="show_ppg", label="Show PPG", updated_label="Remove PPG",
              default_display_name="show_ppg_default")
@@ -212,7 +214,6 @@ server <- function(input, output, session){
              trigger_object=TRIGGERS, trigger_id="ibi_click_select")
 
   observeEvent(TRIGGERS[["ibi_click_select"]], {
-    #browser()
     if(TRIGGERS[["ibi_click_select"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ibi"]])){
         TEMP_GRAPHICS_SETTINGS[["select_mode"]] <- "click"
         BUTTON_STATUS[["ibi_drag_select"]] <- FALSE
@@ -223,8 +224,11 @@ server <- function(input, output, session){
   # Next building out capacity to store "selected_points" - using drag to select
   drag_point_collection(input, brush_id="drag_ibis")
 
-  # Na now using click to select
+  # Using click to select
   click_point_selection(input, click_id="click_ibis", dbl_click_id="clear_ibis")
+
+  # Simple tracking for when each editing function can be used
+  track_editing_options()
 
   output$ibi_main_plot <- renderPlot({
     ibi_editing_plot(brush_in=input$editing_scroll_x)

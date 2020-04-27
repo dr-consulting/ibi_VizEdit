@@ -96,17 +96,12 @@ estimate_mode <- function(x){
 #'
 #' @export
 
-estimate_average_HR <- function(ibi_data=NULL, task_times=NULL, ibi_col="IBI",  time_col="Time"){
-  if(!is.null(task_times)){
-    ibi_trunc <- ibi_data[ibi_col][between(ibi_data[time_col], min(task_times[time_col]), max(task_times[time_col]))]
-  }
-  else{
-    ibi_trunc <- ibi_data[ibi_col][5:(nrow(ibi_data)-5)]
-  }
-  return(1/mean(ibi_trunc)*60)
+estimate_average_HR <- function(ibi_data=NULL, ibi_col="IBI",  time_col="Time"){
+    ibi_trunc <- ibi_data[[ibi_col]][5:(nrow(ibi_data)-5)]
+    return(1/mean(ibi_trunc)*60)
 }
 
-#' Internal utility for deteming average respiration jointly using PPG and IBI signals
+#' Internal utility for determing average respiration jointly using PPG and IBI signals
 #'
 #' @export
 
@@ -139,7 +134,7 @@ estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL, ds = N
 
   resp_stats <- c(mean=mean_resp, sd=sd_resp)
 
-  return(mean_resp)
+  return(resp_stats)
 }
 
 
