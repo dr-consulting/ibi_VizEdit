@@ -134,3 +134,21 @@ highlight_ibis <- function(base_plot=NULL, selected_points=NULL, time_col="Time"
     return(base_plot)
   }
 }
+
+
+#' Internal utility for generating dynamic text label corresponding to ibi value
+#'
+#' @export
+#'
+
+ibi_value_label <- function(base_plot=NULL, hover_point=NULL, time_col="Time", ibi_col="IBI"){
+  if(!is.null(hover_point)){
+    label_value = paste("IBI:", round(hover_point[[ibi_col]], digits = 3))
+    p <- base_plot +
+      geom_label(data=hover_point, label=label_value, nudge_y = .15)
+    return(p)
+  }
+  else{
+    return(base_plot)
+  }
+}

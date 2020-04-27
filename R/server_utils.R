@@ -241,6 +241,7 @@ ibi_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
   }
   else{
     p <- generate_base_gui_plot(ibi_data=ibi_data, color_map=IBI_POINT_COLORS)
+    p <- ibi_value_label(base_plot=p, hover_point=DYNAMIC_DATA[["hover_point"]])
 
     if(!is.null(brush_in)){
       if(!is.null(TEMP_GRAPHICS_SETTINGS[["ymin"]])){
@@ -268,13 +269,10 @@ ibi_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
 generate_heads_up_info <- function(input, hover_id=NULL, ibi_data=NULL){
   req(ibi_data)
   SUMMARY_STATS[["mean_HR"]] <- estimate_average_HR(ibi_data)
-  tmp_point <- nearPoints(DYNAMIC_DATA[["edited_ibi"]], coordinfo = input[[hover_id]])
   cat("Average HR (BPM):\n")
   cat(round(SUMMARY_STATS[["mean_HR"]], 2))
-  cat("\nNear Point:\n")
-  if(nrow(tmp_point)){
-    round(tmp_point[,c("IBI", "Time")], digits = 3)
-  }
+  cat("\nTotal IBIs:\n")
+  cat(nrow(ibi_data))
 }
 
 
@@ -404,6 +402,28 @@ track_editing_options <- function(){
       BUTTON_STATUS[["divide"]] <- FALSE
       BUTTON_STATUS[["average"]] <- FALSE
       BUTTON_STATUS[["combine"]] <- FALSE
+    }
+  }, ignoreNULL = FALSE)
+}
+
+#' Server side function to acquire hover points
+#'
+#' @export
+#'
+
+hover_point_selection <- function(input, hover_id, ibi_data=DYNAMIC_DATA[["edited_ibi"]]){
+  observeEvent(input[[hover_id]], {
+
+    if(!is.null(input[[hover_id]])){
+      tmp_point <- nearPoints(ibi_data, coordinfo = input[[hover_id]], maxpoints = 1)
+
+      if(nrow(tmp_point) == 1){
+        DYNAMIC_DATA[["hover_point"]] <- tmp_point
+      }
+
+      else{
+        DYNAMIC_DATA[["hover_point"]] <- NULL
+      }
     }
   }, ignoreNULL = FALSE)
 }

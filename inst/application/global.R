@@ -138,6 +138,7 @@ DYNAMIC_DATA <- reactiveValues(
   edited_ppg=NULL,
   edited_ibi=NULL,
   selected_points=NULL,
+  hover_point=NULL,
   action_log=NULL
 )
 

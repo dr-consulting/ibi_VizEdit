@@ -230,6 +230,9 @@ server <- function(input, output, session){
   # Simple tracking for when each editing function can be used
   track_editing_options()
 
+  # Obtain hover_point information
+  hover_point_selection(input, hover_id="hover_ibi")
+
   output$ibi_main_plot <- renderPlot({
     ibi_editing_plot(brush_in=input$editing_scroll_x)
   })
