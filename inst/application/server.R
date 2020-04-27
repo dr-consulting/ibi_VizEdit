@@ -198,11 +198,11 @@ server <- function(input, output, session){
              trigger_id="ibi_drag_select")
 
   observeEvent(TRIGGERS[["ibi_drag_select"]], {
+    #browser()
     if(TRIGGERS[["ibi_drag_select"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ibi"]])){
-      if(TEMP_GRAPHICS_SETTINGS[["select_mode"]] != "drag"){
         TEMP_GRAPHICS_SETTINGS[["select_mode"]] <- "drag"
         BUTTON_STATUS[["ibi_click_select"]] <- FALSE
-      }
+        BUTTON_STATUS[["ibi_drag_select"]] <- ifelse(!BUTTON_STATUS[["ibi_drag_select"]], TRUE, FALSE)
     }
   })
 
@@ -212,15 +212,19 @@ server <- function(input, output, session){
              trigger_object=TRIGGERS, trigger_id="ibi_click_select")
 
   observeEvent(TRIGGERS[["ibi_click_select"]], {
+    #browser()
     if(TRIGGERS[["ibi_click_select"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ibi"]])){
-      if(TEMP_GRAPHICS_SETTINGS[["select_mode"]] != "click"){
         TEMP_GRAPHICS_SETTINGS[["select_mode"]] <- "click"
         BUTTON_STATUS[["ibi_drag_select"]] <- FALSE
-      }
+        BUTTON_STATUS[["ibi_click_select"]] <- ifelse(!BUTTON_STATUS[["ibi_click_select"]], TRUE, FALSE)
     }
   })
 
+  # Next building out capacity to store "selected_points" - using drag to select
+  drag_point_collection(input, brush_id="drag_ibis")
 
+  # Na now using click to select
+  click_point_selection(input, click_id="click_ibis", dbl_click_id="clear_ibis")
 
   output$ibi_main_plot <- renderPlot({
     ibi_editing_plot(brush_in=input$editing_scroll_x)

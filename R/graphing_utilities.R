@@ -53,7 +53,7 @@ generate_ppg_data_check_plot <- function(ppg_data = NULL, ppg_col='PPG', time_co
 generate_base_gui_plot <- function(ibi_data=NULL, color_map=NULL, ibi_col="IBI", time_col='Time'){
   p <- ggplot(data=ibi_data,
               aes_string(x=time_col, y=ibi_col)) +
-    geom_point(aes(color=pnt_type), show.legend=FALSE) +
+    geom_point(aes(color=pnt_type), show.legend=FALSE, size=2.75) +
     geom_line(color="black") +
     scale_color_manual(values=color_map) +
     labs(x="Time (s)", y="IBI (s)") +

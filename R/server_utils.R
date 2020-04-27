@@ -323,3 +323,66 @@ eventTriggerMod <- function(input, output, session, input_id=NULL, trigger_items
     }
   })
 }
+
+
+#' Server side function that "collects" points for editing when in click and drag selection mode
+#'
+#' @export
+#'
+
+drag_point_collection <- function(input, brush_id, valid_status="drag",
+                                  status_var=reactive({TEMP_GRAPHICS_SETTINGS[["select_mode"]]})){
+  observeEvent(input[[brush_id]], {
+    if(status_var() == valid_status){
+      if(!is.null(input[[brush_id]])){
+        DYNAMIC_DATA[["selected_points"]] <- brushedPoints(DYNAMIC_DATA[["edited_ibi"]], input[[brush_id]])
+      }
+      else{
+        DYNAMIC_DATA[["selected_points"]] <- NULL
+      }
+    }
+  },
+  ignoreNULL = FALSE)
+
+
+}
+
+#' Server side function that "collects" points for editing when in click ibi selection mode
+#'
+#' @export
+#'
+
+click_point_selection <- function(input, click_id, dbl_click_id, valid_status="click",
+                                  status_var=reactive({TEMP_GRAPHICS_SETTINGS[["select_mode"]]})){
+  observeEvent(input[[click_id]], {
+    if(status_var() == valid_status & !is.null(input[[click_id]])){
+      if(is.null(DYNAMIC_DATA[["selected_points"]])){
+        DYNAMIC_DATA[["selected_points"]] <- nearPoints(DYNAMIC_DATA[["edited_ibi"]], input[[click_id]], xvar="Time",
+                                                        yvar="IBI", maxpoints = 1)
+      }
+
+      else{
+        tmp_clicked <- nearPoints(DYNAMIC_DATA[["edited_ibi"]], input[[click_id]], xvar="Time",
+                                  yvar="IBI", maxpoints = 1)
+
+        tmp_clicked <- rbind(tmp_clicked, DYNAMIC_DATA[["selected_points"]])
+
+        min_clicked_time <- min(tmp_clicked[["Time"]])
+        max_clicked_time <- max(tmp_clicked[["Time"]])
+
+        tmp_clicked <- DYNAMIC_DATA[["edited_ibi"]][between(DYNAMIC_DATA[["edited_ibi"]][["Time"]],
+                                                            min_clicked_time, max_clicked_time), ]
+
+        DYNAMIC_DATA[["selected_points"]] <- tmp_clicked
+      }
+    }
+  })
+
+  observeEvent(input[[dbl_click_id]], {
+    if(status_var() == valid_status){
+      if(!is.null(DYNAMIC_DATA[["selected_points"]])){
+        DYNAMIC_DATA[["selected_points"]] <- NULL
+      }
+    }
+  })
+}

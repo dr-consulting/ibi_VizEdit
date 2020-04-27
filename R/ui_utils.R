@@ -225,7 +225,7 @@ ibiEditingTools <- function(){
 #' @export
 
 ibiEditingPlots <- function(){
-  tagList(plotOutput("ibi_main_plot", height=600, brush=brushOpts("select_ibis", direction="x"),
+  tagList(plotOutput("ibi_main_plot", height=600, brush=brushOpts("drag_ibis", direction="x"),
                      hover=hoverOpts("hover_ibi", delay=250), click="click_ibis", dblclick="clear_ibis"),
           plotOutput("ibi_main_scroll", height=125, brush=brushOpts("editing_scroll_x", direction="x")))
 }
