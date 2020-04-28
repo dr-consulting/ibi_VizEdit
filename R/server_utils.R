@@ -392,7 +392,8 @@ track_editing_options <- function(){
         BUTTON_STATUS[["divide"]] <- TRUE
       }
 
-      else if(nrow(DYNAMIC_DATA[["selected_points"]]) > 1){
+      if(nrow(DYNAMIC_DATA[["selected_points"]]) > 1){
+        BUTTON_STATUS[["divide"]] <- FALSE
         BUTTON_STATUS[["average"]] <- TRUE
         BUTTON_STATUS[["combine"]] <- TRUE
       }
@@ -432,6 +433,39 @@ hover_point_selection <- function(input, hover_id, ibi_data=DYNAMIC_DATA[["edite
 #'
 #' @export
 #'
+
+combine_button_action <- function(input, ibi_data, selected_points=NULL, status=NULL){
+  observeEvent(input[["combine"]], {
+    if(status){
+      min_time_selected <- min(selected_points[["Time"]])
+      max_time_selected <- max(selected_points[["Time"]])
+      orig_time_before <- ibi_data[["Time"]][ibi_data[["Time"]] < min_time_selected]
+      orig_time_after <- ibi_data[["Time"]][ibi_data[["Time"]] > max_time_selected]
+      combined_ibi <- sum(selected_points[["IBI"]])
+      min_original_time <- min(ibi_data[["Time"]])
+
+      if(length(orig_time_before) == 0){
+        time_new <- c(combined_ibi + min_original_time, orig_time_after)
+      }
+
+      else if(length(orig_time_after) == 0){
+        max_orig_time_before <- max(orig_time_before)
+        time_new <- c(orig_time_before, max_orig_time_before + IBI)
+      }
+
+      else{
+        time_new <- c(orig_time_before, max_orig_time_before + IBI, orig_time_after)
+      }
+
+      ibi_new <- time_sum(Time)
+      new_data <- data.frame(IBI=ibi_new,
+                             Time=time_new,
+                             pnt_typ=ibi_data[["pnt_type"]])
+      new_data[["pnt_type"]][new_data[["Time"]] == max_time_selected] <- "combined"
+      DYNAMIC_DATA[["edited_ibi"]] <- new_data
+    }
+  })
+}
 
 #' Server side function to factiliate averaging mulitple points
 #'

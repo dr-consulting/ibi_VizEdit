@@ -233,6 +233,10 @@ server <- function(input, output, session){
   # Obtain hover_point information
   hover_point_selection(input, hover_id="hover_ibi")
 
+  # Combine two or more points
+  combine_button_action(input, ibi_data=DYNAMIC_DATA[["edited_ibi"]], selected_points=DYNAMIC_DATA[["selected_points"]],
+                        status=BUTTON_STATUS[["combine"]])
+
   output$ibi_main_plot <- renderPlot({
     ibi_editing_plot(brush_in=input$editing_scroll_x)
   })
