@@ -233,9 +233,19 @@ server <- function(input, output, session){
   # Obtain hover_point information
   hover_point_selection(input, hover_id="hover_ibi")
 
-  # Combine two or more points
-  combine_button_action(input, ibi_data=DYNAMIC_DATA[["edited_ibi"]], selected_points=DYNAMIC_DATA[["selected_points"]],
-                        status=BUTTON_STATUS[["combine"]])
+  # enable reactivity of combine button
+  callModule(eventTriggerMod, "combine", input_id="click_in",
+             trigger_items=reactive({BUTTON_STATUS[["combine"]]}), trigger_values=TRUE, trigger_object=TRIGGERS,
+             trigger_id="combine")
+
+  observeEvent(TRIGGERS[["combine"]], {
+    if(TRIGGERS[["combine"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ibi"]])){
+      combine_button_action(ibi_data=DYNAMIC_DATA[["edited_ibi"]],
+                            selected_points=DYNAMIC_DATA[["selected_points"]],
+                            status=BUTTON_STATUS[["combine"]])
+    }
+  })
+
 
   output$ibi_main_plot <- renderPlot({
     ibi_editing_plot(brush_in=input$editing_scroll_x)

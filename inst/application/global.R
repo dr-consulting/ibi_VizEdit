@@ -104,7 +104,8 @@ TRIGGERS <- reactiveValues(
   set_ibi_y_axis=0,
   show_ppg=0,
   ibi_drag_select=0,
-  ibi_click_select=0
+  ibi_click_select=0,
+  combine=0
 )
 
 SUMMARY_STATS <- reactiveValues(
