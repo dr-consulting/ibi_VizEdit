@@ -107,10 +107,10 @@ load_files_and_settings <- function(input){
     STATIC_DATA[["orig_ppg"]] <- load_ppg(FILE_SETTINGS[["ppg_file"]], skip_lines=STATIC_DATA[["skip_rows"]],
                                           column=STATIC_DATA[["column_select"]],
                                           sampling_rate=STATIC_DATA[["hz_input"]])
-
     STATIC_DATA[["task_times"]] <- load_timing_data(FILE_SETTINGS[["timing_file"]], case_id=STATIC_DATA[["case_id"]])
-
     STATIC_DATA[["display_task_times"]] <- create_gui_timing_table(STATIC_DATA[["task_times"]])
+    FILE_SETTINGS[["out_dir"]] <- create_and_return_output_dir(FILE_SETTINGS[["wd"]], STATIC_DATA[["case_id"]])
+    FILE_SETTINGS[["screenshot_out_dir"]] <- create_and_return_screenshot_dir(FILE_SETTINGS[["out_dir"]])
   }
 
   else{
@@ -409,28 +409,6 @@ track_editing_options <- function(){
   }, ignoreNULL = FALSE)
 }
 
-#' Server side function to acquire hover points
-#'
-#' @export
-#'
-
-hover_point_selection <- function(input, hover_id, ibi_data=DYNAMIC_DATA[["edited_ibi"]]){
-  observeEvent(input[[hover_id]], {
-
-    if(!is.null(input[[hover_id]])){
-      tmp_point <- nearPoints(ibi_data, coordinfo = input[[hover_id]], maxpoints = 1)
-
-      if(nrow(tmp_point) == 1){
-        DYNAMIC_DATA[["hover_point"]] <- tmp_point
-      }
-
-      else{
-        DYNAMIC_DATA[["hover_point"]] <- NULL
-      }
-    }
-  }, ignoreNULL = FALSE)
-}
-
 
 #' Server side function to extract necessary information from the IBI time series
 #'
@@ -458,7 +436,6 @@ extract_ibi_editing_info <- function(ibi_data, selected_points=NULL){
 
 combine_button_action <- function(ibi_data, selected_points=NULL, status=NULL){
   if(status){
-    browser()
     info <- extract_ibi_editing_info(ibi_data, selected_points)
     info[["combined_ibi"]] <- sum(selected_points[["IBI"]])
 
@@ -505,7 +482,6 @@ combine_button_action <- function(ibi_data, selected_points=NULL, status=NULL){
 
 divide_button_action <- function(ibi_data, denom=NULL, selected_points=NULL, status=NULL){
   if(status){
-    browser()
     info <- extract_ibi_editing_info(ibi_data, selected_points)
     info[["divided_ibis"]] <- rep(selected_points[["IBI"]]/denom, denom)
 
@@ -555,3 +531,107 @@ divide_button_action <- function(ibi_data, denom=NULL, selected_points=NULL, sta
     DYNAMIC_DATA[["edited_ibi"]] <- new_data
   }
 }
+
+
+#' Server side function to facilitate averaging multiple points
+#'
+#' Takes a single point and divides it into n points as determined by the user-specified denominator - defaults to 2 in
+#' the UI
+#'
+#' @export
+#'
+
+average_button_action <- function(ibi_data, selected_points=NULL, status=NULL){
+  if(status){
+    info <- extract_ibi_editing_info(ibi_data, selected_points)
+    avg_value <- mean(selected_points[["IBI"]])
+    info[["averaged_ibis"]] <- rep(mean(selected_points[["IBI"]]), nrow(selected_points))
+
+    if(length(info[["orig_time_before"]]) == 0){
+      ibi_new <- c(info[["averaged_ibis"]], ibi_data[["IBI"]][-1])
+      time_new <- ibi_data[["Time"]]
+      pnt_type <- c(rep("averaged", length(info[["averaged_ibis"]])), ibi_data[["pnt_type"]][-1])
+
+      for(i in 1:(length(info[["averaged_ibis"]]) - 1)){
+        time_new <- c(time_new[1] - info[["averaged_ibis"]][i], time_new)
+      }
+    }
+
+    else if(length(info[["orig_time_after"]]) == 0){
+      ibi_new <- c(ibi_data[["IBI"]][-nrow(ibi_data)], info[["averaged_ibis"]])
+      time_new <- ibi_data[["Time"]]
+
+      pnt_type <- c(ibi_data[["pnt_type"]][-nrow(ibi_data)],
+                    rep("averaged", length(info[["averaged_ibis"]])))
+
+      for(i in 1:(length(info[["averaged_ibis"]]) - 1)){
+        time_new <- c(time_new, time_new[length(time_new)] + info[["averaged_ibis"]][i])
+      }
+    }
+
+    else {
+      ibi_before  <- ibi_data[["IBI"]][ibi_data[["Time"]] < min(selected_points[["Time"]])]
+      ibi_after <- ibi_data[["IBI"]][ibi_data[["Time"]] > max(selected_points[["Time"]])]
+
+      pnt_type_before <- ibi_data[["pnt_type"]][ibi_data[["Time"]] < min(selected_points[["Time"]])]
+      pnt_type_after <- ibi_data[["pnt_type"]][ibi_data[["Time"]] > max(selected_points[["Time"]])]
+      time_before <- info[["orig_time_before"]]
+
+      for(i in 1:(length(info[["averaged_ibis"]]))){
+        time_before <- c(time_before, time_before[length(time_before)] + info[["averaged_ibis"]][i])
+      }
+
+      ibi_new <- c(ibi_before, info[["averaged_ibis"]], ibi_after)
+      time_new <- c(time_before, info[["orig_time_after"]])
+      pnt_type <- c(pnt_type_before, rep('averaged', length(info[["averaged_ibis"]])), pnt_type_after)
+    }
+
+    new_data <- data.frame(IBI=ibi_new,
+                           Time=time_new,
+                           pnt_type=pnt_type,
+                           stringsAsFactors = FALSE)
+    DYNAMIC_DATA[["edited_ibi"]] <- new_data
+  }
+}
+
+
+#' Server side utility that marks selected points as uneditable
+#'
+#' @export
+#'
+
+uneditable_button_action <- function(input, ibi_data, selected_points=NULL){
+  observeEvent(input[["uneditable"]], {
+    if(!is.null(selected_points)){
+      ibi_data[["pnt_type"]][ibi_data[["Time"]] %in% selected_points[["Time"]]] <- "uneditable"
+      DYNAMIC_DATA[["edited_ibi"]] <- ibi_data
+    }
+  })
+}
+
+#' Server side utility that takes restores all IBIs within the selected window
+#'
+#' @export
+#'
+
+restore_button_action <- function(input, restore_id, edited_data, original_data, brush_id, ibi_or_ppg=NULL){
+  observeEvent(input[[restore_id]], {
+    if(!is.null(input[[brush_id]])){
+      time_min <- input[[brush_id]]$xmin
+      time_max <- input[[brush_id]]$xmax
+      select_vals <- between(edited_data[["Time"]], time_min, time_max)
+      edited_data <- edited_data[!select_vals, ]
+      edited_data <- rbind(edited_data, original_data[between(original_data[["Time"]], time_min, time_max), ])
+      edited_data <- edited_data[order(edited_data[["Time"]], decreasing=FALSE), ]
+
+      if(ibi_or_ppg == "ibi"){
+        DYNAMIC_DATA[["edited_ibi"]] <- edited_data
+      }
+
+      if(ibi_or_ppg == "ppg"){
+        DYNAMIC_DATA[["edited_ppg"]] <- edited_data
+      }
+    }
+  })
+}
+

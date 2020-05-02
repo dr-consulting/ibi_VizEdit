@@ -233,6 +233,18 @@ server <- function(input, output, session){
   # Obtain hover_point information
   hover_point_selection(input, hover_id="hover_ibi")
 
+  # enable reactivity of average button
+  callModule(eventTriggerMod, "average", input_id="click_in",
+             trigger_items=reactive({BUTTON_STATUS[["average"]]}), trigger_values=TRUE, trigger_object=TRIGGERS,
+             trigger_id="average")
+
+  observeEvent(TRIGGERS[["average"]], {
+    if(TRIGGERS[["average"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ibi"]])){
+      average_button_action(ibi_data=DYNAMIC_DATA[["edited_ibi"]], selected_points=DYNAMIC_DATA[["selected_points"]],
+                            status=BUTTON_STATUS[["average"]])
+    }
+  })
+
   # enable reactivity of combine button
   callModule(eventTriggerMod, "combine", input_id="click_in",
              trigger_items=reactive({BUTTON_STATUS[["combine"]]}), trigger_values=TRUE, trigger_object=TRIGGERS,
@@ -258,8 +270,18 @@ server <- function(input, output, session){
     }
   })
 
+  # Enable action by the uneditable button
+  uneditable_button_action(input, ibi_data=DYNAMIC_DATA[["edited_ibi"]],
+                           selected_points=DYNAMIC_DATA[["selected_points"]])
+
+  restore_button_action(input, restore_id="undo_ibi", edited_data=DYNAMIC_DATA[["edited_ibi"]],
+                        original_data=STATIC_DATA[["orig_ibi"]], brush_id="drag_ibis", ibi_or_ppg="ibi")
+
+  save_screenshot(input, data=DYNAMIC_DATA[["edited_ibi"]], time_brush="editing_scroll_x", button_id="snapshot_ibi",
+                  ibi_or_ppg="ibi")
+
   output$ibi_main_plot <- renderPlot({
-    ibi_editing_plot(brush_in=input$editing_scroll_x)
+    ibi_editing_plot(brush_in=input[["editing_scroll_x"]])
   })
 
   output$ibi_main_scroll <- renderPlot({

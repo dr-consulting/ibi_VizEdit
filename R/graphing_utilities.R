@@ -143,12 +143,67 @@ highlight_ibis <- function(base_plot=NULL, selected_points=NULL, time_col="Time"
 
 ibi_value_label <- function(base_plot=NULL, hover_point=NULL, time_col="Time", ibi_col="IBI"){
   if(!is.null(hover_point)){
-    label_value = paste("IBI:", round(hover_point[[ibi_col]], digits = 3))
+    label_value <- paste("IBI:", round(hover_point[[ibi_col]], digits = 3))
     p <- base_plot +
-      geom_label(data=hover_point, label=label_value, nudge_y = .15)
+      geom_label(data = hover_point, label=label_value, nudge_y = .15)
     return(p)
   }
   else{
     return(base_plot)
   }
+}
+
+
+#' Server side function to acquire hover points
+#'
+#' @export
+#'
+
+hover_point_selection <- function(input, hover_id){
+  observeEvent(input[[hover_id]], {
+
+    if(!is.null(input[[hover_id]])){
+      tmp_point <- nearPoints(DYNAMIC_DATA[["edited_ibi"]], coordinfo = input[[hover_id]], maxpoints = 1)
+
+      if(nrow(tmp_point) == 1){
+        DYNAMIC_DATA[["hover_point"]] <- tmp_point
+      }
+
+      else{
+        DYNAMIC_DATA[["hover_point"]] <- NULL
+      }
+    }
+  }, ignoreNULL = FALSE)
+}
+
+
+#' Server side function that takes and saves screenshot in a screenshots folder for easy sharing with colleagues
+#'
+#' @export
+#'
+
+save_screenshot <- function(input, data, time_brush, button_id, ibi_or_ppg=NULL){
+  # Getting time min and max for labeling purposes
+  observeEvent(input[[button_id]], {
+    time_min <- ifelse(!is.null(input[[time_brush]]), round(input[[time_brush]]$xmin, 2),
+                       round(min(DYNAMIC_DATA[["edited_ibi"]][["Time"]]), 2))
+    time_max <- ifelse(!is.null(input[[time_brush]]), round(input[[time_brush]]$xmax, 2),
+                       round(max(DYNAMIC_DATA[["edited_ibi"]][["Time"]]), 2))
+
+    file_name <- paste(STATIC_DATA[["case_id"]], time_min, "to", time_max, sep = "_")
+    file_path <- paste0(FILE_SETTINGS[["screenshot_out_dir"]], "/", file_name, ".png")
+
+    if(ibi_or_ppg == "ibi"){
+      ibi_plot <- ibi_editing_plot(ibi_data=data, brush_in = input[[time_brush]])
+      main_title <- glue("{STATIC_DATA[['case_id']]}: IBI Series from {time_min} to {time_max}")
+      return_plot <- ibi_plot +
+        ggtitle(main_title)
+    }
+
+    else if(ibi_or_ppg == "ppg"){
+      # Still needs work
+    }
+
+    ggsave(file_path, return_plot, device = "png", width = 9, height = 6, units = "in")
+  })
 }

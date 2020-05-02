@@ -142,8 +142,8 @@ estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL, ds = N
 #'
 #' @export
 
-create_and_return_output_dir <- function(wd=NULL, sub_id=NULL, secondary_id=NULL, study_id=NULL){
-  out_folder_name <- paste(sub_id, secondary_id, study_id, "output", Sys.Date(), sep="_")
+create_and_return_output_dir <- function(wd=NULL, case_id=NULL){
+  out_folder_name <- paste(case_id, "output", sep="_")
   out_dir <- paste0(wd, "/", out_folder_name)
 
   if(!dir.exists(out_dir)){
@@ -152,6 +152,22 @@ create_and_return_output_dir <- function(wd=NULL, sub_id=NULL, secondary_id=NULL
 
   return(out_dir)
 }
+
+
+#' Internal \code{ibiVizEdit} utility for creating screenshot directory inside of the output directory
+#'
+#' @export
+
+create_and_return_screenshot_dir <- function(out_dir=NULL){
+  dir <- paste0(out_dir, "/screenshots")
+
+  if(!dir.exists(dir)){
+    dir.create(dir)
+  }
+
+  return(dir)
+}
+
 
 #' Internal \code{ibiVizEdit} utility for creating an subdirectory for GP imputation model outputs
 #'

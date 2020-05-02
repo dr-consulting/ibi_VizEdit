@@ -72,7 +72,10 @@ FILE_SETTINGS <- reactiveValues(
   max_file=NULL,
   wd=NULL,
   ppg_file=NULL,
-  timing_file=NULL
+  timing_file=NULL,
+  out_dir=NULL,
+  gp_out_dir=NULL,
+  screenshot_out_dir=NULL
 )
 
 BUTTON_STATUS <- reactiveValues(
@@ -137,6 +140,7 @@ STATIC_DATA <- reactiveValues(
   task_times=NULL,
   display_task_times=NULL,
   peak_detect_tab=NULL
+
 )
 
 DYNAMIC_DATA <- reactiveValues(
