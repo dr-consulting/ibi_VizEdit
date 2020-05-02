@@ -25,7 +25,9 @@ AVERAGE_RESPIRATION_BY_AGE <- list(`Young Infant (<1 yr)`=c(30,60),
 
 EPOCH_CHOICES <- c(10, 15, 20, 30, 45)
 EPOCH_SELECTED <- c(10, 15, 20, 30, 45)
-IBI_POINT_COLORS <- c(edited="#7d3c98",
+IBI_POINT_COLORS <- c(combined="#e482ff",
+                      averaged="#e482ff",
+                      divided="#e482ff",
                       original="#426ebd",
                       uneditable="#c0392b")
 
@@ -105,7 +107,9 @@ TRIGGERS <- reactiveValues(
   show_ppg=0,
   ibi_drag_select=0,
   ibi_click_select=0,
-  combine=0
+  combine=0,
+  divide=0,
+  average=0
 )
 
 SUMMARY_STATS <- reactiveValues(

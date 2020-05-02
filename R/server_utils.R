@@ -390,6 +390,8 @@ track_editing_options <- function(){
 
       if(nrow(DYNAMIC_DATA[["selected_points"]]) == 1){
         BUTTON_STATUS[["divide"]] <- TRUE
+        BUTTON_STATUS[["average"]] <- FALSE
+        BUTTON_STATUS[["combine"]] <- FALSE
       }
 
       if(nrow(DYNAMIC_DATA[["selected_points"]]) > 1){
@@ -429,6 +431,26 @@ hover_point_selection <- function(input, hover_id, ibi_data=DYNAMIC_DATA[["edite
   }, ignoreNULL = FALSE)
 }
 
+
+#' Server side function to extract necessary information from the IBI time series
+#'
+#' Takes in the ibi time series and extracts information used in the average, combine, and divide computations
+#'
+#' @export
+#'
+extract_ibi_editing_info <- function(ibi_data, selected_points=NULL){
+  ibi_info <- list(
+    first_ibi=ibi_data[["IBI"]][1],
+    max_time_selected=max(selected_points[["Time"]]),
+    orig_time_before=ibi_data[["Time"]][ibi_data[["Time"]] < min(selected_points[["Time"]])],
+    orig_time_after=ibi_data[["Time"]][ibi_data[["Time"]] > max(selected_points[["Time"]])],
+    max_orig_time_before=max(ibi_data[["Time"]][ibi_data[["Time"]] < min(selected_points[["Time"]])])
+  )
+
+  return(ibi_info)
+}
+
+
 #' Server side function to facilitate combining multiple points
 #'
 #' @export
@@ -437,38 +459,99 @@ hover_point_selection <- function(input, hover_id, ibi_data=DYNAMIC_DATA[["edite
 combine_button_action <- function(ibi_data, selected_points=NULL, status=NULL){
   if(status){
     browser()
-    min_time_selected <- min(selected_points[["Time"]])
-    max_time_selected <- max(selected_points[["Time"]])
-    orig_time_before <- ibi_data[["Time"]][ibi_data[["Time"]] < min_time_selected]
-    orig_time_after <- ibi_data[["Time"]][ibi_data[["Time"]] > max_time_selected]
-    max_orig_time_before <- max(orig_time_before)
-    combined_ibi <- sum(selected_points[["IBI"]])
-    min_original_time <- min(ibi_data[["Time"]])
+    info <- extract_ibi_editing_info(ibi_data, selected_points)
+    info[["combined_ibi"]] <- sum(selected_points[["IBI"]])
 
-    if(length(orig_time_before) == 0){
-      time_new <- c(combined_ibi + min_original_time, orig_time_after)
-    }
-
-    else if(length(orig_time_after) == 0){
-      time_new <- c(orig_time_before, max_orig_time_before + combined_ibi)
+    if(length(info[["orig_time_before"]]) == 0){
+      # Effectively the same as deleting the first point and adding its IBI to the second point
+      new_data <- ibi_data[-1,]
+      new_data[["pnt_type"]][1] <- "combined"
+      new_data[["IBI"]][1] <- info[["combined_ibi"]]
     }
 
     else{
-      time_new <- c(orig_time_before, max_orig_time_before + combined_ibi, orig_time_after)
+
+      if(length(info[["orig_time_after"]]) == 0){
+        time_new <- c(info[["orig_time_before"]], info[["max_orig_time_before"]] + info[["combined_ibi"]])
+      }
+
+      else{
+        time_new <- c(info[["orig_time_before"]], info[["max_orig_time_before"]] + info[["combined_ibi"]],
+                      info[["orig_time_after"]])
+      }
+      ibi_new <- time_sum(time_new)[-1]  # Dropping the first value to preserve original time stamps
+      ibi_new <- c(info[["first_ibi"]], ibi_new)
+      pnt_type <- ibi_data[["pnt_type"]][ibi_data[["Time"]] %in% time_new]
+      pnt_type[time_new == info[["max_time_selected"]]] <- "combined"
+
+      new_data <- data.frame(IBI=ibi_new,
+                             Time=time_new,
+                             pnt_type=pnt_type,
+                             stringsAsFactors = FALSE)
     }
 
-    ibi_new <- time_sum(time_new)
-    new_data <- data.frame(IBI=ibi_new,
-                           Time=time_new,
-                           pnt_typ=ibi_data[["pnt_type"]])
-    new_data[["pnt_type"]][new_data[["Time"]] == max_time_selected] <- "combined"
     DYNAMIC_DATA[["edited_ibi"]] <- new_data
   }
 }
 
-#' Server side function to factiliate averaging mulitple points
+
+#' Server side function to facilitate division of a single point
+#'
+#' Takes a single point and divides it into n points as determined by the user-specified denominator - defaults to 2 in
+#' the UI
 #'
 #' @export
 #'
 
-#' Server side function to facilitate division of a single point
+divide_button_action <- function(ibi_data, denom=NULL, selected_points=NULL, status=NULL){
+  if(status){
+    browser()
+    info <- extract_ibi_editing_info(ibi_data, selected_points)
+    info[["divided_ibis"]] <- rep(selected_points[["IBI"]]/denom, denom)
+
+    if(length(info[["orig_time_before"]]) == 0){
+      ibi_new <- c(info[["divided_ibis"]], ibi_data[["IBI"]][-1])
+      time_new <- ibi_data[["Time"]]
+      pnt_type <- c(rep("divided", length(info[["divided_ibis"]])), ibi_data[["pnt_type"]][-1])
+
+      for(i in 1:(length(info[["divided_ibis"]]) - 1)){
+        time_new <- c(time_new[1] - info[["divided_ibis"]][i], time_new)
+      }
+    }
+
+    else if(length(info[["orig_time_after"]]) == 0){
+      ibi_new <- c(ibi_data[["IBI"]][-nrow(ibi_data)], info[["divided_ibis"]])
+      time_new <- ibi_data[["Time"]]
+
+      pnt_type <- c(ibi_data[["pnt_type"]][-nrow(ibi_data)],
+                    rep("divided", length(info[["divided_ibis"]])))
+
+      for(i in 1:(length(info[["divided_ibis"]]) - 1)){
+        time_new <- c(time_new, time_new[length(time_new)] + info[["divided_ibis"]][i])
+      }
+    }
+
+    else {
+      ibi_before  <- ibi_data[["IBI"]][ibi_data[["Time"]] < selected_points[["Time"]]]
+      ibi_after <- ibi_data[["IBI"]][ibi_data[["Time"]] > selected_points[["Time"]]]
+
+      pnt_type_before <- ibi_data[["pnt_type"]][ibi_data[["Time"]] < selected_points[["Time"]]]
+      pnt_type_after <- ibi_data[["pnt_type"]][ibi_data[["Time"]] > selected_points[["Time"]]]
+      time_before <- info[["orig_time_before"]]
+
+      for(i in 1:(length(info[["divided_ibis"]]))){
+        time_before <- c(time_before, time_before[length(time_before)] + info[["divided_ibis"]][i])
+      }
+
+      ibi_new <- c(ibi_before, info[["divided_ibis"]], ibi_after)
+      time_new <- c(time_before, info[["orig_time_after"]])
+      pnt_type <- c(pnt_type_before, rep('divided', length(info[["divided_ibis"]])), pnt_type_after)
+    }
+
+    new_data <- data.frame(IBI=ibi_new,
+                           Time=time_new,
+                           pnt_type=pnt_type,
+                           stringsAsFactors = FALSE)
+    DYNAMIC_DATA[["edited_ibi"]] <- new_data
+  }
+}

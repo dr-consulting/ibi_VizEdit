@@ -246,6 +246,17 @@ server <- function(input, output, session){
     }
   })
 
+  # enable reactivity of divide button
+  callModule(eventTriggerMod, "divide", input_id="click_in",
+             trigger_items=reactive({BUTTON_STATUS[["divide"]]}), trigger_values=TRUE, trigger_object=TRIGGERS,
+             trigger_id="divide")
+
+  observeEvent(TRIGGERS[["divide"]], {
+    if(TRIGGERS[["divide"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ibi"]])){
+      divide_button_action(ibi_data=DYNAMIC_DATA[["edited_ibi"]], denom=input[["denom"]],
+                           selected_points=DYNAMIC_DATA[["selected_points"]], status=BUTTON_STATUS[["divide"]])
+    }
+  })
 
   output$ibi_main_plot <- renderPlot({
     ibi_editing_plot(brush_in=input$editing_scroll_x)
