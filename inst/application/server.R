@@ -137,7 +137,7 @@ server <- function(input, output, session){
 
       # Generate the editable ppg data set
       if(is.null(DYNAMIC_DATA[["edited_ppg"]])){
-        DYNAMIC_DATA[["edited_ppg"]] <- STATIC_DATA[["orig_ppg"]]
+        DYNAMIC_DATA[["edited_ppg"]] <- STATIC_DATA[["processed_ppg"]]
       }
 
       # Generate the editable ibi data set

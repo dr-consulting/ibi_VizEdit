@@ -104,12 +104,14 @@ load_files_and_settings <- function(input){
     STATIC_DATA[["peak_iter"]] <- input[["peak_iter"]]
     STATIC_DATA[["epoch_outputs"]] <- input[["epoch_outputs"]]
     STATIC_DATA[["case_id"]] <- paste(input[["sub_id"]], input[["secondary_id"]], sep="_")
+    STATIC_DATA[["optional_id"]] <- input[["optional_id"]]
     STATIC_DATA[["orig_ppg"]] <- load_ppg(FILE_SETTINGS[["ppg_file"]], skip_lines=STATIC_DATA[["skip_rows"]],
                                           column=STATIC_DATA[["column_select"]],
                                           sampling_rate=STATIC_DATA[["hz_input"]])
     STATIC_DATA[["task_times"]] <- load_timing_data(FILE_SETTINGS[["timing_file"]], case_id=STATIC_DATA[["case_id"]])
     STATIC_DATA[["display_task_times"]] <- create_gui_timing_table(STATIC_DATA[["task_times"]])
-    FILE_SETTINGS[["out_dir"]] <- create_and_return_output_dir(FILE_SETTINGS[["wd"]], STATIC_DATA[["case_id"]])
+    FILE_SETTINGS[["out_dir"]] <- create_and_return_output_dir(FILE_SETTINGS[["wd"]], STATIC_DATA[["case_id"]],
+                                                               optional_id=META_DATA[["optional_id"]])
     FILE_SETTINGS[["screenshot_out_dir"]] <- create_and_return_screenshot_dir(FILE_SETTINGS[["out_dir"]])
   }
 
@@ -289,7 +291,7 @@ ppg_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
     if(!is.null(brush_in)){
       p <- p + coord_cartesian(xlim=c(brush_in$xmin, brush_in$xmax))
     }
-    p <- add_task_v_lines(base_plot=p, timing_data=STATIC_DATA[["task_times"]])
+    p <- add_task_v_lines(base_plot=p, timing_data=STATIC_DATA[["display_task_times"]])
     p <- add_ppg_waveform(base_plot=p, ppg_data=DYNAMIC_DATA[["edited_ppg"]],
                           show_ppg=TRUE)
     p <- highlight_ibis(base_plot=p, selected_points=DYNAMIC_DATA[["selected_points"]])
@@ -468,6 +470,7 @@ combine_button_action <- function(ibi_data, selected_points=NULL, status=NULL){
     }
 
     DYNAMIC_DATA[["edited_ibi"]] <- new_data
+    DYNAMIC_DATA[["selected_points"]] <- NULL
   }
 }
 
@@ -529,6 +532,7 @@ divide_button_action <- function(ibi_data, denom=NULL, selected_points=NULL, sta
                            pnt_type=pnt_type,
                            stringsAsFactors = FALSE)
     DYNAMIC_DATA[["edited_ibi"]] <- new_data
+    DYNAMIC_DATA[["selected_points"]] <- NULL
   }
 }
 
@@ -591,6 +595,7 @@ average_button_action <- function(ibi_data, selected_points=NULL, status=NULL){
                            pnt_type=pnt_type,
                            stringsAsFactors = FALSE)
     DYNAMIC_DATA[["edited_ibi"]] <- new_data
+    DYNAMIC_DATA[["selected_points"]] <- NULL
   }
 }
 

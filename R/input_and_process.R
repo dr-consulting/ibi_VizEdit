@@ -64,9 +64,7 @@ filter_ppg <- function(ppg_data, sampling_rate, ppg_col="PPG", time_col="Time"){
   ppg_sig <- smooth.spline(ppg_sig, nknots=10*sampling_rate)$y
   ppg_sig <- ts(ppg_sig, frequency = sampling_rate)
 
-  # Hz using bpm for heart rate
   ppg_filtered <- seewave::bwfilter(ppg_sig, from=50/60, to=180/60, bandpass=TRUE, f=sampling_rate)
-
 
   df <- data.frame(PPG = ppg_filtered,
                    Time = ppg_data[[time_col]])

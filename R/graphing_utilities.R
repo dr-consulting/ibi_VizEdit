@@ -190,12 +190,12 @@ save_screenshot <- function(input, data, time_brush, button_id, ibi_or_ppg=NULL)
     time_max <- ifelse(!is.null(input[[time_brush]]), round(input[[time_brush]]$xmax, 2),
                        round(max(DYNAMIC_DATA[["edited_ibi"]][["Time"]]), 2))
 
-    file_name <- paste(STATIC_DATA[["case_id"]], time_min, "to", time_max, sep = "_")
+    file_name <- glue("{STATIC_DATA[['case_id']]}_{STATIC_DATA[['optional_id']]}_{time_min}_to_{time_max}")
     file_path <- paste0(FILE_SETTINGS[["screenshot_out_dir"]], "/", file_name, ".png")
 
     if(ibi_or_ppg == "ibi"){
       ibi_plot <- ibi_editing_plot(ibi_data=data, brush_in = input[[time_brush]])
-      main_title <- glue("{STATIC_DATA[['case_id']]}: IBI Series from {time_min} to {time_max}")
+      main_title <- glue("{STATIC_DATA[['case_id']]}_{STATIC_DATA[['optional_id']]}: IBI Series from {time_min} to {time_max}")
       return_plot <- ibi_plot +
         ggtitle(main_title)
     }

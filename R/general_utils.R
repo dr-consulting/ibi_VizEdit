@@ -142,8 +142,13 @@ estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL, ds = N
 #'
 #' @export
 
-create_and_return_output_dir <- function(wd=NULL, case_id=NULL){
+create_and_return_output_dir <- function(wd=NULL, case_id=NULL, optional_id=NULL){
   out_folder_name <- paste(case_id, "output", sep="_")
+
+  if(!is.null(optional_id)){
+    out_folder_name <- paste(out_folder_name, optional_id, sep = "_")
+  }
+
   out_dir <- paste0(wd, "/", out_folder_name)
 
   if(!dir.exists(out_dir)){
