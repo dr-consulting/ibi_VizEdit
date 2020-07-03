@@ -56,7 +56,7 @@ range01 <- function(x){
 #'
 #' @export
 
-estimate_mode <- function(x){
+estimate_max_density <- function(x){
   d <- density(x)
   return(d$x[which.max(d$y)])
 }
@@ -66,9 +66,18 @@ estimate_mode <- function(x){
 #'
 #' @export
 
-estimate_average_HR <- function(ibi_data=NULL, ibi_col="IBI",  time_col="Time"){
-    ibi_trunc <- ibi_data[[ibi_col]][5:(nrow(ibi_data)-5)]
-    return(1/mean(ibi_trunc)*60)
+estimate_average_HR <- function(ibi_data=NULL, ibi_col="IBI", trim=3){
+
+  # Drop first 3 and last 3 data points to accomodate end of file issues
+  if(!is.null(trim)){
+    ibi_trunc <- ibi_data[3:(nrow(ibi_data)-3), ]
+  }
+
+  if("pnt_type" %in% colnames(ibi_data)){
+    ibi_trunc <- ibi_trunc[ibi_trunc[["pnt_type"]] != "Uneditable", ]
+  }
+
+  return(1/mean(ibi_trunc[[ibi_col]])*60)
 }
 
 #' Internal utility for determing average respiration jointly using PPG and IBI signals
