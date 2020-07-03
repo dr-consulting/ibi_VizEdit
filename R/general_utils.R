@@ -33,36 +33,6 @@ set_file_size_max <- function(size = 500){
 }
 
 
-#' Initialize global reactive values.
-#'
-#' \code{ini_global_reactive_values} is an internal utility that initializes a set of global reactive values that affect
-#' the behavior of the GUI, including colors, displays, and which actions are available to a user.
-#'
-#' @param tot_edits is a \code{dataframe} that is used to maintain a running track record unique edits made by a user.
-#' @param base_on is used to toggle access to the "base" editing functions on and off. Default is off.
-#' @param adv_on is used to toggle access to the "advanced" editing functions on and off. Default is off.
-#' @param ppg_on is used to toggle the display of the underlying PPG waveform on and off. Only works when a user is
-#' zoomed in on a section of the file. Default is off.
-#' @param select_on is used to toggle on access to the select brush on the "base" editing panel. This particular select
-#' brush supports the use of the "combine", "divide", and "average" functions. Default is off.
-#' @param add_delete_on is used to toggle on access to mouse-click-based "add" and "delete" functionality.
-#' @param select_on2 is used to toggle on access to the select brush on the "advanced" editing panel. This particular
-#' select brush allows the user to specify the section of corrupted data targeted for imputation. Default is off.
-#' @param add_delete_on2 is used to toggle on access to mouse-click-based "add" and "delete" functionality. Default is
-#' off.
-#' @param start.time is used to store the time and date the user began processing a target file.
-#' @param GP_impute_tab is used to store ongoing information about Gaussian imputation attempts. The table is included
-#' in the final output.
-#'
-#' @export
-
-ibi_global_reactive_values <- function(){
-  rv_start <- reactiveValues(tot_edits=data.frame(), base_on=0, adv_on=0, ppg_on=0, select_on=0, add_delete_on=0,
-                             select_on2=0, add_delete_on2=0, start_time=NULL, GP_impute_tab=NULL, IBI_temp=NULL)
-  return(rv_start)
-}
-
-
 #' Set min/max to 0/1.
 #'
 #' \code{range01} is an internal utility that takes a vector of values and returns a new vector with the same
