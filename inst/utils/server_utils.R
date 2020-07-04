@@ -120,7 +120,7 @@ load_files_and_settings <- function(input){
   }
 }
 
-#' Server-side utility for \code(ibiVizEdit) that monitors data entry values and updates them accordingly
+#' Server-side utility for \code{ibiVizEdit} that monitors data entry values and updates them accordingly
 #'
 #' @export
 
