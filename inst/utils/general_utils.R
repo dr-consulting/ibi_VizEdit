@@ -96,12 +96,12 @@ estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL,
                                 max(ibi_data[time_col], na.rm = TRUE), by = .01))
   colnames(time_df) <- c(time_col)
   ibi_data <- merge(time_df, ibi_data, by=time_col, all=TRUE)
-  ibi_data[ibi_col] <- na_kalman(ibi_data[time_col])
+  ibi_data[ibi_col] <- imputeTS::na_kalman(ibi_data[time_col])
 
-  ibi_filtered <- bwfilter(ts(ibi_data[ibi_col], frequency = 100), from = respiration_bounds[1],
-                           to = respiration_bounds[2], bandpass = TRUE, f = 100)
+  ibi_filtered <- seewave::bwfilter(ts(ibi_data[ibi_col], frequency = 100), from = respiration_bounds[1],
+                                    to = respiration_bounds[2], bandpass = TRUE, f = 100)
 
-  spec_ibi <- mvspec(ibi_filtered, spans=c(7, 7), taper=.1, demean=TRUE, log='no', plot=FALSE)
+  spec_ibi <- astsa::mvspec(ibi_filtered, spans=c(7, 7), taper=.1, demean=TRUE, log='no', plot=FALSE)
 
   # Truncating data to expected respiration frequency range.
   # The more consistent and cleaner the signal across ppg and ibi waverforms, the stronger prior for the average
