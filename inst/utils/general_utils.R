@@ -68,9 +68,11 @@ estimate_max_density <- function(x){
 
 estimate_average_HR <- function(ibi_data=NULL, ibi_col="IBI", trim=3){
 
-  # Drop first 3 and last 3 data points to accomodate end of file issues
+  ibi_trunc <- ibi_data
+
+  # Drop first and last data points to accomodate end of file issues - defined by trim
   if(!is.null(trim)){
-    ibi_trunc <- ibi_data[3:(nrow(ibi_data)-3), ]
+    ibi_trunc <- ibi_data[trim:(nrow(ibi_data)-trim), ]
   }
 
   if("pnt_type" %in% colnames(ibi_data)){

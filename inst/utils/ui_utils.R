@@ -114,7 +114,7 @@ dataEntryActionButtons <- function(){
   )
 }
 
-#' UI utility for \code(ibiVizEdit) that adds a note about open-source nature of program and link to documentation
+#' UI utility for \code{ibiVizEdit} that adds a note about open-source nature of program and link to documentation
 #'
 #' @export
 

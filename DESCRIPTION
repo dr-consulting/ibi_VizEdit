@@ -8,9 +8,21 @@ Description: ibiVizEdit allows users to process and edit heart rate data obtaine
     Users can create a interbeat interval (IBI) time-series from their raw PPG files, launch an Rshiny GUI that allows 
     them to visually edit the time-series for artifact, and output meaningful summary statistics for the file overall
     and by task/condition if a timing file is supplied. 
-License: MIT
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
+Imports: 
+    shiny, 
+    shinythemes, 
+    dplyr, 
+    ggplot2, 
+    shinyFiles, 
+    shinyWidgets,
+    signal, 
+    seewave, 
+    oce, 
+    psych
 Suggests: 
-    testthat
+    testthat, 
+    tidyverse
