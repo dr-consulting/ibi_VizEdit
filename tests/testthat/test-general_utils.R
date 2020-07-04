@@ -114,17 +114,39 @@ test_that("create_and_return_screenshot_dir: creates output directory and return
   expect_false(dir.exists(tmp_dir)) # ensure the mini-teardown step works.
 })
 
-test_that("create_and_return_gp_subdir: ...", {
-  # skipping for now but need to come back - may need to modify function slightly
+test_that("create_and_return_gp_output_subdir: ...", {
+  home_dir <- Sys.getenv("HOME")
+  tmp_dir <- paste0(home_dir, "/tmp_test")
+  gp_driver <- list(prediction_window = c(100, 200))
+  set_sys_time <- Sys.time()
+  result <- create_and_return_gp_output_subdir(tmp_dir, gp_driver, set_sys_time)
+
+  expected <- paste0(tmp_dir, "/GP_imputation_output_100_200_", set_sys_time)
+  expect_equal(result, expected)
+  expect_true(dir.exists(expected))
+
+  # Remove the temporary directory at the end
+  unlink(tmp_dir, recursive = TRUE)
+  expect_false(dir.exists(tmp_dir)) # ensure the mini-teardown step works.
 })
 
-test_that("raise_not_integer: raises when value is not an integer", {
+test_that("raise_not_in_range_integer: raises when value is not an integer", {
   expected <- "The input value of 2.5 for triathlons must be an integer"
-  expect_warning(raise_not_integer(2.5, "triathlons"), expected)
-  result <- suppressWarnings(raise_not_integer(2.5, "triathlons"))
+  expect_warning(raise_not_in_range_integer (2.5, "triathlons"), expected)
+  result <- suppressWarnings(raise_not_in_range_integer (2.5, "triathlons"))
   expect_equal(result, expected)
 })
 
-test_that("raise_not_integer: raises when value is not an integer and/or out of bounds", {
-  # test stub to come back to
+test_that("raise_not_in_range_integer: raises when value is out of bounds", {
+  # raises & returns when value is not an integer and out of range
+  expected <- "The input value of 2.5 for triathlons must be an integer between 3 and 5"
+  expect_warning(raise_not_in_range_integer (2.5, "triathlons", 3, 5), expected)
+  result <- suppressWarnings(raise_not_in_range_integer (2.5, "triathlons", 3, 5))
+  expect_equal(result, expected)
+
+  # raises & returns when the value is an integer and out of range
+  expected <- "The input value of 2 for triathlons must be an integer between 3 and 5"
+  expect_warning(raise_not_in_range_integer (2, "triathlons", 3, 5), expected)
+  result <- suppressWarnings(raise_not_in_range_integer (2, "triathlons", 3, 5))
+  expect_equal(result, expected)
 })

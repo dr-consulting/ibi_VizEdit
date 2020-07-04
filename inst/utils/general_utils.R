@@ -161,9 +161,9 @@ create_and_return_screenshot_dir <- function(out_dir=NULL){
 #'
 #' @export
 
-create_and_return_gp_output_subdir <- function(out_dir, gp_driver){
+create_and_return_gp_output_subdir <- function(out_dir, gp_driver, sys_time=Sys.time()){
   gp_folder_name <- paste("GP_imputation_output", gp_driver$prediction_window[1], gp_driver$prediction_window[2],
-                          Sys.time(), sep="_")
+                          sys_time, sep="_")
   gp_subdir <- paste0(out_dir, "/", gp_folder_name)
 
   if(!dir.exists(gp_subdir)){
@@ -178,12 +178,17 @@ create_and_return_gp_output_subdir <- function(out_dir, gp_driver){
 #'
 #' @export
 
-raise_not_integer <- function(input_val=NULL, input_name=NULL, lower_bound=NULL, upper_bound=NULL){
-  if(input_val %% 1 != 0){
-    msg <- "The input value of {input_val} for {input_name} must be an integer"
-    if(!is.null(lower_bound) & !is.null(upper_bound)){
-      msg <- paste(msg, "between {lower_bound} and {upper_bound}")
-    }
+raise_not_in_range_integer <- function(input_val=NULL, input_name=NULL, lower_bound=NULL, upper_bound=NULL){
+  msg <- "The input value of {input_val} for {input_name} must be an integer"
+
+  if(input_val %% 1 != 0 & is.null(lower_bound) & is.null(upper_bound)){
+    msg <- glue::glue(msg)
+    warning(msg)
+    return(msg)
+  }
+
+  if(!is.null(lower_bound) & !is.null(upper_bound) & !dplyr::between(input_val, lower_bound, upper_bound)){
+    msg <- paste(msg, "between {lower_bound} and {upper_bound}")
     msg <- glue::glue(msg)
     warning(msg)
     return(msg)
