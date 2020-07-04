@@ -16,7 +16,7 @@ Imports:
     shiny, 
     shinythemes, 
     dplyr, 
-    ggplot, 
+    ggplot2, 
     shinyFiles, 
     shinyWidgets,
     signal, 
