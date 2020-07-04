@@ -1,0 +1,10 @@
+citHeader("To cite ibiVizEdit  in publications use:") 
+citEntry(entry = "Computer Software",
+  title = "Open source processing and editing of photoplethysmogram data: {ibiVizEdit}",
+  author = personList(as.person("Matthew G. Barstead)),
+  year = "2020",
+  url = "https://github.com/matgbar/IBI_VizEdit",
+  textVersion =
+  paste("M. G. Barstead (2020).",
+        "Open source processing and editing of photoplethysmogram data with ibiVizEdit.",
+        "https://github.com/matgbar/IBI_VizEdit.")
