@@ -1,4 +1,4 @@
-source("~/dr-consulting_GH/ibi_VizEdit/R/general_utils.R")
+source(system.file("utils", "general_utils.R", package = "ibiVizEdit"))
 
 test_that("set_file_size_max: returns max file size memory as string", {
   expected <- "200 MB"
