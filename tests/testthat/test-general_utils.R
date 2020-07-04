@@ -45,3 +45,16 @@ test_that("estimate_average_HR: returns valid average", {
   expect_equal(result, expected)
 })
 
+test_that("estimate_average_HR: ignores uneditable data points", {
+  test_data <- read.csv("../testdata/clean_ibi_example.csv")
+
+  uneditable_data <- data.frame(IBI = rep(600, 3),
+                                Time = rep(5000, 3),
+                                pnt_type = rep("Uneditable", 3))
+
+  test_data_w_uneditable <- rbind(test_data, uneditable_data)
+  expected <- estimate_average_HR(ibi_data = test_data, trim = NULL)
+  result <- estimate_average_HR(ibi_data = test_data_w_uneditable, trim = NULL)
+
+  expect_equal(result, expected)
+})
