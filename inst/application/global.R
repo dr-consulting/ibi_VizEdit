@@ -1,13 +1,10 @@
-source("~/dr-consulting_GH/ibi_VizEdit/R/ui_utils.R")
+source(system.file("ui_utils.R", package = "ibiVizEdit"))
 source("~/dr-consulting_GH/ibi_VizEdit/R/server_utils.R")
 source("~/dr-consulting_GH/ibi_VizEdit/R/general_utils.R")
 source("~/dr-consulting_GH/ibi_VizEdit/R/graphing_utilities.R")
 source("~/dr-consulting_GH/ibi_VizEdit/R/input_and_process.R")
 source("~/dr-consulting_GH/ibi_VizEdit/R/hotkey_utils.R")
 source("~/dr-consulting_GH/ibi_VizEdit/R/find_ibis.R")
-
-if(!require('pacman')) install.packages('pacman')
-pacman::p_load(shiny, shinythemes, tidyverse, shinyFiles, shinyWidgets, signal, seewave, oce, psych)
 
 # Standard Text Output in UI - Only short, easy to map snippets
 CURRENT_NAME_VERSION <- 'ibiVizEdit 0.0.1'

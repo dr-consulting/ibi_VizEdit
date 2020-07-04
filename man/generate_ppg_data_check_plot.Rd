@@ -4,8 +4,11 @@
 \alias{generate_ppg_data_check_plot}
 \title{Internal utility for plot generation}
 \usage{
-generate_ppg_data_check_plot(ppg_data = NULL, ppg_col = "PPG",
-  time_col = "Time")
+generate_ppg_data_check_plot(
+  ppg_data = NULL,
+  ppg_col = "PPG",
+  time_col = "Time"
+)
 }
 \arguments{
 \item{ppg_data}{is a \code{data.frame} that contains the processed PPG signal and a time variable.}

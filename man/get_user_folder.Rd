@@ -4,7 +4,7 @@
 \alias{get_user_folder}
 \title{Finding user home directory.}
 \usage{
-get_user_folder()
+get_user_folder(input)
 }
 \description{
 \code{get_user_folder} is designed to identify the home directory of the user who initiated the R session.

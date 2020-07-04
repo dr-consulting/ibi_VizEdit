@@ -4,7 +4,7 @@
 \alias{find_ibis}
 \title{Integrated function for generating interbeat interval time-series.}
 \usage{
-find_ibis(x, ds)
+find_ibis(ppg_signal, sampling_rate, min_time, peak_iter)
 }
 \arguments{
 \item{x}{a vector of signal values collected from a photopleythysmogram sensor. If not a vector of values must be an

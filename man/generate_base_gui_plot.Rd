@@ -4,8 +4,12 @@
 \alias{generate_base_gui_plot}
 \title{Internal utility for gui plot generation}
 \usage{
-generate_base_gui_plot(ibi_data = NULL, ibi_col = "IBI",
-  time_col = "Time")
+generate_base_gui_plot(
+  ibi_data = NULL,
+  color_map = NULL,
+  ibi_col = "IBI",
+  time_col = "Time"
+)
 }
 \arguments{
 \item{ibi_data}{is a \code{data.frame} that contains the IBI series being activel edited by the user during the

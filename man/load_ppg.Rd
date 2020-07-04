@@ -4,8 +4,12 @@
 \alias{load_ppg}
 \title{Internal utility for loading raw photoplethysmogram (PPG) data}
 \usage{
-load_ppg(file_name = NULL, skip_lines = NULL, column = NULL,
-  sampling_rate = NULL)
+load_ppg(
+  file_name = NULL,
+  skip_lines = NULL,
+  column = NULL,
+  sampling_rate = NULL
+)
 }
 \arguments{
 \item{file_name}{is of type \code{character} and identifies the file path containing the raw PPG signal.}

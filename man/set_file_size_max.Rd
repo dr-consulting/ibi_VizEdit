@@ -6,6 +6,10 @@
 \usage{
 set_file_size_max(size = 500)
 }
+\arguments{
+\item{size}{is the total size of the raw file in MB. Default for the program is 500 and can be reset by advanced
+users}
+}
 \description{
 \code{set_file_size_max} is an internal utility that sets the maximum file size for an input data set in megabytes.
 The default is set to 150 MB. If this is too low in general or for a specific use case, it can be adjusted here.

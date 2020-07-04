@@ -1,1 +1,3 @@
 exportPattern("^[[:alpha:]]+")
+importFrom("stats", "acf", "density", "lm", "predict", "sd", "smooth.spline", "ts")
+importFrom("utils", "read.csv", "read.table")
