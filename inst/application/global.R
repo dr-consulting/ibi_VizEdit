@@ -1,10 +1,9 @@
-source(system.file("ui_utils.R", package = "ibiVizEdit"))
-source("~/dr-consulting_GH/ibi_VizEdit/R/server_utils.R")
-source("~/dr-consulting_GH/ibi_VizEdit/R/general_utils.R")
-source("~/dr-consulting_GH/ibi_VizEdit/R/graphing_utilities.R")
-source("~/dr-consulting_GH/ibi_VizEdit/R/input_and_process.R")
-source("~/dr-consulting_GH/ibi_VizEdit/R/hotkey_utils.R")
-source("~/dr-consulting_GH/ibi_VizEdit/R/find_ibis.R")
+source(system.file("utils", "ui_utils.R", package = "ibiVizEdit"))
+source(system.file("utils", "server_utils.R", package = "ibiVizEdit"))
+source(system.file("utils", "general_utils.R", package = "ibiVizEdit"))
+source(system.file("utils", "graphing_utilities.R", package = "ibiVizEdit"))
+source(system.file("utils", "input_and_process.R", package = "ibiVizEdit"))
+source(system.file("utils", "find_ibis.R", package = "ibiVizEdit"))
 
 # Standard Text Output in UI - Only short, easy to map snippets
 CURRENT_NAME_VERSION <- 'ibiVizEdit 0.0.1'
