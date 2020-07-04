@@ -86,18 +86,20 @@ estimate_average_HR <- function(ibi_data=NULL, ibi_col="IBI", trim=3){
 #'
 #' @export
 
-estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL, ds = NULL,
+estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL,
                                      respiration_mapping=AVERAGE_RESPIRATION_BY_AGE, ibi_col="IBI", time_col="Time"){
-  respiration_bounds <- respiration_mapping[respiration_cat][[1]]/60/ds
+
+  respiration_bounds <- respiration_mapping[respiration_cat][[1]]/60
 
   # Upsampling the IBI signal to enable interpolation for additional processing.
-  time_df <- data.frame(time_col=seq(min(ibi_data[time_col], na.rm = TRUE),
-                                     max(ibi_data[time_col], na.rm = TRUE), by = .01))
+  time_df <- data.frame(x = seq(min(ibi_data[time_col], na.rm = TRUE),
+                                max(ibi_data[time_col], na.rm = TRUE), by = .01))
+  colnames(time_df) <- c(time_col)
   ibi_data <- merge(time_df, ibi_data, by=time_col, all=TRUE)
   ibi_data[ibi_col] <- na_kalman(ibi_data[time_col])
 
-  ibi_filtered <- bwfilter(ts(ibi_data[ibi_col], frequency = 100), from = respiration_bounds[1]*ds,
-                           to = respiration_bounds[2]*ds, bandpass = TRUE, f = 100)
+  ibi_filtered <- bwfilter(ts(ibi_data[ibi_col], frequency = 100), from = respiration_bounds[1],
+                           to = respiration_bounds[2], bandpass = TRUE, f = 100)
 
   spec_ibi <- mvspec(ibi_filtered, spans=c(7, 7), taper=.1, demean=TRUE, log='no', plot=FALSE)
 
@@ -109,8 +111,8 @@ estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL, ds = N
                                                 spec_ibi$freq <= respiration_bounds[2]])
 
   # Attempting to analytically solve for a reasonable respiration priors based on subject file properties
-  mean_resp <- (spec_ibi$freq*spec$dens)/sum(spec_ibi$dens)*ds
-  wss <- (sum((spec_ibi$freq*ds - mean_resp)*spec_ibi$dens)^2)/sum(spec_ibi$dens)
+  mean_resp <- sum(spec_ibi$freq*spec_ibi$dens)/sum(spec_ibi$dens)
+  wss <- sum((mean_resp - spec_ibi$freq)^2*spec_ibi$dens)/sum(spec_ibi$dens)
   sd_resp <- sqrt(wss)
 
   resp_stats <- c(mean=mean_resp, sd=sd_resp)
@@ -127,13 +129,13 @@ create_and_return_output_dir <- function(wd=NULL, case_id=NULL, optional_id=NULL
   out_folder_name <- paste(case_id, "output", sep="_")
 
   if(!is.null(optional_id)){
-    out_folder_name <- paste(out_folder_name, optional_id, sep = "_")
+    out_folder_name <- paste(case_id, optional_id, "output", sep = "_")
   }
 
   out_dir <- paste0(wd, "/", out_folder_name)
 
   if(!dir.exists(out_dir)){
-    dir.create(out_dir)
+    dir.create(out_dir, recursive = TRUE)
   }
 
   return(out_dir)
@@ -148,7 +150,7 @@ create_and_return_screenshot_dir <- function(out_dir=NULL){
   dir <- paste0(out_dir, "/screenshots")
 
   if(!dir.exists(dir)){
-    dir.create(dir)
+    dir.create(dir, recursive = TRUE)
   }
 
   return(dir)
@@ -165,7 +167,7 @@ create_and_return_gp_output_subdir <- function(out_dir, gp_driver){
   gp_subdir <- paste0(out_dir, "/", gp_folder_name)
 
   if(!dir.exists(gp_subdir)){
-    dir.create(gp_subdir)
+    dir.create(gp_subdir, recursive = TRUE)
   }
 
   return(gp_subdir)
@@ -182,7 +184,7 @@ raise_not_integer <- function(input_val=NULL, input_name=NULL, lower_bound=NULL,
     if(!is.null(lower_bound) & !is.null(upper_bound)){
       msg <- paste(msg, "between {lower_bound} and {upper_bound}")
     }
-    msg <- glue(msg)
+    msg <- glue::glue(msg)
     warning(msg)
     return(msg)
   }

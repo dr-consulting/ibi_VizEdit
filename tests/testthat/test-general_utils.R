@@ -58,3 +58,73 @@ test_that("estimate_average_HR: ignores uneditable data points", {
 
   expect_equal(result, expected)
 })
+
+test_that("estimate_avg_respiration: returns estimated mean and sd for resp", {
+  test_data <- read.csv("../testdata/clean_ibi_example.csv")
+  AVERAGE_RESPIRATION_BY_AGE <- list(`Adolescent (12 to 18 yrs)`=c(12,16)) # copied portion from global.R
+
+  # manually calculated on the testdata file
+  expected <- c(mean = 0.23887402, sd = 0.01311138)
+
+  out_resp <- estimate_avg_respiration(ibi_data = test_data, respiration_cat = "Adolescent (12 to 18 yrs)",
+                                       respiration_mapping = AVERAGE_RESPIRATION_BY_AGE)
+  expect_equal(out_resp, expected)
+  expect_equal(names(out_resp), names(expected))
+})
+
+test_that("create_and_return_output_dir: creates output directory and returns filepath", {
+  home_dir <- Sys.getenv("HOME")
+  tmp_dir <- paste0(home_dir, "/tmp_test")
+  result <- create_and_return_output_dir(tmp_dir, "heart", "beat")
+
+  expected <- paste0(tmp_dir, "/heart_beat_output")
+  expect_equal(result, expected)
+  expect_true(dir.exists(expected))
+
+  # Remove the temporary directory at the end
+  unlink(tmp_dir, recursive = TRUE)
+  expect_false(dir.exists(tmp_dir)) # ensure the mini-teardown step works.
+})
+
+test_that("create_and_return_output_dir: creates output directory and returns filepath w/o optional id", {
+  home_dir <- Sys.getenv("HOME")
+  tmp_dir <- paste0(home_dir, "/tmp_test")
+  result <- create_and_return_output_dir(tmp_dir, "heart")
+
+  expected <- paste0(tmp_dir, "/heart_output")
+  expect_equal(result, expected)
+  expect_true(dir.exists(expected))
+
+  # Remove the temporary directory at the end
+  unlink(tmp_dir, recursive = TRUE)
+  expect_false(dir.exists(tmp_dir)) # ensure the mini-teardown step works.
+})
+
+test_that("create_and_return_screenshot_dir: creates output directory and returns filepath", {
+  home_dir <- Sys.getenv("HOME")
+  tmp_dir <- paste0(home_dir, "/tmp_test")
+  result <- create_and_return_screenshot_dir(tmp_dir)
+
+  expected <- paste0(tmp_dir, "/screenshots")
+  expect_equal(result, expected)
+  expect_true(dir.exists(expected))
+
+  # Remove the temporary directory at the end
+  unlink(tmp_dir, recursive = TRUE)
+  expect_false(dir.exists(tmp_dir)) # ensure the mini-teardown step works.
+})
+
+test_that("create_and_return_gp_subdir: ...", {
+  # skipping for now but need to come back - may need to modify function slightly
+})
+
+test_that("raise_not_integer: raises when value is not an integer", {
+  expected <- "The input value of 2.5 for triathlons must be an integer"
+  expect_warning(raise_not_integer(2.5, "triathlons"), expected)
+  result <- suppressWarnings(raise_not_integer(2.5, "triathlons"))
+  expect_equal(result, expected)
+})
+
+test_that("raise_not_integer: raises when value is not an integer and/or out of bounds", {
+  # test stub to come back to
+})

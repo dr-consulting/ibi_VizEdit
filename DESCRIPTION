@@ -22,7 +22,8 @@ Imports:
     signal, 
     seewave, 
     oce, 
-    psych
+    psych, 
+    glue
 Suggests: 
     testthat, 
     tidyverse
