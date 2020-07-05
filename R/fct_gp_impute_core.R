@@ -263,7 +263,7 @@ save_model_summary_as_text <- function(model_ouputs=NULL, gp_driver=NULL,sub_id=
 
 add_MAP_summaries <- function(model_outputs=NULL, pars=c("HR", "R")){
   for(p in 1:length(pars)){
-    model_outputs[paste0("MAP_", pars[p])] <- estimate_mode(model_outputs[pars[p]])
+    model_outputs[paste0("MAP_", pars[p])] <- estimate_max_density(model_outputs[pars[p]])
   }
   return(model_outputs)
 }
