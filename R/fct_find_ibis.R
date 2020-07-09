@@ -5,17 +5,23 @@
 #' bandwidth used in the peak detection algorithm, uses the peaks as proxies for the timing of heart beats, and returns
 #' a time-series of interbeat intervals with basic diagnostic statistics.
 #'
-#' @param x a vector of signal values collected from a photopleythysmogram sensor. If not a vector of values must be an
-#' object that can be safely cast to a single vector of temporally sequenced numeric values.
-#' @param ds the desired sampling rate, in Hz, for the data used in the peak detection algorithm.
-#'
+#' @param ppg_signal a vector of signal values collected from a photopleythysmogram sensor. If not a vector of values 
+#' must be an object that can be safely cast to a single vector of temporally sequenced numeric values.
+#' @param sampling_rate the desired sampling rate, in Hz, for the data used in the peak detection algorithm.
+#' @param min_time the minimum time value of the original time series in seconds
+#' @param time_adjust the time value adjustment applied to the ibi_series. Within the \code{ibiVizEdit} app the value
+#' defaults to 3, which, in effect removes the first and last three seconds of the returned ibi values as a crude 
+#' system for dealing with beginning and end of file issues associated with peak detection. 
 #' @return Returns a list containing a \code{dataframe} of interbeat intervals and their timing and a \code{dataframe}
 #' of diagnostic information about the peak detection algorithm optimization parameters and summary statistics.
 #'
-#' @export
+#' @importFrom magrittr %>% 
 
-find_ibis <- function(ppg_signal, sampling_rate, min_time, peak_iter){
-  s <- round(seq(round(sampling_rate/8), round(sampling_rate/2), length.out = peak_iter))
+find_ibis <- function(ppg_signal, sampling_rate, min_time, time_adjust = 3, peak_iter){
+  s <- seq(round(sampling_rate/8), round(sampling_rate/2), length.out = peak_iter) %>% 
+    round() %>% 
+    unique()
+  
   Z <- data.frame(rep(NA, length(s)),
                   rep(NA, length(s)),
                   rep(NA, length(s)),
@@ -38,7 +44,7 @@ find_ibis <- function(ppg_signal, sampling_rate, min_time, peak_iter){
   colnames(Z) <- c('BW', 'SD', 'Range', 'RMSSD', 'AC', 'BW(s)')
   Z <- Z[order(Z$RMSSD, decreasing = FALSE),]
   IBI_pos <- find_peaks(ppg_signal, bw=Z[1,1])-1
-  IBI_time <- IBI_pos/sampling_rate + min_time - 3 # for built in buffers
+  IBI_time <- IBI_pos/sampling_rate + min_time - time_adjust 
   IBI_vals <- time_sum(IBI_pos)/sampling_rate
   IBI_out <- data.frame(IBI=IBI_vals, Time=IBI_time)
   IBI_comp <- list(IBI_out, Z)

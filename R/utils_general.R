@@ -2,7 +2,7 @@
 #'
 #' \code{get_user_folder} is designed to identify the home directory of the user who initiated the R session.
 #'
-#' @export
+#' @importFrom shinyFiles shinyDirChoose
 
 get_user_folder <- function(input){
   if(Sys.getenv('USERPROFILE')=="")
@@ -24,8 +24,6 @@ get_user_folder <- function(input){
 #'
 #' @param size is the total size of the raw file in MB. Default for the program is 500 and can be reset by advanced
 #' users
-#'
-#' @export
 
 set_file_size_max <- function(size = 500){
   options(shiny.maxRequestSize=size*1024^2)
@@ -37,8 +35,6 @@ set_file_size_max <- function(size = 500){
 #'
 #' \code{range01} is an internal utility that takes a vector of values and returns a new vector with the same
 #' distribution, re-scaled to a range of 0 to 1.
-#'
-#' @export
 
 range01 <- function(x){
   (x-min(x, na.rm = T))/(max(x, na.rm = T)-min(x, na.rm = T))
@@ -53,8 +49,6 @@ range01 <- function(x){
 #' @param x a \code{numeric} series, vector, or matrix of values
 #'
 #' @return maximum a posteriori value of the input object
-#'
-#' @export
 
 estimate_max_density <- function(x){
   d <- density(x)
@@ -123,7 +117,6 @@ estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL,
 
 #' Internal \code{ibiVizEdit} utility for creating output directory inside working directory
 #'
-#' @export
 
 create_and_return_output_dir <- function(wd=NULL, case_id=NULL, optional_id=NULL){
   out_folder_name <- paste(case_id, "output", sep="_")
@@ -144,7 +137,6 @@ create_and_return_output_dir <- function(wd=NULL, case_id=NULL, optional_id=NULL
 
 #' Internal \code{ibiVizEdit} utility for creating screenshot directory inside of the output directory
 #'
-#' @export
 
 create_and_return_screenshot_dir <- function(out_dir=NULL){
   dir <- paste0(out_dir, "/screenshots")
@@ -159,7 +151,6 @@ create_and_return_screenshot_dir <- function(out_dir=NULL){
 
 #' Internal \code{ibiVizEdit} utility for creating an subdirectory for GP imputation model outputs
 #'
-#' @export
 
 create_and_return_gp_output_subdir <- function(out_dir, gp_driver, sys_time=Sys.time()){
   gp_folder_name <- paste("GP_imputation_output", gp_driver$prediction_window[1], gp_driver$prediction_window[2],
@@ -176,7 +167,6 @@ create_and_return_gp_output_subdir <- function(out_dir, gp_driver, sys_time=Sys.
 
 #' Internal \code{ibiVizEdit} utility that generates a warning if an input expected to be an integer is not
 #'
-#' @export
 
 raise_not_in_range_integer <- function(input_val=NULL, input_name=NULL, lower_bound=NULL, upper_bound=NULL){
   msg <- "The input value of {input_val} for {input_name} must be an integer"
@@ -198,7 +188,6 @@ raise_not_in_range_integer <- function(input_val=NULL, input_name=NULL, lower_bo
 
 #' Internal \code{ibiVizEdit} utility that creates a running log of user actions
 #'
-#' @export
 
 user_action_log <- function(button_name){
   tmp_dat <- data.frame(Timestamp=Sys.time(), action=button_name, stringsAsFactors = FALSE)

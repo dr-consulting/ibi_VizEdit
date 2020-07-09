@@ -1,9 +1,7 @@
-# Will need to have functionality to auto populate fields when existing data are loaded
-# Probably want a modal dialog box that says something like "Import Settings"
-
 #' Sever-side utility for \code{ibiVizEdit} that observes and updates directory information
 #'
 #' @export
+#' @importFrom shinyFiles parseDirPath shinyFileChoose
 
 get_working_directory <- function(input, input_name=NULL){
   observeEvent(input[[input_name]], {
@@ -20,9 +18,11 @@ get_working_directory <- function(input, input_name=NULL){
   })
 }
 
+
 #' Server-side utility for \code{ibiVizEdit} that observes and updates raw data paths file paths
 #'
 #' @export
+#' @importFrom shinyFiles parseFilePaths
 
 store_raw_data_filepath <- function(input, input_name=NULL){
   observeEvent(input[[input_name]], {
@@ -120,6 +120,7 @@ load_files_and_settings <- function(input){
   }
 }
 
+
 #' Server-side utility for \code{ibiVizEdit} that monitors data entry values and updates them accordingly
 #'
 #' @export
@@ -130,90 +131,6 @@ processing_settings_observer <- function(input_name){
   })
 }
 
-#' Server-side utiltiy for \code{ibiVizEdit} that dynamically updates data entry options on UI, starts with defaults
-#'
-#' @export
-
-dynamicTextInputMod <- function(input, output, session, label=NULL, value=NULL){
-  output$rendered_field <- renderUI({
-    textInput("text_in", label=label, value=value)
-  })
-}
-
-#' Sever-side utility for \code{ibiVizEdit} that dynamically updates data entry options on UI, starts with defaults
-#'
-#' @export
-
-dynamicNumInputMod <- function(input, output, session, label=NULL, value=NULL){
-  output$rendered_field <- renderUI({
-    numericInput("numeric_in", label=label, value=value)
-  })
-}
-
-#' Sever-side utility for \code{ibiVizEdit} that dynamically produces an awesomeCheckboxGroup with pre-selections
-#'
-#' @export
-
-dynamicCheckBoxInputMod <- function(input, output, session, label=NULL, choices=NULL, selected=NULL, paste_char=NULL){
-  output$rendered_checkbox <- renderUI({
-    if(!is.null(paste_char)){
-      choices = paste0(choices, paste_char)
-      selected = paste0(slected, paste_char)
-    }
-    tagList(awesomeCheckboxGroup("checbox_in", label=label, choices=choices, selected=selected),
-            tags$head(tags$style(HTML("
-                                    #checkbox :after, #checkbox :before{
-                                    background-color: #426ebd;
-                                    }"))))
-
-  })
-}
-
-#' Sever-side utility for \code{ibiVizEdit} that dynamically produces a selectInput Field
-#'
-#' @export
-
-
-dynamicSelectInputMod <- function(input, output, session, label=NULL, choices=NULL, choice_index=NULL){
-  output$rendered_dropdown <- renderUI({
-    selectInput("dropdown_in", label=label, choices=names(choices), selected=names(choices)[choice_index])
-  })
-}
-
-#' Server-side utility for \code{ibiVizEdit} that dynamically switches actionButton UIs based on color
-#'
-#' @export
-
-dynamicClrButtonMod <- function(input, output, session, status_name=NULL, label=NULL, hotkey=NULL, hotkey_map=NULL,
-                                updated_label=NULL, default_display_name=NULL, button_name="click_in",
-                                active_color=BUTTON_COLORS["standard"], inactive_color=BUTTON_COLORS["inactive"],
-                                updated_color=BUTTON_COLORS["warning"]){
-
-  output$rendered_button <- renderUI({
-    active <- as.logical(BUTTON_STATUS[[status_name]])
-    default_display <- TRUE
-    color_arg <- inactive_color
-
-    if(!is.null(default_display_name)){
-      default_display <- as.logical(BUTTON_STATUS[[default_display_name]])
-    }
-
-    if(active){
-      color_arg <- active_color
-    }
-
-    if(!is.null(hotkey) & !is.null(hotkey_map)){
-      tags$script(HTML(track_hotkey_presses(key=hotkey, key_map=hotkey_map, button_name=button_name)))
-    }
-
-    if(!default_display){
-      label <- updated_label
-      color_arg <- updated_color
-    }
-
-    actionButton(session$ns(button_name), label=label, style=color_arg)
-  })
-}
 
 #' Server-side utility for \code{ibiVizEdit} that dynamically updates pre-processing PPG plot
 #'
@@ -300,24 +217,6 @@ ppg_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
 }
 
 
-#' Server-side utility for \code{ibiVizEdit} that enables Event Observation from action buttons inside modules
-#'
-#' Note that currently the logic on whether a function (func) should run needs to be contained inside that function
-#'
-#' @export
-
-eventTriggerMod <- function(input, output, session, input_id=NULL, trigger_items=NULL, trigger_values=NULL,
-                            trigger_object=NULL, trigger_id=NULL){
-  observeEvent(input[[input_id]], {
-    trigger_object[[trigger_id]] <- FALSE
-
-    if(trigger_items() == trigger_values){
-      trigger_object[[trigger_id]] <- TRUE
-    }
-  })
-}
-
-
 #' Server side function that "collects" points for editing when in click and drag selection mode
 #'
 #' @export
@@ -336,14 +235,12 @@ drag_point_collection <- function(input, brush_id, valid_status="drag",
     }
   },
   ignoreNULL = FALSE)
-
-
 }
 
 #' Server side function that "collects" points for editing when in click ibi selection mode
 #'
 #' @export
-#'
+#'@importFrom dplyr between
 
 click_point_selection <- function(input, click_id, dbl_click_id, valid_status="click",
                                   status_var=reactive({TEMP_GRAPHICS_SETTINGS[["select_mode"]]})){
@@ -617,7 +514,7 @@ uneditable_button_action <- function(input, ibi_data, selected_points=NULL){
 #' Server side utility that takes restores all IBIs within the selected window
 #'
 #' @export
-#'
+#' @importFrom dplyr between
 
 restore_button_action <- function(input, restore_id, edited_data, original_data, brush_id, ibi_or_ppg=NULL){
   observeEvent(input[[restore_id]], {

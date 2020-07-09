@@ -1,9 +1,9 @@
-source(system.file("utils", "ui_utils.R", package = "ibiVizEdit"))
-source(system.file("utils", "server_utils.R", package = "ibiVizEdit"))
-source(system.file("utils", "general_utils.R", package = "ibiVizEdit"))
-source(system.file("utils", "graphing_utilities.R", package = "ibiVizEdit"))
-source(system.file("utils", "input_and_process.R", package = "ibiVizEdit"))
-source(system.file("utils", "find_ibis.R", package = "ibiVizEdit"))
+#source(system.file("utils", "ui_utils.R", package = "ibiVizEdit"))
+#source(system.file("utils", "server_utils.R", package = "ibiVizEdit"))
+#source(system.file("utils", "general_utils.R", package = "ibiVizEdit"))
+#source(system.file("utils", "graphing_utilities.R", package = "ibiVizEdit"))
+#source(system.file("utils", "input_and_process.R", package = "ibiVizEdit"))
+#source(system.file("utils", "find_ibis.R", package = "ibiVizEdit"))
 
 # Standard Text Output in UI - Only short, easy to map snippets
 CURRENT_NAME_VERSION <- 'ibiVizEdit 0.0.1'
@@ -28,8 +28,8 @@ IBI_POINT_COLORS <- c(combined="#e482ff",
                       uneditable="#c0392b")
 
 # Global variables to be used on both UI and Server Side
-WIDE_LOGO <- "dr_logo_wide_33.png"
-THUMB_LOGO <- "dr_logo_thumb.png"
+WIDE_LOGO <- "www/dr_logo_wide_33.png"
+THUMB_LOGO <- "www/dr_logo_thumb"
 DOCS_LINK <- "https://github.com/matgbar/IBI_VizEdit/blob/master/IBI%20VizEdit%20Manual%20v1_2_3.pdf"
 REPO_LINK <- "https://github.com/matgbar/IBI_VizEdit"
 WIKI_LINK <- "https://github.com/matgbar/IBI_VizEdit/wiki"

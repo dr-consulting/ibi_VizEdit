@@ -1,3 +1,12 @@
 exportPattern("^[[:alpha:]]+")
 importFrom("stats", "acf", "density", "lm", "predict", "sd", "smooth.spline", "ts")
 importFrom("utils", "read.csv", "read.table")
+importFrom("golem", "with_golem_options", "add_resource_path", "activate_js", "favicon", "bundle_resources")
+importFrom("shinythemes", "shinytheme")
+importFrom("shinyFiles", "shinyDirButton", "shinyFilesButton", "shinyFileChoose", "parseDirPath", "parseFilePaths", 
+           "shinyDirChoose")
+importFrom("shinyWidgets", "awesomeCheckboxGroup")
+importFrom("dplyr", "between")
+importFrom("ggplot2", "ggplot", "annotate", "theme_bw", "geom_line", "labs", "scale_color_manual", 
+           "geom_point", "geom_vline", "geom_text", "ggsave", "aes_string")
+importFrom("glue", "glue")

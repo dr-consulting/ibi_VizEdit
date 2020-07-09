@@ -1,5 +1,3 @@
-source(system.file("utils", "general_utils.R", package = "ibiVizEdit"))
-
 test_that("set_file_size_max: returns max file size memory as string", {
   expected <- "200 MB"
   observed <- set_file_size_max(200)

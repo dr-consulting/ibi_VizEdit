@@ -1,0 +1,13 @@
+---
+title: "Using ibiVizEdit to find IBIs in PPG signals"
+author: "Matthew Barstead, Ph.D."
+company: "Dead Reckoning Analytics & Consulting"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{find_ibis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+stub file. 

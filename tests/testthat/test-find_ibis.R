@@ -1,5 +1,3 @@
-source(system.file("utils", "find_ibis.R", package = "ibiVizEdit"))
-
 test_that("find_ibis: integration test - using static data", {
   # test stub
 })
