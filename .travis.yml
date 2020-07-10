@@ -7,3 +7,9 @@ cache: packages
 branches:
   only:
   - dev
+
+# Add in development pkgs
+addons:
+  apt: 
+    packages: 
+      - libv8-dev
