@@ -16,6 +16,7 @@
 #' of diagnostic information about the peak detection algorithm optimization parameters and summary statistics.
 #'
 #' @importFrom magrittr %>% 
+#' @importFrom psych rmssd
 
 find_ibis <- function(ppg_signal, sampling_rate, min_time, time_adjust = 3, peak_iter){
   s <- seq(round(sampling_rate/8), round(sampling_rate/2), length.out = peak_iter) %>% 
@@ -28,19 +29,16 @@ find_ibis <- function(ppg_signal, sampling_rate, min_time, time_adjust = 3, peak
                   rep(NA, length(s)),
                   rep(NA, length(s)),
                   rep(NA, length(s)))
-  withProgress(message = 'Finding Peaks', value = 0,{
-    for(i in 1:length(s)){
-      IBI_pos <- find_peaks(ppg_signal, s[i])
-      IBI_vals <- time_sum(IBI_pos)/sampling_rate
-      Z[i,1] <- s[i]
-      Z[i,2] <- sd(IBI_vals)
-      Z[i,3] <- max(IBI_vals)-min(IBI_vals)
-      Z[i,4] <- rmssd(IBI_vals)
-      Z[i,5] <- mean(acf(IBI_vals, lag.max = length(IBI_vals)/20, plot = FALSE)$acf)
-      Z[i,6] <- s[i]/sampling_rate
-      incProgress(1/length(s), detail = "Peak Detection Progress")
-    }
-  })
+  for(i in 1:length(s)){
+    IBI_pos <- find_peaks(ppg_signal, s[i])
+    IBI_vals <- time_sum(IBI_pos)/sampling_rate
+    Z[i,1] <- s[i]
+    Z[i,2] <- sd(IBI_vals)
+    Z[i,3] <- max(IBI_vals)-min(IBI_vals)
+    Z[i,4] <- rmssd(IBI_vals)
+    Z[i,5] <- mean(acf(IBI_vals, lag.max = length(IBI_vals)/20, plot = FALSE)$acf)
+    Z[i,6] <- s[i]/sampling_rate
+  }
   colnames(Z) <- c('BW', 'SD', 'Range', 'RMSSD', 'AC', 'BW(s)')
   Z <- Z[order(Z$RMSSD, decreasing = FALSE),]
   IBI_pos <- find_peaks(ppg_signal, bw=Z[1,1])-1

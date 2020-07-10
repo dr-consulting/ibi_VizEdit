@@ -8,5 +8,8 @@ importFrom("shinyFiles", "shinyDirButton", "shinyFilesButton", "shinyFileChoose"
 importFrom("shinyWidgets", "awesomeCheckboxGroup")
 importFrom("dplyr", "between")
 importFrom("ggplot2", "ggplot", "annotate", "theme_bw", "geom_line", "labs", "scale_color_manual", 
-           "geom_point", "geom_vline", "geom_text", "ggsave", "aes_string")
+           "geom_point", "geom_vline", "geom_text", "ggsave", "aes_string", "coord_cartesian", "aes")
 importFrom("glue", "glue")
+importFrom("stringr", "str_wrap")
+importFrom("magrittr", "%>%")
+importFrom("psych", "rmssd")

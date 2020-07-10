@@ -75,6 +75,7 @@ generate_base_gui_plot <- function(ibi_data=NULL, color_map=NULL, ibi_col="IBI",
 #' task/condition names
 #'
 #' @importFrom ggplot2 geom_vline geom_text 
+#' @importFrom magrittr %>%
 
 add_task_v_lines <- function(base_plot=NULL, timing_data=NULL, time_col='Time', task_col="Task",
                              label_color=IBI_POINT_COLORS["original"]){

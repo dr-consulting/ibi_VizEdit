@@ -135,6 +135,7 @@ processing_settings_observer <- function(input_name){
 #' Server-side utility for \code{ibiVizEdit} that dynamically updates pre-processing PPG plot
 #'
 #' @export
+#' @importFrom ggplot2 coord_cartesian
 
 basic_ppg <- function(ppg_data=NULL, brush_in=NULL){
   if(is.null(ppg_data)){
@@ -153,6 +154,7 @@ basic_ppg <- function(ppg_data=NULL, brush_in=NULL){
 #' Server-side utility for \code{ibiVizEdit} that dynamically updates full IBI + PPG combo plots
 #'
 #' @export
+#' @importFrom ggplot2 coord_cartesian
 
 ibi_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NULL){
   if(is.null(ibi_data)){
@@ -198,6 +200,7 @@ generate_heads_up_info <- function(input, hover_id=NULL, ibi_data=NULL){
 #' Server-side utility for \code{ibiVizEdit} that defines main PPG plot for GUI editing
 #'
 #' @export
+#' @importFrom ggplot coord_cartesian
 
 ppg_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NULL){
   if(is.null(ibi_data)){
