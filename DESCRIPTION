@@ -19,6 +19,7 @@ Imports:
     glue,
     golem,
     imputeTS,
+    magrittr,
     psych, 
     oce, 
     seewave,
@@ -26,7 +27,9 @@ Imports:
     shinyFiles, 
     shinythemes, 
     shinyWidgets,
-    signal
+    signal,
+    stringr, 
+    tidyr
 Suggests: 
     testthat, 
     tidyverse

@@ -4,3 +4,6 @@
 
 .Rhistory
 .github
+
+# Contains the golem dev files - can still open and run locally if I want
+.dev
