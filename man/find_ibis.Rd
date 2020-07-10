@@ -17,6 +17,9 @@ must be an object that can be safely cast to a single vector of temporally seque
 \item{time_adjust}{the time value adjustment applied to the ibi_series. Within the \code{ibiVizEdit} app the value
 defaults to 3, which, in effect removes the first and last three seconds of the returned ibi values as a crude 
 system for dealing with beginning and end of file issues associated with peak detection.}
+
+\item{peak_iter}{a value that specificies the number of iterations for the algorithm to use when attempting to 
+identify the location of the heartbeat "peaks"}
 }
 \value{
 Returns a list containing a \code{dataframe} of interbeat intervals and their timing and a \code{dataframe}
