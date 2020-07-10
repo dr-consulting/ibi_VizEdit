@@ -14,14 +14,18 @@ LazyData: true
 RoxygenNote: 7.1.1
 Imports: 
     astsa,
+    cowplot,
+    benchmarkme,
     dplyr, 
     ggplot2, 
     glue,
     golem,
     imputeTS,
     magrittr,
-    psych, 
     oce, 
+    parallel,
+    psych,
+    rstan,
     seewave,
     shiny, 
     shinyFiles, 
@@ -31,5 +35,8 @@ Imports:
     stringr, 
     tidyr
 Suggests: 
-    testthat, 
-    tidyverse
+    testthat,
+    tidyverse,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

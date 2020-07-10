@@ -39,9 +39,7 @@ load_ppg <- function(file_name=NULL, skip_lines=NULL, column=NULL, sampling_rate
 
 
 #' Internal utility that creates a down-sampled data.frame of the ppg signal
-#'
-#' @export
-#'
+#' @noRd
 
 downsample_ppg_data <- function(ppg_data, sampling_rate, downsampled_rate=100, ppg_col="PPG", time_col="Time"){
   ds_ppg <- signal::resample(ppg_data[[ppg_col]], p=downsampled_rate, q=sampling_rate)
@@ -52,9 +50,7 @@ downsample_ppg_data <- function(ppg_data, sampling_rate, downsampled_rate=100, p
 
 
 #' Internal utility that attempts to maximize raw signal properties to generate more reliable peak locations
-#'
-#' @export
-#'
+#' @noRd
 
 filter_ppg <- function(ppg_data, sampling_rate, ppg_col="PPG", time_col="Time"){
   ppg_sig <- ppg_data[[ppg_col]]
@@ -74,9 +70,7 @@ filter_ppg <- function(ppg_data, sampling_rate, ppg_col="PPG", time_col="Time"){
 
 
 #' Internal utility that trims down the time range of the PPG signal used to edit the data
-#'
-#' @export
-#'
+#' @noRd
 
 trim_ppg_window <- function(ppg_data, timing_data, time_col="Time"){
   # Taking the min and max and adding a 3 second-buffer before the start and after the end of the observation period
@@ -137,9 +131,7 @@ load_timing_data <- function(file_name=NULL, case_id=NULL){
 #' There needs to be a lot of data formatting checks/errors raised here - lots of unit testing as a result too
 #'
 #' One check is to make sure that the columns appear arranged in order (may just want a separate format utility to run)
-#'
-#' @export
-#'
+#' @noRd
 
 create_gui_timing_table <- function(df=NULL){
   if(!is.null(df)){
@@ -158,34 +150,6 @@ create_gui_timing_table <- function(df=NULL){
   }
 }
 
-#' Integrated function for generating IBIs matched with a timing variable
-#'
-#' \code{generate_ibis_w_timing} integrates other \code{ibi_VizEdit} functions \code{iter_IBI} and \code{sum_rev} to
-#' produce a matrix of values. One column stores the returned interbeat intervals. The other column represents a timing
-#' variable. Timing and IBIs are estimated to the nearest millisecond.
-#'
-#' @param clean_ppg is the cleaned and processed photoplethysmogram data (either a \code{data.frame} or a
-#' \code{matrix}).
-#' @param ppg_col is the name of the column in the \code{clean_ppg} object that contains measuresments of the pulse
-#' waveform.
-#' @param time_col is the name of the column in the \code{clean_ppg} object that measures the passage of time associated
-#' with the pulse waveform.
-#'
-#' @return Returns a matrix of interbeat intervals and their relative timing.
-#'
-#' @export
-#'
-
-generate_ibis_w_timing <- function(clean_ppg, ppg_col="PPG", time_col="Time"){
-  # Generating IBIs:
-  IBI_list <- iter_IBI(clean_ppg[ppg_col], ds=1000)
-  IBI <- IBI_list$IBI_done
-  IBI_time <- sum_rev(IBI)
-  IBI_matrix <- cbind(IBI, IBI_time + min(clean_ppg[time_col]))
-  colnames(IBI_matrix)<-c('IBI', 'Time')
-  return(IBI_matrix)
-}
-
 #' Internal utility for ibiVizEdit that centers PPG and IBI timing values a the start of a task file.
 #'
 #' \code{time_center} takes a PPG and/or IBI file and centers it at the very start of a task file. The effect is to cut
@@ -194,7 +158,7 @@ generate_ibis_w_timing <- function(clean_ppg, ppg_col="PPG", time_col="Time"){
 #'
 #' @param x PPG or IBI \code{data.frame}
 #' @param time_col the name of the column in \code{x} that contains the time data
-#' @param time_df the name of the \code{vector} that contains timestamps for the initial task and subsequent tasks.
+#' @param timing_series the name of the \code{vector} that contains timestamps for the initial task and subsequent tasks.
 #' Must be formatted such that the element is the start of the first task/condition, the second element is the end of
 #' that task, the third is start of the second condition/task, the fourth is the end of that task and so on.
 #'

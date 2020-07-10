@@ -1,17 +1,34 @@
-#source(system.file("utils", "ui_utils.R", package = "ibiVizEdit"))
-#source(system.file("utils", "server_utils.R", package = "ibiVizEdit"))
-#source(system.file("utils", "general_utils.R", package = "ibiVizEdit"))
-#source(system.file("utils", "graphing_utilities.R", package = "ibiVizEdit"))
-#source(system.file("utils", "input_and_process.R", package = "ibiVizEdit"))
-#source(system.file("utils", "find_ibis.R", package = "ibiVizEdit"))
-
-# Standard Text Output in UI - Only short, easy to map snippets
+#' Configuration variable - solely for inclusion in the main header
+#' @noRd
 CURRENT_NAME_VERSION <- 'ibiVizEdit 0.0.1'
+
+#' Configuration setting - Tagline for the application header
+#' @noRd
 TAG_LINE <- "Open-source tool for processing and editing PPG data"
+
+#' Message to display underneath "Load" button
+#' @noRd
 LOAD_BUTTON_MESSAGE <- "Load selected files and settings."
+
+#' Message to display underneath "Save Progress" button
+#' @noRd
 SAVE_PROG_BUTTON_MESSAGE <- "Save current progress in an .RData file to pick up later"
+
+#' Message to display underneath "Save and Output" button
+#' @noRd
 SAVE_OUT_BUTTON_MESSAGE <- "Save edits and generate all output and summary files"
+
+#' Message to display underneath "Reset" button 
+#' @noRd
 RESET_ALL_MESSAGE <- "WARNING! Any unsaved work will be lost if you choose to reset"
+
+#' Prior boundaries based on average respiration rates for each population 
+#' 
+#' This list is used to define respiration rates and will be incorporated into imputation models to improve accuracy 
+#' and to ensure that a sufficient number of respiration cycles are selected. May be subject to manual override in the 
+#' future but not in the experimental version. Will also be used when HRV values are calculated as part of the final 
+#' set of outputs.
+#' @noRd
 AVERAGE_RESPIRATION_BY_AGE <- list(`Young Infant (<1 yr)`=c(30,60),
                                    `Infant/Toddler (1 to 3 yrs)`=c(24,40),
                                    `Young Child (3 to 6 yrs)`=c(22,34),
@@ -19,28 +36,50 @@ AVERAGE_RESPIRATION_BY_AGE <- list(`Young Infant (<1 yr)`=c(30,60),
                                    `Adolescent (12 to 18 yrs)`=c(12,16),
                                    `Adult (18+ yrs)`=c(12,20))
 
+#' Settings for the epochs users can request to have the output "chunked" into
+#' @noRd
 EPOCH_CHOICES <- c(10, 15, 20, 30, 45)
+
+#' Defaults for epoch lengths in output files. 
+#' @noRd
 EPOCH_SELECTED <- c(10, 15, 20, 30, 45)
+
+#' Central location for IBI point colors used throughout the plots based on point type as defined in this named vector
+#' @noRd
 IBI_POINT_COLORS <- c(combined="#e482ff",
                       averaged="#e482ff",
                       divided="#e482ff",
                       original="#426ebd",
                       uneditable="#c0392b")
 
-# Global variables to be used on both UI and Server Side
+#' Location of the main Dead Reckoning logo
+#' @noRd
 WIDE_LOGO <- "www/dr_logo_wide_33.png"
+
+#' Location of the thumbnail - used mainly as the favicon
+#' @noRd
 THUMB_LOGO <- "www/dr_logo_thumb"
+
+#' Link to the docs - going to need a significant overhaul
+#' @noRd
 DOCS_LINK <- "https://github.com/matgbar/IBI_VizEdit/blob/master/IBI%20VizEdit%20Manual%20v1_2_3.pdf"
-REPO_LINK <- "https://github.com/matgbar/IBI_VizEdit"
-WIKI_LINK <- "https://github.com/matgbar/IBI_VizEdit/wiki"
+
+#' Link to the repo 
+#' @noRd
+REPO_LINK <- "https://github.com/dr-consulting/ibi_VizEdit"
+
+#' Link to the wiki - needs to be considerably added to
+#' @noRd
+WIKI_LINK <- "https://github.com/dr-consulting/ibi_VizEdit/wiki"
+
+#' Vector that specifies three basic color templates based on conditions
+#' @noRd
 BUTTON_COLORS <- c(standard="background-color: #426ebd; border-color: #000000; color: #FFFFFF;",
                    inactive="background-color: #a0a9c3; border-color: #000000; color: #FFFFFF;",
                    warning="background-color: #c0392b; border-color: #000000; color: #FFFFFF;")
 
-
-EDIT_BUTTON_CLICKS <- c(a=65, c=67, d=68)
-
-# Server-side reactive variables and data_sets
+#' Presets for the inputs 
+#' @noRd
 PROCESSING_DEFAULTS <- list(
   column_select=1,
   skip_rows=15,
@@ -53,6 +92,8 @@ PROCESSING_DEFAULTS <- list(
   resp_age_grp_opts=AVERAGE_RESPIRATION_BY_AGE
 )
 
+#' Initialization of META_DATA reactiveValues used throughout the application
+#' @noRd
 META_DATA <- reactiveValues(
   sub_id=NULL,
   secondary_id=NULL,
@@ -63,6 +104,8 @@ META_DATA <- reactiveValues(
   warnings_log=NULL
 )
 
+#' Initialization of FILE_SETTINGS reactiveValues used throughout the application
+#' @noRd
 FILE_SETTINGS <- reactiveValues(
   user_dir=NULL,
   max_file=NULL,
@@ -74,6 +117,8 @@ FILE_SETTINGS <- reactiveValues(
   screenshot_out_dir=NULL
 )
 
+#' Initialization of BUTTON_STATUS reactiveValues used throughout the application
+#' @noRd
 BUTTON_STATUS <- reactiveValues(
   load=0,
   save_progress=0,
@@ -99,6 +144,8 @@ BUTTON_STATUS <- reactiveValues(
   gp_impute=0
 )
 
+#' Initiatlization of a set of TRIGGERS reactiveValues used in conjunction with the eventTrigger module
+#' @noRd
 TRIGGERS <- reactiveValues(
   load=0,
   process_ppg=0,
@@ -111,6 +158,8 @@ TRIGGERS <- reactiveValues(
   average=0
 )
 
+#' Initialization of SUMMARY_STATS reactiveValues used to store summary values calculated during application usage
+#' @noRd
 SUMMARY_STATS <- reactiveValues(
   tot_edits=0,
   mean_bpm=NULL,
@@ -119,6 +168,8 @@ SUMMARY_STATS <- reactiveValues(
   mean_resp_Hz=NULL
 )
 
+#' Initialization of STATIC_DATA reactiveValues that, once processed by the application never change
+#' @noRd
 STATIC_DATA <- reactiveValues(
   column_select=NULL,
   skip_rows=NULL,
@@ -136,9 +187,10 @@ STATIC_DATA <- reactiveValues(
   task_times=NULL,
   display_task_times=NULL,
   peak_detect_tab=NULL
-
 )
 
+#' Initialization of DYNAMIC_DATA reactiveValues that can change and be modified based on user actions
+#' @noRd
 DYNAMIC_DATA <- reactiveValues(
   edited_ppg=NULL,
   edited_ibi=NULL,
@@ -147,6 +199,9 @@ DYNAMIC_DATA <- reactiveValues(
   action_log=NULL
 )
 
+#' Initialization of TEMP_GRAPHICS_SETTINGS reactiveValues that specify the default settings for certain graphics. All 
+#' can be modified by user when interacting with the application. 
+#' @noRd
 TEMP_GRAPHICS_SETTINGS <- reactiveValues(
   ymin=NULL,
   ymax=NULL,

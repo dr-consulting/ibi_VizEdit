@@ -15,6 +15,8 @@
 #' @return Returns a list containing a \code{dataframe} of interbeat intervals and their timing and a \code{dataframe}
 #' of diagnostic information about the peak detection algorithm optimization parameters and summary statistics.
 #'
+#' @export
+#'
 #' @importFrom magrittr %>% 
 #' @importFrom psych rmssd
 
@@ -84,11 +86,9 @@ find_peaks <- function (x, bw){
 #'
 #' @param x a vector of equal interval values measuring a periodic or quasi-periodic process. If not a vector of values,
 #' must be an object that can be safely cast to a single vector of temporally sequenced numeric values.
-#' @param bw the bandwidth used to define the moving window within which a "peak" is identified.
 #'
 #' @return Returns the sequentially ordered index values at which each "peak" is detected.
-#'
-#' @export
+#' @noRd
 
 sum_rev <- function(x){
   Z<-rep(NA, length(x))
@@ -100,9 +100,7 @@ sum_rev <- function(x){
 
 
 #' Internal utility that creates IBI values from the find_peaks output
-#'
-#' @export
-#'
+#' @noRd
 
 time_sum<-function(x){
   Z<-rep(NA, length(x))

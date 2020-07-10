@@ -4,22 +4,7 @@
 #' set of "Time" and "PPG" inputs for the imputation model. These inputs represent PPG data that "surrounds" the window
 #' selected for imputation. The size of the window is dynamically determined for each participant based on average
 #' respiration rate (derived from \code{estimate_avg_respiration()}).
-#'
-#' @param time_min is a \code{numeric} 1D vector that contains the minimum time value of the user-defined imputation
-#' window.
-#' @param time_max is a \code{numeric} 1D vector that contains the maximum time value of the user-definedimputation
-#' window.
-#' @param ppg_data is a \code{data.frame} that contains the processed PPG signal and a time variable.
-#' @param ppg_col is of type \code{character} and is the column name in the \code{ppg_data} that contains the PPG signal
-#' @param time_col is of type \code{character} and is the column name in the \code{ppg_data} that contains the time
-#' variable
-#' @param expansion_factor is a \code{integer} that represents the number of average respiration cycles the program will
-#' use when exapanding to select input data for the imputation model.
-#' @param respiration_cycle_time is a \code{numeric} value that indicates the average number of seconds elapsed during
-#' each respiration cycle. The value is derived from \code{estimate_avg_respiration()}
-#' @param ds is a \code{integer} that represents the final "downsampled" rate of the PPG data, in Hz
-#'
-#' @export
+#' @noRd
 
 generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NULL, total_time=NULL, ds=NULL,
                                       input_windows=NULL, ppg_col="PPG", time_col="Time"){
@@ -161,8 +146,7 @@ generate_imputation_input_windows <- function(time_vector, total_input_time, tar
 
 
 #' Internal utility for extracting local HP mean and sd based on user-identified valid data
-#'
-#' @export
+#' @noRd
 
 extract_valid_local_HP_stats <- function(ibi_data=NULL, time_min=NULL, time_max=NULL, selected_points=NULL,
                                          input_windows=NULL, ibi_col="IBI", time_col="Time"){
@@ -176,13 +160,12 @@ extract_valid_local_HP_stats <- function(ibi_data=NULL, time_min=NULL, time_max=
 
 
 #' Internal utility for defining time variable over which to impute
-#'
-#' @export
+#' @noRd
 
 generate_imputation_time <- function(ppg_data=NULL, time_min=NULL, time_max=NULL, ds=NULL, time_col="Time"){
   sample_rate <- round(ds/24)
   imputation_target_time <- ppg_data[time_col][between(ppg_data[time_col], time_min, time_max)]
-  imputation_target_time <- imputation_target_time[seq(1, length(imputation_target_time, by=sample_rate))]
+  imputation_target_time <- imputation_target_time[seq(1, length(imputation_target_time), by=sample_rate)]
 
   return(imputation_target_time)
 }
@@ -190,7 +173,8 @@ generate_imputation_time <- function(ppg_data=NULL, time_min=NULL, time_max=NULL
 
 #' Internal \code{ibiVizEdit} utility for generating diagnostic traceplots
 #'
-#' @export
+#' @importFrom cowplot plot_grid
+#' @noRd
 
 save_gp_imputation_traceplots <- function(model_outputs=NULL, gp_driver=NULL, sub_id=NULL, secondary_id=NULL,
                                           study_id=NULL, out_dir=NULL){
@@ -226,9 +210,11 @@ save_gp_imputation_traceplots <- function(model_outputs=NULL, gp_driver=NULL, su
 
 #' Internal \code{ibiVizEdit} utility for generation a model output summary in .txt
 #'
-#' @export
+#' @importFrom benchmarkme get_cpu get_ram
+#' @importFrom parallel detectCores
+#' @noRd
 
-save_model_summary_as_text <- function(model_ouputs=NULL, gp_driver=NULL,sub_id=NULL, secondary_id=NULL, study_id=NULL,
+save_model_summary_as_text <- function(model_outputs=NULL, gp_driver=NULL,sub_id=NULL, secondary_id=NULL, study_id=NULL,
                                        out_dir=NULL){
   file_name <- paste("/Model_summary", sub_id, secondary_id, study_id, sep="_")
   full_filepath <- paste0(out_dir, file_name, ".txt")
@@ -238,7 +224,7 @@ save_model_summary_as_text <- function(model_ouputs=NULL, gp_driver=NULL,sub_id=
   cat(paste0('\nT1:', '\t\t\t\t', round(gp_driver$prediction_window[1], digits = 2)))
   cat(paste0('\nT2:', '\t\t\t\t', round(gp_driver$prediction_window[2], digits = 2)))
   cat(paste0('\nTotal Time', '\t\t\t', round(diff(gp_driver$prediction_window), digits = 2), '(s)'))
-  cat(paste0('\nRun Time:', '\t\t\t', model_ouputs$run_time, '(mins)'))
+  cat(paste0('\nRun Time:', '\t\t\t', model_outputs$run_time, '(mins)'))
   cat(paste0('\nMAP HR:', '\t\t\t\t', round(model_outputs$HR_mode*60, digits = 2)))
   cat(paste0('\nMAP R:', '\t\t\t\t',round(model_outputs$R_mode*60, digits = 2)))
   cat(paste0('\nadapt_delta:', '\t\t\t', gp_driver$adapt_delta))
@@ -252,14 +238,13 @@ save_model_summary_as_text <- function(model_ouputs=NULL, gp_driver=NULL,sub_id=
   cat(paste0('\nRAM:', '\t\t\t\t', paste(round(get_ram()/1073741824), 'GB')))
   cat('\n-------------------------------------------------------------------------------------')
   cat('\n\nGP SUMMARY:\n\n')
-  print(model_ouputs$model_pars_summary)
+  print(model_outputs$model_pars_summary)
   sink()
 }
 
 
 #' Internal \code{ibiVizEdit} utility for appending summary data from an imputation model's posterior distributions
-#'
-#' @export
+#' @noRd
 
 add_MAP_summaries <- function(model_outputs=NULL, pars=c("HR", "R")){
   for(p in 1:length(pars)){
@@ -271,7 +256,8 @@ add_MAP_summaries <- function(model_outputs=NULL, pars=c("HR", "R")){
 
 #' Internal \code{ibiVizEdit} utility for selecting maximum a posteriori estimates of corrupted PPG data
 #'
-#' @export
+#' @importFrom ImputeTS na_kalman 
+#' @noRd
 
 generate_gp_ppg_predictions <- function(model_outputs=NULL, gp_driver=NULL){
   time_df <- data.frame(Time=seq(gp_driver$prediction_window[1], gp_driver$prediction_window[2], by=1/gp_driver$ds))
@@ -284,8 +270,7 @@ generate_gp_ppg_predictions <- function(model_outputs=NULL, gp_driver=NULL){
 
 
 #' Internal \code{ibiVizEdit} utility for identying large Rhat estimates in GP imputation model outputs
-#'
-#' @export
+#' @noRd
 
 check_for_large_rhats <- function(summary_table=NULL){
   if(sum(summary_table$Rhat > 1.1) > 1){
@@ -308,8 +293,7 @@ check_for_large_rhats <- function(summary_table=NULL){
 
 
 #' Internal \code{ibiVizEdit} utility for generating the GP imputation model in Stan code
-#'
-#' @export
+#' @noRd
 
 return_stan_code <- function(){
   model_string <- "

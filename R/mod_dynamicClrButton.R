@@ -1,7 +1,7 @@
 #' UI module for \code{ibiVizEdit} that serves as a basic wrapper and enables single actionButton generation.
 #'
-#' @export
 #' @importFrom shiny uiOutput
+#' @noRd
 
 dynamicClrButtonModUI <- function(id=NULL, inline=FALSE){
   ns <- NS(id)
@@ -11,10 +11,10 @@ dynamicClrButtonModUI <- function(id=NULL, inline=FALSE){
 
 #' Server module for \code{ibiVizEdit} that dynamically switches actionButton UIs based on color
 #'
-#' @export
 #' @importFrom shiny actionButton
+#' @noRd
 
-dynamicClrButtonMod <- function(input, output, session, status_name=NULL, label=NULL, hotkey=NULL, hotkey_map=NULL,
+dynamicClrButtonMod <- function(input, output, session, status_name=NULL, label=NULL,
                                 updated_label=NULL, default_display_name=NULL, button_name="click_in",
                                 active_color=BUTTON_COLORS["standard"], inactive_color=BUTTON_COLORS["inactive"],
                                 updated_color=BUTTON_COLORS["warning"]){
@@ -30,10 +30,6 @@ dynamicClrButtonMod <- function(input, output, session, status_name=NULL, label=
     
     if(active){
       color_arg <- active_color
-    }
-    
-    if(!is.null(hotkey) & !is.null(hotkey_map)){
-      tags$script(HTML(track_hotkey_presses(key=hotkey, key_map=hotkey_map, button_name=button_name)))
     }
     
     if(!default_display){

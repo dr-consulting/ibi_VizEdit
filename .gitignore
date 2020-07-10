@@ -7,3 +7,6 @@
 
 # Contains the golem dev files - can still open and run locally if I want
 .dev
+inst/doc
+doc
+Meta

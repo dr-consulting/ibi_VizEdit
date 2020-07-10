@@ -5,11 +5,12 @@
 #' @export
 #' @importFrom shiny shinyApp
 #' @importFrom golem with_golem_options
+#' @noRd
 
 run_app <- function(
   ...
 ) {
-  golem::with_golem_options(
+  with_golem_options(
     app = shinyApp(
       ui = app_ui, 
       server = app_server

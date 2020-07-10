@@ -11,7 +11,7 @@ time_center(x, time_col = "Time", timing_series = NULL)
 
 \item{time_col}{the name of the column in \code{x} that contains the time data}
 
-\item{time_df}{the name of the \code{vector} that contains timestamps for the initial task and subsequent tasks.
+\item{timing_series}{the name of the \code{vector} that contains timestamps for the initial task and subsequent tasks.
 Must be formatted such that the element is the start of the first task/condition, the second element is the end of
 that task, the third is start of the second condition/task, the fourth is the end of that task and so on.}
 }

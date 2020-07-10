@@ -1,13 +1,12 @@
-library(shiny)
-
 #' Internal utility for defualt plot message generation
 #'
 #' \code{ppg_data_check_empty_plot} creates a plot with a user-facing message stating that no data has been loaded.
 #' @importFrom ggplot2 ggplot annotate theme_bw
+#' @noRd
 
 ppg_data_check_empty_plot <- function(){
   df <- data.frame(x=c(-1,0,1), y=c(-1,0,1))
-  p <- ggplot(aes(x=x, y=y), data=df) +
+  p <- ggplot(aes_string(x='x', y='y'), data=df) +
     annotate('text', x=0, y=0, label='No Processed Data Provided') +
     theme_bw()
 
@@ -47,13 +46,13 @@ generate_ppg_data_check_plot <- function(ppg_data = NULL, ppg_col='PPG', time_co
 #' @param time_col is of type \code{character} and is the column name in the \code{ppg_data} that contains the time
 #' variable
 #'
-#' @export
 #' @importFrom ggplot2 ggplot geom_point geom_line scale_color_manual labs theme_bw aes_string
+#' @noRd
 
-generate_base_gui_plot <- function(ibi_data=NULL, color_map=NULL, ibi_col="IBI", time_col='Time'){
+generate_base_gui_plot <- function(ibi_data=NULL, color_map=NULL, ibi_col="IBI", time_col='Time', pnt_type="pnt_type"){
   p <- ggplot(data=ibi_data,
               aes_string(x=time_col, y=ibi_col)) +
-    geom_point(aes(color=pnt_type), show.legend=FALSE, size=2.75) +
+    geom_point(aes_string(color=pnt_type), show.legend=FALSE, size=2.75) +
     geom_line(color="black") +
     scale_color_manual(values=color_map) +
     labs(x="Time (s)", y="IBI (s)") +
@@ -77,6 +76,7 @@ generate_base_gui_plot <- function(ibi_data=NULL, color_map=NULL, ibi_col="IBI",
 #' @importFrom ggplot2 geom_vline geom_text 
 #' @importFrom magrittr %>%
 #' @importFrom tidyr pivot_longer
+#' @noRd
 
 add_task_v_lines <- function(base_plot=NULL, timing_data=NULL, time_col='Time', task_col="Task",
                              label_color=IBI_POINT_COLORS["original"]){
@@ -100,8 +100,8 @@ add_task_v_lines <- function(base_plot=NULL, timing_data=NULL, time_col='Time', 
 
 #' Internal \code{ibiVizEdit} utility that adds PPG to plot
 #'
-#' @export
 #' @importFrom ggplot2 geom_line aes_string
+#' @noRd
 
 add_ppg_waveform <- function(base_plot=NULL, ppg_data=NULL, show_ppg=FALSE, time_col="Time", ppg_col="PPG"){
   if(show_ppg & !is.null(ppg_data)){
@@ -121,8 +121,8 @@ add_ppg_waveform <- function(base_plot=NULL, ppg_data=NULL, show_ppg=FALSE, time
 
 #' Internal \code{ibiVizEdit} utility that enables dynamic color selection based on selected points
 #'
-#' @export
 #' @importFrom ggplot2 geom_point aes_string
+#' @noRd
 
 highlight_ibis <- function(base_plot=NULL, selected_points=NULL, time_col="Time", ibi_col="IBI"){
   if(!is.null(selected_points)){
@@ -141,8 +141,8 @@ highlight_ibis <- function(base_plot=NULL, selected_points=NULL, time_col="Time"
 
 #' Internal utility for generating dynamic text label corresponding to ibi value
 #'
-#' @export
 #' @importFrom ggplot2 geom_label
+#' @noRd
 
 ibi_value_label <- function(base_plot=NULL, hover_point=NULL, time_col="Time", ibi_col="IBI"){
   if(!is.null(hover_point)){
@@ -158,7 +158,7 @@ ibi_value_label <- function(base_plot=NULL, hover_point=NULL, time_col="Time", i
 
 
 #' Server side function to acquire hover points
-#'
+#' @noRd
 
 hover_point_selection <- function(input, hover_id){
   observeEvent(input[[hover_id]], {
@@ -180,9 +180,9 @@ hover_point_selection <- function(input, hover_id){
 
 #' Server side function that takes and saves screenshot in a screenshots folder for easy sharing with colleagues
 #'
-#' @export
 #' @importFrom glue glue
 #' @importFrom ggplot2 labs ggsave
+#' @noRd
 
 save_screenshot <- function(input, data, time_brush, button_id, ibi_or_ppg=NULL){
   # Getting time min and max for labeling purposes

@@ -2,8 +2,8 @@
 #'
 #' Note that currently the logic on whether a function (func) should run needs to be contained inside that function
 #'
-#' @export
 #' @importFrom shiny observeEvent
+#' @noRd
 
 eventTriggerMod <- function(input, output, session, input_id=NULL, trigger_items=NULL, trigger_values=NULL,
                             trigger_object=NULL, trigger_id=NULL){

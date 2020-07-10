@@ -166,12 +166,9 @@ app_server <- function( input, output, session ) {
              default_display_name="show_ppg_default")
   callModule(dynamicClrButtonMod, "ibi_drag_select", status_name="ibi_drag_select", label="Select Mode")
   callModule(dynamicClrButtonMod, "ibi_click_select", status_name="ibi_click_select", label="Click Mode")
-  callModule(dynamicClrButtonMod, "average", status_name="average", label="Average", hotkey="a",
-             hotkey_map=EDIT_BUTTON_CLICKS)
-  callModule(dynamicClrButtonMod, "combine", status_name="combine", label="Combine", hotkey="c",
-             hotkey_map=EDIT_BUTTON_CLICKS)
-  callModule(dynamicClrButtonMod, "divide", status_name="divide", label="Divide", hotkey="d",
-             hotkey_map=EDIT_BUTTON_CLICKS)
+  callModule(dynamicClrButtonMod, "average", status_name="average", label="Average")
+  callModule(dynamicClrButtonMod, "combine", status_name="combine", label="Combine")
+  callModule(dynamicClrButtonMod, "divide", status_name="divide", label="Divide")
   
   # Enable reactivity with the set_ibi_y_axis button
   callModule(eventTriggerMod, "set_ibi_y_axis", input_id="click_in",
