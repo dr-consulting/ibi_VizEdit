@@ -35,7 +35,7 @@ find_ibis <- function(ppg_signal, sampling_rate, min_time, time_adjust = 3, peak
                   rep(NA, length(s)))
   for(i in 1:length(s)){
     IBI_pos <- find_peaks(ppg_signal, s[i])
-    IBI_vals <- time_sum(IBI_pos)/sampling_rate
+    IBI_vals <- time_diff(IBI_pos)/sampling_rate
     Z[i,1] <- s[i]
     Z[i,2] <- sd(IBI_vals)
     Z[i,3] <- max(IBI_vals)-min(IBI_vals)
@@ -47,7 +47,7 @@ find_ibis <- function(ppg_signal, sampling_rate, min_time, time_adjust = 3, peak
   Z <- Z[order(Z$RMSSD, decreasing = FALSE),]
   IBI_pos <- find_peaks(ppg_signal, bw=Z[1,1])-1
   IBI_time <- IBI_pos/sampling_rate + min_time - time_adjust 
-  IBI_vals <- time_sum(IBI_pos)/sampling_rate
+  IBI_vals <- time_diff(IBI_pos)/sampling_rate
   IBI_out <- data.frame(IBI=IBI_vals, Time=IBI_time)
   IBI_comp <- list(IBI_out, Z)
   names(IBI_comp) <- c('IBI_out', 'detection_settings')
@@ -90,7 +90,7 @@ find_peaks <- function (x, bw){
 #' must be an object that can be safely cast to a single vector of temporally sequenced numeric values.
 #'
 #' @return Returns the sequentially ordered index values at which each "peak" is detected.
-#' @noRd
+#' @export
 
 sum_rev <- function(x){
   Z<-rep(NA, length(x))
@@ -102,9 +102,15 @@ sum_rev <- function(x){
 
 
 #' Internal utility that creates IBI values from the find_peaks output
-#' @noRd
+#' 
+#' @param x a vector of time values used to generate a diff series. Time values represent the moment at which a beat was
+#' detected
+#' 
+#' @return Returns a series of differenced values representing the time between each successive x value from the input
+#' series 
+#' @export
 
-time_sum<-function(x){
+time_diff<-function(x){
   Z<-rep(NA, length(x))
   for(i in 1:length(x)){
     Z[i]<-ifelse(i==1, x[i], x[i]-x[i-1])
