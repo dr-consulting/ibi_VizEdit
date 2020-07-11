@@ -1,7 +1,27 @@
 #' Internal utility that aggregates data and settings needed to trigger an imputation model run
 #' 
 #' This could use a considerable refactor - need to back through and break up a lot of these complicated functions
-#' @noRd
+#' @param iter number of iterations per chain
+#' @param warmup number of warmup interations
+#' @param adapt_delta parameter passed to rstan call 
+#' @param time_min lower boundary of the time window for imputation 
+#' @param time_max upper boundary of the time window for imputation
+#' @param ppg_data the processed PPG data.frame be used in the analysis
+#' @param ibi_data the IBI data used to define priors for the imputation model
+#' @param respiration_cat the population age group used to define the respiration range 
+#' @param ds the downsampled sampling rate for the PPG data
+#' @param selected_ibis IBI values that will be used in setting the priors (defined by a combination of the expansion
+#' factor and the individual respiration rate. 
+#' @param ppg_col column name in \code{ppg_data} that contains the PPG signal data. Default is "PPG".
+#' @param ibi_col column name in \code{ibi_data} that contains the IBI series 
+#' @param time_col defaults to "Time" and represents the synchronized time values for the \code{ppg_data} and 
+#' \code{ibi_data}
+#' @param expansion_factor is the number of respiration cycles to use in setting the data used to define the paramters
+#' in the imputation model 
+#' 
+#' @return applies a series of helper function and returns a \code{list} of values that are used to define the Gaussian
+#' process imputation model. 
+#' @export
 
 gp_impute_driver <- function(iter=NULL, warmup=NULL, adapt_delta=NULL, time_min=NULL,time_max=NULL, ppg_data=NULL,
                              ibi_data=NULL, respiration_cat=NULL, ds=NULL, selected_ibis=NULL, ppg_col="PPG",
@@ -26,7 +46,7 @@ gp_impute_driver <- function(iter=NULL, warmup=NULL, adapt_delta=NULL, time_min=
   driver$adapt_delta <- adapt_delta
   driver$prediction_window <- c(time_min, time_max)
   driver$ds <- ds
-  # Initializing stan data list...
+  # Initializing stan data list
   driver$gp_data <- list()
   driver$gp_data$mu_R <- respiration_stats$mean
   driver$gp_data$sigma_R <- respiration_stats$sd
@@ -43,10 +63,16 @@ gp_impute_driver <- function(iter=NULL, warmup=NULL, adapt_delta=NULL, time_min=
 
 
 #' Internal \code{ibiVizEdit} utility for running a Bayesian Gaussian process imputation model
-#'
+#' 
+#' @param gp_driver \code{list} returned from \code{ibiVizEdit::gp_impute_driver} that includes all of the values 
+#' required for the imputation model. 
+#' @param imputation_model a string that defines a \code{Stan} model 
+#' 
 #' @importFrom parallel detectCores
 #' @importFrom rstan rstan_options stan extract traceplot
-#' @noRd
+#' 
+#' @return Returns the outputs of a Bayesian imputation model as defined by \code{imputation_model}
+#' @export
 
 run_bayesian_gp <- function(gp_driver, imputation_model){
   pars_to_monitor <- c('HR','R', 'Ypred', paste0('a',1:3), paste0('r',1:5))
@@ -83,7 +109,14 @@ run_bayesian_gp <- function(gp_driver, imputation_model){
 
 
 #' Internal \code{ibiVizEdit} function for replacing corrupted data with imputed data
-#' @noRd
+#' 
+#' @param PLACEHOLDER
+#' @param model_outputs list returned from run_bayesian_gp. 
+#' @param ppg_col the column name in the PPG \code{data.frame} that contains the PPG. 
+#' @param time_col the column name in the PPG \code{data.frame} that contains the time values. 
+#' 
+#' @return the ppg_data with the imputed values overwriting the original values
+#' @export 
 
 replace_w_imputed <- function(ppg_out=NULL, model_outputs=NULL, ppg_col="PPG", time_col="Time"){
   ppg_out[ppg_col][ppg_out[time_col] %in% model_outputs$imputed_df[time_col]] <- model_outputs$imputed_df[ppg_col]
