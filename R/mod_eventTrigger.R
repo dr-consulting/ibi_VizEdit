@@ -2,6 +2,12 @@
 #'
 #' Note that currently the logic on whether a function (func) should run needs to be contained inside that function
 #'
+#' @param input,output,session 
+#' @param input_id id label - actual name stored within the {shiny} {input} object
+#' @param trigger_items PLACEHOLDER 
+#' @param trigger_values PLACEHOLDER
+#' @param trigger_object PLACEHOLDER
+#' @param trigger_id PLACEHOLDER
 #' @importFrom shiny observeEvent
 #' @noRd
 
