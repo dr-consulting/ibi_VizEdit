@@ -4,7 +4,7 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @importFrom shinythemes shinytheme
-#' @noRd
+
 app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
@@ -62,7 +62,7 @@ app_ui <- function(request) {
 #' 
 #' @import shiny
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
-#' @noRd
+
 golem_add_external_resources <- function(){
   
   add_resource_path(

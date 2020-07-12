@@ -16,7 +16,7 @@ Must be formatted such that the element is the start of the first task/condition
 that task, the third is start of the second condition/task, the fourth is the end of that task and so on.}
 }
 \value{
-Returns a re-coded version of the inputs with new timing
+a re-coded version of the inputs with new timing
 }
 \description{
 \code{time_center} takes a PPG and/or IBI file and centers it at the very start of a task file. The effect is to cut

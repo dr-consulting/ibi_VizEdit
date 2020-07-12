@@ -2,7 +2,6 @@
 #'
 #' @param id for the namespace that connects the ui and server components of the module
 #' @importFrom shiny uiOutput
-#' @noRd
 
 dynamicCheckBoxInputModUI <-function(id=NULL){
   ns <- NS(id)
@@ -17,7 +16,6 @@ dynamicCheckBoxInputModUI <-function(id=NULL){
 #' @param selected the default set of selections
 #' @param paste_char optional value or vector that appends to each value defined by {choices} and {selected}
 #' @importFrom shinyWidgets awesomeCheckboxGroup
-#' @noRd
 
 dynamicCheckBoxInputMod <- function(input, output, session, label=NULL, choices=NULL, selected=NULL, paste_char=NULL){
   output$rendered_checkbox <- renderUI({

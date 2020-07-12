@@ -3,7 +3,6 @@
 #' @param id value for the namespace that links the server and ui components of the module
 #' @param inline setting passed on to the ui defining whether the button should be placed in line or not
 #' @importFrom shiny uiOutput
-#' @noRd
 
 dynamicClrButtonModUI <- function(id=NULL, inline=FALSE){
   ns <- NS(id)
@@ -24,7 +23,6 @@ dynamicClrButtonModUI <- function(id=NULL, inline=FALSE){
 #' @param inactive_color the inactive color - defaults to settings defined in {ibiVizEdit} internals
 #' @param updated_color the updated color (when active) - defaults to settings defined in {ibiVizEdit} internals
 #' @importFrom shiny actionButton
-#' @noRd
 
 dynamicClrButtonMod <- function(input, output, session, status_name=NULL, label=NULL,
                                 updated_label=NULL, default_display_name=NULL, button_name="click_in",

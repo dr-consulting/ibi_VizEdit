@@ -110,7 +110,7 @@ run_bayesian_gp <- function(gp_driver, imputation_model){
 
 #' Internal \code{ibiVizEdit} function for replacing corrupted data with imputed data
 #' 
-#' @param PLACEHOLDER
+#' @param ppg_out PLACEHOLDER
 #' @param model_outputs list returned from run_bayesian_gp. 
 #' @param ppg_col the column name in the PPG \code{data.frame} that contains the PPG. 
 #' @param time_col the column name in the PPG \code{data.frame} that contains the time values. 

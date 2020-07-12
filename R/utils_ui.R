@@ -1,5 +1,7 @@
 #' UI utility for \code{ibiVizEdit} that renders the Dead Reckoning wide Logo
-#' @noRd
+#' 
+#' @param logo_filepath relative path for the desired logo
+#' @param url the url the user should be directed to upon clicking the logo
 
 addLogo <- function(logo_filepath=NULL, url="https://www.deadreckoning.consulting/"){
   tags$a(href=url, tags$img(src=logo_filepath))
@@ -7,8 +9,10 @@ addLogo <- function(logo_filepath=NULL, url="https://www.deadreckoning.consultin
 
 #' UI utility for \code{ibiVizEdit} that generates a series of file and director input objects
 #'
+#' @param button_color hexidecimal code for the button coloring
+#' @param heading heading info presented to the user
+#'
 #' @importFrom shinyFiles shinyDirButton shinyFilesButton
-#' @noRd
 
 fileButtons <- function(button_color=BUTTON_COLORS['standard'], heading="Select File(s) & Working Directory"){
   # Add option to load from partially processed data files...
@@ -35,8 +39,9 @@ fileButtons <- function(button_color=BUTTON_COLORS['standard'], heading="Select 
 
 #' UI utility for \code{ibiVizEdit} that generates fields for ID, Study, and Editor Labels
 #'
+#' @param heading heading info presented to the user
+#' 
 #' @importFrom shiny textInput
-#' @noRd
 
 idNameFields <- function(heading="File ID and Information:"){
   tagList(tags$h2(heading),
@@ -49,8 +54,9 @@ idNameFields <- function(heading="File ID and Information:"){
 
 #' UI utility for \code{ibiVizEdit} that generates data entry fields for data properties; accepts user-defined defaults
 #'
+#' @param heading heading info presented to the user
+#'
 #' @importFrom shiny numericInput selectInput
-#' @noRd
 
 ppgDataPropertiesEntry <- function(heading="Data Properties:"){
 
@@ -64,9 +70,10 @@ ppgDataPropertiesEntry <- function(heading="Data Properties:"){
 
 #' UI utility for \code{ibiVizEdit} that generates data entry fields for optional settings
 #'
+#' @param heading heading info presented to the user
+#'
 #' @importFrom shiny numericInput 
 #' @importFrom shinyWidgets awesomeCheckboxGroup
-#' @noRd
 
 optionalSettingsEntry <- function(heading="Optional Settings:"){
 
@@ -81,7 +88,6 @@ optionalSettingsEntry <- function(heading="Optional Settings:"){
 
 
 #' UI utility for \code{ibiVizEdit} that generates data entry actionButtons
-#' @noRd
 
 dataEntryActionButtons <- function(){
   fluidRow(
@@ -97,9 +103,12 @@ dataEntryActionButtons <- function(){
 }
 
 #' UI utility for \code{ibiVizEdit} that adds a note about open-source nature of program and link to documentation
-#'
+#' 
+#' @param docs_link a hyperlink to additional {ibiVizEdit} documentation
+#' @param repo_link a hyperlink to the application repository on GH 
+#' @param wiki_link a hyperlink to the Wiki for additional documentation
+#' 
 #' @importFrom stringr str_wrap
-#' @noRd
 
 addMainFooter <- function(docs_link=NULL, repo_link=NULL, wiki_link=NULL){
   tags$body(h4("Open-Source Tool for Processing Psychophysiological Data"),
@@ -118,8 +127,9 @@ addMainFooter <- function(docs_link=NULL, repo_link=NULL, wiki_link=NULL){
 
 #' UI utility for \code{ibiVizEdit} that renders a footer for the processing panel
 #'
+#' @param heading heading info presented to the user
+#'
 #' @importFrom stringr str_wrap
-#' @noRd
 
 addProcessingFooter <- function(heading="Processing Tab Overview"){
   tags$body(h4(heading),
@@ -142,7 +152,8 @@ addProcessingFooter <- function(heading="Processing Tab Overview"){
 }
 
 #' Utility for \code{ibiVizEdit} that defines plots for pre-processing tab
-#' @noRd
+#' 
+#' @param heading heading info presented to the user
 
 preProcessPlots <- function(heading="Visualize Pre-Processed PPG Data:"){
   tagList(tags$h2(heading),
@@ -153,8 +164,9 @@ preProcessPlots <- function(heading="Visualize Pre-Processed PPG Data:"){
 
 #' Utility for \code{ibiVizEdit} that defines tables for pre-processing tab
 #'
+#' @param heading heading info presented to the user
+#'
 #' @importFrom shiny tableOutput
-#' @noRd
 
 preProcessTables <- function(heading="Task Timing and Peak Detection Outputs:"){
   tagList(tags$h2(heading),
@@ -169,7 +181,6 @@ preProcessTables <- function(heading="Task Timing and Peak Detection Outputs:"){
 #' Utility for \code{ibiVizEdit} that gemerates UI components for ibi editing tab tools
 #'
 #' @importFrom shiny sliderInput verbatimTextOutput numericInput actionButton
-#' @noRd
 
 ibiEditingTools <- function(){
   tagList(tags$h4("Heads Up Display:"),
@@ -208,7 +219,6 @@ ibiEditingTools <- function(){
 #' Utility for \code{ibiVizEdit} that generates main editing plots for IBI tab
 #'
 #' @importFrom shiny plotOutput
-#' @noRd
 
 ibiEditingPlots <- function(){
   tagList(plotOutput("ibi_main_plot", height=600, brush=brushOpts("drag_ibis", direction="x"),
@@ -220,8 +230,9 @@ ibiEditingPlots <- function(){
 
 #' Utility for \code{ibiVizEdit} that generates footer note at the bottom of the IBI tab
 #'
+#' @param heading heading info presented to the user
+#'
 #' @importFrom stringr str_wrap
-#' @noRd
 
 addIbiFooter <- function(heading="IBI Tab Overview"){
   tags$body(h4(heading),
@@ -246,7 +257,6 @@ addIbiFooter <- function(heading="IBI Tab Overview"){
 #' Utility for \code{ibiVizEdit} that generates UI components for ibi editing tab tools
 #'
 #' @importFrom shiny sliderInput numericInput actionButton
-#' @noRd
 
 ppgEditingTools <- function(){
   tagList(tags$h4("Plot Settings"),
@@ -292,7 +302,6 @@ ppgEditingTools <- function(){
 #' Utility for \code{ibiVizEdit} that generates main editing plots for PPG tab
 #'
 #' @importFrom shiny plotOutput
-#' @noRd
 
 ppgEditingPlots <- function(){
   tagList(plotOutput("ppg_main_plot", height=600, brush=brushOpts("select_ppg", direction="x"), click="click_ppg",
@@ -303,8 +312,9 @@ ppgEditingPlots <- function(){
 
 #' Utility for \code{ibiVizEdit} that generates footer note at the bottom of the PPG tab
 #'
+#' @param heading heading info presented to the user
+#'
 #' @importFrom stringr str_wrap
-#' @noRd
 
 addPpgFooter <- function(heading="PPG Tab Overview"){
   tags$body(h4(heading),

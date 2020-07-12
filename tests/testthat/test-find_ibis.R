@@ -43,8 +43,8 @@ test_that("sum_rev: returns cumulative sum with fixed value at x[1]", {
   expect_equal(result, expected)
 })
 
-test_that("time_sum: returns a running difference with fixed value at x[1]", {
-  result <- time_sum(c(1, 1.5, 2.75, 3))
+test_that("time_diff: returns a running difference with fixed value at x[1]", {
+  result <- time_diff(c(1, 1.5, 2.75, 3))
   expected <- c(1, .5, 1.25, .25)
 
   # Basically a running difference   

@@ -25,6 +25,9 @@ imputation window.}
 \item{target_time_max}{is a \code{numeric} 1D vector that contains the maximum time value of the user-defined
 imputation window.}
 }
+\value{
+list that contains the input imputation windows boundaries
+}
 \description{
 \code{generate_imputation_input_windows} is designed to take in the time vector for the entire PPG series, and return
 a list containing the boundaries that define input data that will be used in the imputation model. The total amount

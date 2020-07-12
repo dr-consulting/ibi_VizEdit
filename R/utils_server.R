@@ -1,7 +1,8 @@
 #' Sever-side utility for \code{ibiVizEdit} that observes and updates directory information
 #'
+#' @param input,input_name {shiny} and {ibiVizEdit} internals for setting working directory
+#'
 #' @importFrom shinyFiles parseDirPath shinyFileChoose
-#' @noRd
 
 get_working_directory <- function(input, input_name=NULL){
   observeEvent(input[[input_name]], {
@@ -21,8 +22,9 @@ get_working_directory <- function(input, input_name=NULL){
 
 #' Server-side utility for \code{ibiVizEdit} that observes and updates raw data paths file paths
 #'
+#' @param input,input_name {shiny} and {ibiVizEdit} internals for defining raw data path
+#' 
 #' @importFrom shinyFiles parseFilePaths
-#' @noRd
 
 store_raw_data_filepath <- function(input, input_name=NULL){
   observeEvent(input[[input_name]], {
@@ -38,7 +40,12 @@ store_raw_data_filepath <- function(input, input_name=NULL){
 
 
 #' Server-side utility for \code{ibiVizEdit} that outputs relevant file and directory information when submitted
-#' @noRd
+#' 
+#' @param default_text the default message to display
+#' @param msg_part1 the first portion of the message which remains static. 
+#' @param obj_name the object name referred to at the end of the displayed message. Typically a file or directory path
+#' 
+#' @return a message to be displayed in the appropriate location in the {ibiVizEdit} ui
 
 generate_path_messages <- function(default_text=NULL, msg_part1=NULL, obj_name=NULL){
   renderText({
@@ -53,7 +60,7 @@ generate_path_messages <- function(default_text=NULL, msg_part1=NULL, obj_name=N
 
 
 #' Server-side utility for \code{ibiVizEdit} that tracks and updates text field data entry
-#' @noRd
+#' @param input {shiny} internal
 
 track_data_text_entry <- function(input){
     observe({
@@ -77,7 +84,6 @@ track_data_text_entry <- function(input){
 
 
 #' Server-side utility for \code{ibiVizEdit} that turns on "load" button
-#' @noRd
 
 turn_on_load_button <- function(){
   observe({
@@ -89,7 +95,7 @@ turn_on_load_button <- function(){
 
 
 #' Server-side utility for \code{ibiVizEdit} that loads data using specifications set in Data Entry tab
-#' @noRd
+#' @param input {shiny} internal
 
 load_files_and_settings <- function(input){
   if(BUTTON_STATUS[["load"]] == 1){
@@ -120,8 +126,9 @@ load_files_and_settings <- function(input){
 
 #' Server-side utility for \code{ibiVizEdit} that dynamically updates pre-processing PPG plot
 #'
+#' @param ppg_data PPG data series
+#' @param brush_in the brush used to define the time window for inspection
 #' @importFrom ggplot2 coord_cartesian
-#' @noRd
 
 basic_ppg <- function(ppg_data=NULL, brush_in=NULL){
   if(is.null(ppg_data)){
@@ -139,8 +146,10 @@ basic_ppg <- function(ppg_data=NULL, brush_in=NULL){
 
 #' Server-side utility for \code{ibiVizEdit} that dynamically updates full IBI + PPG combo plots
 #'
+#' @param ibi_data IBI data stored in a list of reactiveValues and edited during the user's {ibiVizEdit} session
+#' @param brush_in the brush used to define the time window for inspection
+#' 
 #' @importFrom ggplot2 coord_cartesian
-#' @noRd
 
 ibi_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NULL){
   if(is.null(ibi_data)){
@@ -170,7 +179,10 @@ ibi_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
 }
 
 #' Server-side utility for \code{ibiVizEdit} that updates summary stats displayed in text window
-#' @noRd
+#' 
+#' @param input {shiny} internal
+#' @param hover_id internal name for the hover input object
+#' @param ibi_data IBI data stored in a list of reactiveValues and edited during the user's {ibiVizEdit} session 
 
 generate_heads_up_info <- function(input, hover_id=NULL, ibi_data=NULL){
   req(ibi_data)
@@ -184,8 +196,10 @@ generate_heads_up_info <- function(input, hover_id=NULL, ibi_data=NULL){
 
 #' Server-side utility for \code{ibiVizEdit} that defines main PPG plot for GUI editing
 #'
+#' @param ibi_data IBI data stored in a list of reactiveValues and edited during the user's {ibiVizEdit} session
+#' @param brush_in the brush used to define the time window for inspection
+#' 
 #' @importFrom ggplot coord_cartesian
-#' @noRd
 
 ppg_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NULL){
   if(is.null(ibi_data)){
@@ -206,7 +220,11 @@ ppg_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
 
 
 #' Server side function that "collects" points for editing when in click and drag selection mode
-#' @noRd
+#' 
+#' @param input {shiny} internal
+#' @param brush_id the brush id used to perform point selection in the "main" editing plot on a given panel
+#' @param valid_status defaults to "drag" - the other option is "click" in terms of point selection
+#' @param status_var the reactiveValues that "track" whether the select_mode status is "drag" or "click"
 
 drag_point_collection <- function(input, brush_id, valid_status="drag",
                                   status_var=reactive({TEMP_GRAPHICS_SETTINGS[["select_mode"]]})){
@@ -224,9 +242,15 @@ drag_point_collection <- function(input, brush_id, valid_status="drag",
 }
 
 #' Server side function that "collects" points for editing when in click ibi selection mode
-#'
+#' 
+#' @param input {shiny} internal
+#' @param click_id the click id used to perform point selection in the "main" editing plot on a given panel
+#' @param dbl_click_id the double click id used to perform point selection in the "main" editing plot on a given panel. 
+#' This action is used to reset or "de-select" any points that were previously highlighted by the user. 
+#' @param valid_status defaults to "click" - the other option is "drag" in terms of point selection
+#' @param status_var the reactiveValues that "track" whether the select_mode status is "drag" or "click"
+#' 
 #' @importFrom dplyr between
-#' @noRd
 
 click_point_selection <- function(input, click_id, dbl_click_id, valid_status="click",
                                   status_var=reactive({TEMP_GRAPHICS_SETTINGS[["select_mode"]]})){
@@ -265,8 +289,6 @@ click_point_selection <- function(input, click_id, dbl_click_id, valid_status="c
 
 
 #' Server side function that tracks and updates the status of the editing functions
-#' @noRd
-
 track_editing_options <- function(){
   observeEvent(DYNAMIC_DATA[["selected_points"]], {
     if(!is.null(DYNAMIC_DATA[["selected_points"]])){
@@ -296,7 +318,9 @@ track_editing_options <- function(){
 #' Server side function to extract necessary information from the IBI time series
 #'
 #' Takes in the ibi time series and extracts information used in the average, combine, and divide computations
-#' @noRd
+#' 
+#' @param ibi_data IBI data stored in a list of reactiveValues and edited during the user's {ibiVizEdit} session
+#' @param selected_points the points defined by using the "drag" or "click" selection method 
 
 extract_ibi_editing_info <- function(ibi_data, selected_points=NULL){
   ibi_info <- list(
@@ -312,7 +336,10 @@ extract_ibi_editing_info <- function(ibi_data, selected_points=NULL){
 
 
 #' Server side function to facilitate combining multiple points
-#' @noRd
+#' 
+#' @param ibi_data IBI data stored in a list of reactiveValues and edited during the user's {ibiVizEdit} session
+#' @param selected_points the points defined by using the "drag" or "click" selection method 
+#' @param status the status of the combine button - whether it can be used or not
 
 combine_button_action <- function(ibi_data, selected_points=NULL, status=NULL){
   if(status){
@@ -336,7 +363,7 @@ combine_button_action <- function(ibi_data, selected_points=NULL, status=NULL){
         time_new <- c(info[["orig_time_before"]], info[["max_orig_time_before"]] + info[["combined_ibi"]],
                       info[["orig_time_after"]])
       }
-      ibi_new <- time_sum(time_new)[-1]  # Dropping the first value to preserve original time stamps
+      ibi_new <- time_diff(time_new)[-1]  # Dropping the first value to preserve original time stamps
       ibi_new <- c(info[["first_ibi"]], ibi_new)
       pnt_type <- ibi_data[["pnt_type"]][ibi_data[["Time"]] %in% time_new]
       pnt_type[time_new == info[["max_time_selected"]]] <- "combined"
@@ -357,7 +384,12 @@ combine_button_action <- function(ibi_data, selected_points=NULL, status=NULL){
 #'
 #' Takes a single point and divides it into n points as determined by the user-specified denominator - defaults to 2 in
 #' the UI
-#' @noRd
+#' 
+#' @param ibi_data IBI data stored in a list of reactiveValues and edited during the user's {ibiVizEdit} session
+#' @param denom the denominator specified by the user. Determines the number of points to divide the selected IBI value
+#' evenly into.
+#' @param selected_points the points defined by using the "drag" or "click" selection method 
+#' @param status the status of the divide button - whether it can be used or not
 
 divide_button_action <- function(ibi_data, denom=NULL, selected_points=NULL, status=NULL){
   if(status){
@@ -417,7 +449,10 @@ divide_button_action <- function(ibi_data, denom=NULL, selected_points=NULL, sta
 #'
 #' Takes a single point and divides it into n points as determined by the user-specified denominator - defaults to 2 in
 #' the UI
-#' @noRd
+#' 
+#' @param ibi_data IBI data stored in a list of reactiveValues and edited during the user's {ibiVizEdit} session
+#' @param selected_points the points defined by using the "drag" or "click" selection method 
+#' @param status the status of the average button - whether it can be used or not
 
 average_button_action <- function(ibi_data, selected_points=NULL, status=NULL){
   if(status){
@@ -475,7 +510,10 @@ average_button_action <- function(ibi_data, selected_points=NULL, status=NULL){
 
 
 #' Server side utility that marks selected points as uneditable
-#' @noRd
+#' 
+#' @param input {shiny} internal
+#' @param ibi_data IBI data stored in a list of reactiveValues and edited during the user's {ibiVizEdit} session
+#' @param selected_points the points defined by using the "drag" or "click" selection method 
 
 uneditable_button_action <- function(input, ibi_data, selected_points=NULL){
   observeEvent(input[["uneditable"]], {
@@ -488,8 +526,14 @@ uneditable_button_action <- function(input, ibi_data, selected_points=NULL){
 
 #' Server side utility that takes restores all IBIs within the selected window
 #'
+#' @param input {shiny} internal 
+#' @param restore_id id value for the button used to enable the restore action
+#' @param edited_data data stored in a list of reactiveValues that contains "in-progress" edits during the user session
+#' @param original_data data stored in a list of reactiveValues that contains the "original" data as it existed 
+#' following preliminary processing but before manual editing. 
+#' @param brush_id id for the brush that defines the section of data to restore
+#' @param ibi_or_ppg used to define whether the data being restored is from the IBI or PPG series
 #' @importFrom dplyr between
-#' @noRd
 
 restore_button_action <- function(input, restore_id, edited_data, original_data, brush_id, ibi_or_ppg=NULL){
   observeEvent(input[[restore_id]], {

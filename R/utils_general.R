@@ -4,7 +4,6 @@
 #' 
 #' @param input {shiny} internal
 #' @importFrom shinyFiles shinyDirChoose
-#' @noRd
 
 get_user_folder <- function(input){
   if(Sys.getenv('USERPROFILE')=="")
@@ -41,7 +40,6 @@ set_file_size_max <- function(size = 500){
 #' distribution, re-scaled to a range of 0 to 1.
 #' 
 #' @param x is a numeric vector or series
-#' @noRd
 
 range01 <- function(x){
   (x-min(x, na.rm = T))/(max(x, na.rm = T)-min(x, na.rm = T))
@@ -56,7 +54,6 @@ range01 <- function(x){
 #' @param x a \code{numeric} series, vector, or matrix of values
 #'
 #' @return maximum a posteriori value of the input object
-#' @noRd
 
 estimate_max_density <- function(x){
   d <- density(x)
@@ -71,7 +68,6 @@ estimate_max_density <- function(x){
 #' @param trim number of seconds to trim from the beginning and end of the IBI series to remove when calculating HR
 #' 
 #' @return estimate of HR in beats per minute
-#' @noRd
 
 estimate_average_HR <- function(ibi_data=NULL, ibi_col="IBI", trim=3){
 
@@ -98,7 +94,6 @@ estimate_average_HR <- function(ibi_data=NULL, ibi_col="IBI", trim=3){
 #' @param time_col name of the column in \code{ibi_data} that contains information about the relative 
 #' 
 #' @return repiration statistics for the IBI series
-#' @noRd
 
 estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL,
                                      respiration_mapping=AVERAGE_RESPIRATION_BY_AGE, ibi_col="IBI", time_col="Time"){
@@ -142,7 +137,6 @@ estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL,
 #' @param optional_id id value that can be provided by the user to further differentiate files and directories
 #' 
 #' @return the output directory which combines the file settings. Creates the directory if not present.
-#' @noRd
 
 create_and_return_output_dir <- function(wd=NULL, case_id=NULL, optional_id=NULL){
   out_folder_name <- paste(case_id, "output", sep="_")
@@ -166,7 +160,6 @@ create_and_return_output_dir <- function(wd=NULL, case_id=NULL, optional_id=NULL
 #' @param out_dir the output directory set by {create_and_return_output_dir}
 #' 
 #' @return a directory for saving "screenshots" from {ibiVizEdit}
-#' @noRd
 
 create_and_return_screenshot_dir <- function(out_dir=NULL){
   dir <- paste0(out_dir, "/screenshots")
@@ -186,7 +179,6 @@ create_and_return_screenshot_dir <- function(out_dir=NULL){
 #' @param sys_time the timestamp from the system used to differentiate between outputs 
 #' 
 #' @return creates and outputs the sub directory for a given Gaussian process imputation run
-#' @noRd
 
 create_and_return_gp_output_subdir <- function(out_dir, gp_driver, sys_time=Sys.time()){
   gp_folder_name <- paste("GP_imputation_output", gp_driver$prediction_window[1], gp_driver$prediction_window[2],
@@ -209,7 +201,6 @@ create_and_return_gp_output_subdir <- function(out_dir, gp_driver, sys_time=Sys.
 #' @param upper_bound the upper bound of the allowable integer range
 #' 
 #' @return raises a warning if value is not an integer or not in permitted range
-#' @noRd
 
 raise_not_in_range_integer <- function(input_val=NULL, input_name=NULL, lower_bound=NULL, upper_bound=NULL){
   msg <- "The input value of {input_val} for {input_name} must be an integer"

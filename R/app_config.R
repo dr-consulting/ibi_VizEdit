@@ -2,8 +2,7 @@
 #' 
 #' @param ... Character vector specifying directory and or file to
 #'     point to inside the current package.
-#' 
-#' @noRd
+
 app_sys <- function(...){
   system.file(..., package = "ibiVizEdit")
 }
@@ -16,8 +15,7 @@ app_sys <- function(...){
 #' @param use_parent Logical, scan the parent directory for config file.
 #'     
 #' @import config
-#' 
-#' @noRd
+
 get_golem_config <- function(
   value, 
   config = Sys.getenv("R_CONFIG_ACTIVE", "default"), 

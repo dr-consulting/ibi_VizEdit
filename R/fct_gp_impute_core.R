@@ -17,7 +17,6 @@
 #'
 #' @return a set of inputs for the imputation model 
 #' @export
-#' @noRd
 
 generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NULL, total_time=NULL, ds=NULL,
                                       input_windows=NULL, ppg_col="PPG", time_col="Time"){

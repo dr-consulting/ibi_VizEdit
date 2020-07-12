@@ -5,7 +5,6 @@
 #' @export
 #' @importFrom shiny shinyApp
 #' @importFrom golem with_golem_options
-#' @noRd
 
 run_app <- function(
   ...
