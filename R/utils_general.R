@@ -1,7 +1,8 @@
 #' Finding user home directory.
 #'
 #' \code{get_user_folder} is designed to identify the home directory of the user who initiated the R session.
-#'
+#' 
+#' @param input {shiny} internal
 #' @importFrom shinyFiles shinyDirChoose
 #' @noRd
 
@@ -27,7 +28,6 @@ get_user_folder <- function(input){
 #' users
 #' 
 #' @export
-#' 
 
 set_file_size_max <- function(size = 500){
   options(shiny.maxRequestSize=size*1024^2)
@@ -39,6 +39,8 @@ set_file_size_max <- function(size = 500){
 #'
 #' \code{range01} is an internal utility that takes a vector of values and returns a new vector with the same
 #' distribution, re-scaled to a range of 0 to 1.
+#' 
+#' @param x is a numeric vector or series
 #' @noRd
 
 range01 <- function(x){
@@ -54,7 +56,7 @@ range01 <- function(x){
 #' @param x a \code{numeric} series, vector, or matrix of values
 #'
 #' @return maximum a posteriori value of the input object
-#' @export
+#' @noRd
 
 estimate_max_density <- function(x){
   d <- density(x)
@@ -63,6 +65,12 @@ estimate_max_density <- function(x){
 
 
 #' Internal utility for \code{ibiVizEdit} that generates a global estimated mean HR
+#' 
+#' @param ibi_data \code{data.frame} that contains the IBI time series and corresponding time values
+#' @param ibi_col name of the column in \code{ibi_data} that contains the IBI values
+#' @param trim number of seconds to trim from the beginning and end of the IBI series to remove when calculating HR
+#' 
+#' @return estimate of HR in beats per minute
 #' @noRd
 
 estimate_average_HR <- function(ibi_data=NULL, ibi_col="IBI", trim=3){
@@ -82,6 +90,14 @@ estimate_average_HR <- function(ibi_data=NULL, ibi_col="IBI", trim=3){
 }
 
 #' Internal utility for determing average respiration jointly using PPG and IBI signals
+#' 
+#' @param ibi_data \code{data.frame} that contains the IBI time series and corresponding time values
+#' @param respiration_cat PLACEHOLDER
+#' @param respiration_mapping PLACEHOLDER
+#' @param ibi_col name of the column in \code{ibi_data} that contains the IBI values
+#' @param time_col name of the column in \code{ibi_data} that contains information about the relative 
+#' 
+#' @return repiration statistics for the IBI series
 #' @noRd
 
 estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL,
@@ -120,6 +136,12 @@ estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL,
 
 
 #' Internal \code{ibiVizEdit} utility for creating output directory inside working directory
+#' 
+#' @param wd the working directory for the project
+#' @param case_id id used by {ibiVizEdit} to track outputs 
+#' @param optional_id id value that can be provided by the user to further differentiate files and directories
+#' 
+#' @return the output directory which combines the file settings. Creates the directory if not present.
 #' @noRd
 
 create_and_return_output_dir <- function(wd=NULL, case_id=NULL, optional_id=NULL){
@@ -140,6 +162,10 @@ create_and_return_output_dir <- function(wd=NULL, case_id=NULL, optional_id=NULL
 
 
 #' Internal \code{ibiVizEdit} utility for creating screenshot directory inside of the output directory
+#' 
+#' @param out_dir the output directory set by {create_and_return_output_dir}
+#' 
+#' @return a directory for saving "screenshots" from {ibiVizEdit}
 #' @noRd
 
 create_and_return_screenshot_dir <- function(out_dir=NULL){
@@ -154,6 +180,12 @@ create_and_return_screenshot_dir <- function(out_dir=NULL){
 
 
 #' Internal \code{ibiVizEdit} utility for creating an subdirectory for GP imputation model outputs
+#' 
+#' @param out_dir the output directory set by {create_and_return_output_dir}
+#' @param gp_driver a \code{list} containing the imputation data and settings 
+#' @param sys_time the timestamp from the system used to differentiate between outputs 
+#' 
+#' @return creates and outputs the sub directory for a given Gaussian process imputation run
 #' @noRd
 
 create_and_return_gp_output_subdir <- function(out_dir, gp_driver, sys_time=Sys.time()){
@@ -170,6 +202,13 @@ create_and_return_gp_output_subdir <- function(out_dir, gp_driver, sys_time=Sys.
 
 
 #' Internal \code{ibiVizEdit} utility that generates a warning if an input expected to be an integer is not
+#' 
+#' @param input_val the value passed by the user to the {ibiVizEdit} gui
+#' @param input_name the name corresponding to the {shiny} {input} being evaluated
+#' @param lower_bound the lower bound of the allowable integer range
+#' @param upper_bound the upper bound of the allowable integer range
+#' 
+#' @return raises a warning if value is not an integer or not in permitted range
 #' @noRd
 
 raise_not_in_range_integer <- function(input_val=NULL, input_name=NULL, lower_bound=NULL, upper_bound=NULL){
@@ -189,18 +228,3 @@ raise_not_in_range_integer <- function(input_val=NULL, input_name=NULL, lower_bo
   }
 }
 
-
-#' Internal \code{ibiVizEdit} utility that creates a running log of user actions
-#' @noRd
-
-user_action_log <- function(button_name){
-  tmp_dat <- data.frame(Timestamp=Sys.time(), action=button_name, stringsAsFactors = FALSE)
-
-  if(is.null(DYNAMIC_DATA[["action_log"]])){
-    DYNAMIC_DATA[["action_log"]] <- tmp_dat
-  }
-
-  else{
-    DYNAMIC_DATA[["action_log"]] <- rbind(DYNAMIC_DATA[["action_log"]], tmp_dat)
-  }
-}
