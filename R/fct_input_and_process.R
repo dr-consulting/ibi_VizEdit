@@ -13,7 +13,6 @@
 #' initialized at 0.
 #'
 #' @export
-#'
 
 load_ppg <- function(file_name=NULL, skip_lines=NULL, column=NULL, sampling_rate=NULL){
   if(file.exists(file_name)){
@@ -39,10 +38,20 @@ load_ppg <- function(file_name=NULL, skip_lines=NULL, column=NULL, sampling_rate
 
 
 #' Internal utility that creates a down-sampled data.frame of the ppg signal
-#' @noRd
+#' 
+#' @param ppg_data \code{data.frame} that contains the processed PPG data 
+#' @param sampling_rate the original sampling rate in Hz of the PPG data 
+#' @param downsampled_rate the downsampling rate for the PPG waveform to enable easier plotting. Default is 100 Hz
+#' @param ppg_col column name in \code{ppg_data} that contains the PPG signal
+#' @param time_col column name in \code{ppg_data} that contains the timing information corresponding with the PPG
+#' signal
+#' 
+#' @return a \code{data.frame} with the down-sampled PPG signal
+#' @importFrom signal resample
+#' @export
 
 downsample_ppg_data <- function(ppg_data, sampling_rate, downsampled_rate=100, ppg_col="PPG", time_col="Time"){
-  ds_ppg <- signal::resample(ppg_data[[ppg_col]], p=downsampled_rate, q=sampling_rate)
+  ds_ppg <- resample(ppg_data[[ppg_col]], p=downsampled_rate, q=sampling_rate)
   ds_time <- seq(min(ppg_data[[time_col]]), max(ppg_data[[time_col]]), length.out = length(ds_ppg))
   df <- data.frame(PPG=ds_ppg, Time=ds_time)
   return(df)
@@ -50,7 +59,16 @@ downsample_ppg_data <- function(ppg_data, sampling_rate, downsampled_rate=100, p
 
 
 #' Internal utility that attempts to maximize raw signal properties to generate more reliable peak locations
-#' @noRd
+#'
+#' @param ppg_data \code{data.frame} that contains the processed PPG data 
+#' @param sampling_rate the original sampling rate in Hz of the PPG data 
+#' @param ppg_col column name in \code{ppg_data} that contains the PPG signal
+#' @param time_col column name in \code{ppg_data} that contains the timing information corresponding with the PPG
+#' signal
+#' 
+#' @return a processed and filtered PPG signal - de-noised and with linear trend removed
+#' @importFrom seewave bwfilter
+#' @export
 
 filter_ppg <- function(ppg_data, sampling_rate, ppg_col="PPG", time_col="Time"){
   ppg_sig <- ppg_data[[ppg_col]]
@@ -60,7 +78,7 @@ filter_ppg <- function(ppg_data, sampling_rate, ppg_col="PPG", time_col="Time"){
   ppg_sig <- smooth.spline(ppg_sig, nknots=10*sampling_rate)$y
   ppg_sig <- ts(ppg_sig, frequency = sampling_rate)
 
-  ppg_filtered <- seewave::bwfilter(ppg_sig, from=50/60, to=180/60, bandpass=TRUE, f=sampling_rate)
+  ppg_filtered <- bwfilter(ppg_sig, from=50/60, to=180/60, bandpass=TRUE, f=sampling_rate)
 
   df <- data.frame(PPG = ppg_filtered,
                    Time = ppg_data[[time_col]])
@@ -70,7 +88,14 @@ filter_ppg <- function(ppg_data, sampling_rate, ppg_col="PPG", time_col="Time"){
 
 
 #' Internal utility that trims down the time range of the PPG signal used to edit the data
-#' @noRd
+#'
+#' @param ppg_data \code{data.frame} that contains the processed PPG data 
+#' @param timing_data \code{data.frame} user defined input data set containing task timing
+#' @param time_col column name in \code{ppg_data} that contains the timing information corresponding with the PPG
+#' signal
+#' 
+#' @return a \code{data.frame} that has been restricted to the range of the timing file +/- 3 seconds
+#' @export
 
 trim_ppg_window <- function(ppg_data, timing_data, time_col="Time"){
   # Taking the min and max and adding a 3 second-buffer before the start and after the end of the observation period
@@ -93,9 +118,7 @@ trim_ppg_window <- function(ppg_data, timing_data, time_col="Time"){
 #'
 #' @return returns a vector of time stamps that correspond to the start and stop time codes for tasks/conditions of
 #' interest
-#'
 #' @export
-#'
 
 load_timing_data <- function(file_name=NULL, case_id=NULL){
   if(file.exists(file_name) & !is.null(case_id)){
@@ -130,8 +153,10 @@ load_timing_data <- function(file_name=NULL, case_id=NULL){
 #'
 #' There needs to be a lot of data formatting checks/errors raised here - lots of unit testing as a result too
 #'
-#' One check is to make sure that the columns appear arranged in order (may just want a separate format utility to run)
-#' @noRd
+#' @param df the original timing data
+#' 
+#' @return \code{data.frame} formatted for a clean display on the processing tab in the ibiVizEdit \code{RShiny} gui
+#' @export
 
 create_gui_timing_table <- function(df=NULL){
   if(!is.null(df)){
@@ -162,10 +187,9 @@ create_gui_timing_table <- function(df=NULL){
 #' Must be formatted such that the element is the start of the first task/condition, the second element is the end of
 #' that task, the third is start of the second condition/task, the fourth is the end of that task and so on.
 #'
-#' @return Returns a re-coded version of the inputs with new timing
+#' @return a re-coded version of the inputs with new timing
 #'
 #' @export
-#'
 
 time_center <- function(x, time_col = 'Time', timing_series = NULL){
   if(!is.null(timing_series)){
