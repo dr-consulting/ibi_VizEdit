@@ -4,6 +4,19 @@
 #' set of "Time" and "PPG" inputs for the imputation model. These inputs represent PPG data that "surrounds" the window
 #' selected for imputation. The size of the window is dynamically determined for each participant based on average
 #' respiration rate (derived from \code{estimate_avg_respiration()}).
+#' 
+#' @param time_min lower boundary of the time window that defines the PPG data selected for imputation 
+#' @param time_max upper boundary of the time window that defines the PPG data selected for imputation
+#' @param ppg_data \code{data.frame} that contains the PPG data 
+#' @param total_time is the total length of the PPG data selected for imputation in seconds
+#' @param ds downsampled sampling rate in Hz 
+#' @param input_windows a \code{list} that cotains the pre and post timing boundaries for the input data used in the 
+#' imputation model 
+#' @param ppg_col name of the column in the PPG \code{data.frame} that contains the PPG signal
+#' @param time_col name of the column in the PPG \code{data.frame} that contains timing information in seconds
+#'
+#' @return a set of inputs for the imputation model 
+#' @export
 #' @noRd
 
 generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NULL, total_time=NULL, ds=NULL,
@@ -85,6 +98,7 @@ generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NUL
 #' @param target_time_max is a \code{numeric} 1D vector that contains the maximum time value of the user-defined
 #' imputation window.
 #'
+#' @return list that contains the input imputation windows boundaries
 #' @export
 
 generate_imputation_input_windows <- function(time_vector, total_input_time, target_time_min, target_time_max){
@@ -146,7 +160,20 @@ generate_imputation_input_windows <- function(time_vector, total_input_time, tar
 
 
 #' Internal utility for extracting local HP mean and sd based on user-identified valid data
-#' @noRd
+#' 
+#' @param ibi_data a \code{data.frame} containing the IBI series and corresponding time
+#' @param time_min the lower boundary of the imputation window - used to identify the range from which to calculate the 
+#' "local" average heart period
+#' @param time_max the upper boundary of the imputation window - used to identify the range from which to calculate the
+#' "local" average heart period
+#' @param selected_points returned from the \code{shiny} brush used to identify the PPG imputation window
+#' @param input_windows the windows defined by the user and default settings that will be used by the imputation model 
+#' to calculate the replacement PPG data for the targeted selection.
+#' @param ibi_col the column name in \code{ibi_data} that contains the IBI time series
+#' @param time_col the column name in the \code{ibi_data} that contains the timing information for the IBI series
+#' 
+#' @return a \code{list} of "local" heart period stats including the mean and standard deviation
+#' @export
 
 extract_valid_local_HP_stats <- function(ibi_data=NULL, time_min=NULL, time_max=NULL, selected_points=NULL,
                                          input_windows=NULL, ibi_col="IBI", time_col="Time"){
@@ -160,7 +187,15 @@ extract_valid_local_HP_stats <- function(ibi_data=NULL, time_min=NULL, time_max=
 
 
 #' Internal utility for defining time variable over which to impute
-#' @noRd
+#' 
+#' @param ppg_data \code{data.frame} that contains the PPG data 
+#' @param time_min lower boundary of the time window that defines the PPG data selected for imputation 
+#' @param time_max upper boundary of the time window that defines the PPG data selected for imputation
+#' @param ds downsampled sampling rate in Hz 
+#' @param time_col name of the column in the PPG \code{data.frame} that contains timing information in seconds
+#' 
+#' @return the time values corresponding to the imputation window
+#' @export
 
 generate_imputation_time <- function(ppg_data=NULL, time_min=NULL, time_max=NULL, ds=NULL, time_col="Time"){
   sample_rate <- round(ds/24)
@@ -172,9 +207,18 @@ generate_imputation_time <- function(ppg_data=NULL, time_min=NULL, time_max=NULL
 
 
 #' Internal \code{ibiVizEdit} utility for generating diagnostic traceplots
-#'
+#' 
+#' @param model_outputs output object generated from the imputation run
+#' @param gp_driver a \code{list} object used to define the imputation problem and includes hyperparameters
+#' @param sub_id the subject id defined by the user and used by \code{ibiVizEdit} to label outputs 
+#' @param secondary_id a secondary id value defined by the user and used by \code{ibiVizEdit} to label outputs
+#' @param study_id as study id value defined by the user and used by \code{ibiVizEdit} to label outputs
+#' @param out_dir the internal directory where outputs are stored - created via a default process defined by the 
+#' internal settings of \code{ibiVizEdit}
+#' 
+#' @return saves imputation model diagnostics plots 
 #' @importFrom cowplot plot_grid
-#' @noRd
+#' @export
 
 save_gp_imputation_traceplots <- function(model_outputs=NULL, gp_driver=NULL, sub_id=NULL, secondary_id=NULL,
                                           study_id=NULL, out_dir=NULL){
@@ -210,9 +254,18 @@ save_gp_imputation_traceplots <- function(model_outputs=NULL, gp_driver=NULL, su
 
 #' Internal \code{ibiVizEdit} utility for generation a model output summary in .txt
 #'
+#' @param model_outputs output object generated from the imputation run
+#' @param gp_driver a \code{list} object used to define the imputation problem and includes hyperparameters
+#' @param sub_id the subject id defined by the user and used by \code{ibiVizEdit} to label outputs 
+#' @param secondary_id a secondary id value defined by the user and used by \code{ibiVizEdit} to label outputs
+#' @param study_id as study id value defined by the user and used by \code{ibiVizEdit} to label outputs
+#' @param out_dir the internal directory where outputs are stored - created via a default process defined by the 
+#' internal settings of \code{ibiVizEdit}
+#'
+#' @return saves imputation model and system information in a raw text file
 #' @importFrom benchmarkme get_cpu get_ram
 #' @importFrom parallel detectCores
-#' @noRd
+#' @export
 
 save_model_summary_as_text <- function(model_outputs=NULL, gp_driver=NULL,sub_id=NULL, secondary_id=NULL, study_id=NULL,
                                        out_dir=NULL){
@@ -244,7 +297,12 @@ save_model_summary_as_text <- function(model_outputs=NULL, gp_driver=NULL,sub_id
 
 
 #' Internal \code{ibiVizEdit} utility for appending summary data from an imputation model's posterior distributions
-#' @noRd
+#' 
+#' @param model_outputs output object generated from the imputation run
+#' @param pars the parameters from the model for which to generate maximum a posteriori estimates
+#' 
+#' @return appends maximum a posteriori estiamtes from the imputation model to the \code{model_outputs} 
+#' @export
 
 add_MAP_summaries <- function(model_outputs=NULL, pars=c("HR", "R")){
   for(p in 1:length(pars)){
@@ -256,8 +314,12 @@ add_MAP_summaries <- function(model_outputs=NULL, pars=c("HR", "R")){
 
 #' Internal \code{ibiVizEdit} utility for selecting maximum a posteriori estimates of corrupted PPG data
 #'
+#' @param model_outputs output object generated from the imputation run
+#' @param gp_driver a \code{list} object used to define the imputation problem and includes hyperparameters
+#' 
+#' @return output \code{data.frame} that upsamples based on the Gaussian process imputation model
 #' @importFrom ImputeTS na_kalman 
-#' @noRd
+#' @export
 
 generate_gp_ppg_predictions <- function(model_outputs=NULL, gp_driver=NULL){
   time_df <- data.frame(Time=seq(gp_driver$prediction_window[1], gp_driver$prediction_window[2], by=1/gp_driver$ds))
@@ -270,7 +332,11 @@ generate_gp_ppg_predictions <- function(model_outputs=NULL, gp_driver=NULL){
 
 
 #' Internal \code{ibiVizEdit} utility for identying large Rhat estimates in GP imputation model outputs
-#' @noRd
+#' 
+#' @param summary_table model summary table that includes rhat values for inspection
+#' 
+#' @return a warning if one of the r-hats returned from the model is problematic 
+#' @export
 
 check_for_large_rhats <- function(summary_table=NULL){
   if(sum(summary_table$Rhat > 1.1) > 1){
@@ -293,7 +359,8 @@ check_for_large_rhats <- function(summary_table=NULL){
 
 
 #' Internal \code{ibiVizEdit} utility for generating the GP imputation model in Stan code
-#' @noRd
+#' 
+#' @return the \code{Stan} code that defines the Gaussian process imputation model used by \code{ibiVizEdit}
 
 return_stan_code <- function(){
   model_string <- "
