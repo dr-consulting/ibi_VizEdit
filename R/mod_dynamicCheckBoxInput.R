@@ -1,5 +1,6 @@
 #' UI Shiny Module for \code{ibiVizEdit} that serves as a basic wrapper and enables dynamic updating of checkbox UI
 #'
+#' @param id for the namespace that connects the ui and server components of the module
 #' @importFrom shiny uiOutput
 #' @noRd
 
@@ -10,6 +11,11 @@ dynamicCheckBoxInputModUI <-function(id=NULL){
 
 #' Server Shiny Module for \code{ibiVizEdit} that serves as a basic wrapper and enables dynamic updating of checkbox UI
 #'
+#' @param input,output,session internal parameters for {shiny}
+#' @param label value displayed on ui for the specific checkbox
+#' @param choices values available for selection 
+#' @param selected the default set of selections
+#' @param paste_char optional value or vector that appends to each value defined by {choices} and {selected}
 #' @importFrom shinyWidgets awesomeCheckboxGroup
 #' @noRd
 
