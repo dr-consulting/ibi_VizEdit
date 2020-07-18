@@ -1,8 +1,5 @@
-create_sim_ppg <- function(sampling_rate, min_time, max_time, hr_freq){ 
-  time <- seq(min_time, max_time, by=1/sampling_rate)
-  sim_ppg <- cos(2*pi*time*hr_freq)
-  return(sim_ppg)
-}
+# Testing functionality of peak detection algorithm support utilities
+source("../testdata/testing_data_utils.R")
 
 test_that("find_ibis: a properly formatted list of data.frames simulated data", {
   # test stub
@@ -12,7 +9,7 @@ test_that("find_ibis: a properly formatted list of data.frames simulated data", 
   hr_freq <- 80/60
   
   sim_ppg <- create_sim_ppg(sampling_rate, min_time, max_time, hr_freq)
-  ibi_out <- find_ibis(sim_ppg, sampling_rate, min_time, time_adjust = 0, peak_iter = 200)
+  ibi_out <- find_ibis(sim_ppg$PPG, sampling_rate, min_time, time_adjust = 0, peak_iter = 200)
   
   # Basic list properties
   expect_type(ibi_out, "list")

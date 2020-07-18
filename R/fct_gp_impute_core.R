@@ -8,7 +8,6 @@
 #' @param time_min lower boundary of the time window that defines the PPG data selected for imputation 
 #' @param time_max upper boundary of the time window that defines the PPG data selected for imputation
 #' @param ppg_data \code{data.frame} that contains the PPG data 
-#' @param total_time is the total length of the PPG data selected for imputation in seconds
 #' @param ds downsampled sampling rate in Hz 
 #' @param input_windows a \code{list} that cotains the pre and post timing boundaries for the input data used in the 
 #' imputation model 
@@ -16,19 +15,20 @@
 #' @param time_col name of the column in the PPG \code{data.frame} that contains timing information in seconds
 #'
 #' @return a set of inputs for the imputation model 
+#' @importFrom dplyr between
 #' @export
 
-generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NULL, total_time=NULL, ds=NULL,
+generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NULL, ds=NULL,
                                       input_windows=NULL, ppg_col="PPG", time_col="Time"){
 
-  sample_rate <- round(ds/12)
+  sample_rate <- round(ds/10)
 
   # Creating a basic set of guardails here to propagate forward presence/effects of NULL values
   if(!is.null(input_windows$pre) & !is.null(input_windows$post)){
-    time_pre <- ppg_data[time_col][between(ppg_data[time_col], input_windows$pre[1], input_windows$pre[2])]
-    time_post <- ppg_data[time_col][between(ppg_data[time_col], input_windows$post[1], input_windows$post[2])]
-    ppg_pre <- ppg_data[ppg_col][between(ppg_data[time_col], input_windows$pre[1], input_windows$pre[2])]
-    ppg_post <- ppg_data[ppg_col][between(ppg_data[time_col], input_windows$post[1], input_windows$post[2])]
+    time_pre <- ppg_data[[time_col]][between(ppg_data[[time_col]], input_windows$pre[1], input_windows$pre[2])]
+    time_post <- ppg_data[[time_col]][between(ppg_data[[time_col]], input_windows$post[1], input_windows$post[2])]
+    ppg_pre <- ppg_data[[ppg_col]][between(ppg_data[[time_col]], input_windows$pre[1], input_windows$pre[2])]
+    ppg_post <- ppg_data[[ppg_col]][between(ppg_data[[time_col]], input_windows$post[1], input_windows$post[2])]
   }
 
   # Enforcing guardrails for processing steps that could return NULLs as invalid processing outputs
@@ -41,7 +41,7 @@ generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NUL
     else{
       warning("Input time vector and ppg vector do not match in length. Specify your imputation window again.", "\n",
               "If this continues to happen either contact the developer (mbarstead@deadreckoning.consulting), or", "\n",
-              "submit an issue on GitHub: https://github.com/matgbar/IBI_VizEdit")
+              "submit an issue on GitHub: https://github.com/dr-consulting/ibi_vizedit")
       time_pre <- NULL
       ppg_pre <- NULL
     }
