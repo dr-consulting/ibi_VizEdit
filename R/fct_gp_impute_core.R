@@ -33,6 +33,7 @@ generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NUL
 
   # Enforcing guardrails for processing steps that could return NULLs as invalid processing outputs
   if(exists("time_pre") & exists("ppg_pre")){
+    browser()
     if(length(time_pre) == length(ppg_pre)){
       select_seq <- seq(1, length(time_pre), by=sample_rate)
       time_pre <- time_pre[select_seq]

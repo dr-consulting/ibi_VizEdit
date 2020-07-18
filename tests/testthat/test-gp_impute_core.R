@@ -22,3 +22,23 @@ test_that("generate_model_ppg_inputs: returns a properly formatted data.frame", 
   n_rows_post <- nrow(ppg_data[dplyr::between(ppg_data[["Time"]], input_windows$post[1], input_windows$post[2]), ]) - 1
   expect_equal(nrow(result)-2, (n_rows_pre + n_rows_post)/(sample_rate/10))
 })
+
+test_that("generate_model_ppg_inputs: rasises warnings", {
+  time_min <- 10
+  time_max <- 30
+  hr_freq <- 90/60
+  sample_rate <- 1000
+  ppg_data <- create_sim_ppg(sample_rate, time_min, time_max, hr_freq)
+  
+  input_windows <- list(pre = c(9,11), post = c(28, 30))
+  
+  expected <- paste("Input time vector and ppg vector do not match in length. Specify your imputation window again.", "\n",
+                    "If this continues to happen either contact the developer (mbarstead@deadreckoning.consulting), or", "\n",
+                    "submit an issue on GitHub: https://github.com/dr-consulting/ibi_vizedit") 
+  
+  result <- expect_warning(
+    generate_model_ppg_inputs(time_min = 20, time_max = 25, ppg_data = ppg_data, ds = sample_rate, 
+                              input_windows = input_windows), 
+    expected
+  )
+})
