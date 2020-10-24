@@ -139,6 +139,9 @@ load_timing_data <- function(file_name=NULL, case_id=NULL){
 
     if(!is.null(timing_data) & case_id %in% timing_data[,1]){
       time_stamps <- timing_data[timing_data[,1] == case_id,]
+      
+      # Coerce any values imported as strings to numbers
+      time_stamps[,2:ncol(time_stamps)] <- as.numeric(time_stamps[,2:ncol(time_stamps)])
       return(time_stamps)
     }
     else{

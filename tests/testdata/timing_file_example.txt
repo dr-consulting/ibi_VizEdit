@@ -1,0 +1,4 @@
+case_id	t1_start	t1_stop	t2_start	t2_stop	t3_start	t3_stop
+only_numeric	5	45	50	100	105	165
+numeric_string	“5”	45	“50”	100	105	165
+numeric_uncoerceable	five	Forty-five	fifty	one hundred	One-oh-five	one hundred and sixty-five

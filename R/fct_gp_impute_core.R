@@ -9,7 +9,7 @@
 #' @param time_max upper boundary of the time window that defines the PPG data selected for imputation
 #' @param ppg_data \code{data.frame} that contains the PPG data 
 #' @param ds downsampled sampling rate in Hz 
-#' @param input_windows a \code{list} that cotains the pre and post timing boundaries for the input data used in the 
+#' @param input_windows a \code{list} that contains the pre and post timing boundaries for the input data used in the 
 #' imputation model 
 #' @param ppg_col name of the column in the PPG \code{data.frame} that contains the PPG signal
 #' @param time_col name of the column in the PPG \code{data.frame} that contains timing information in seconds
@@ -23,7 +23,7 @@ generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NUL
 
   sample_rate <- round(ds/10)
 
-  # Creating a basic set of guardails here to propagate forward presence/effects of NULL values
+  # Creating a basic set of guardrails here to propagate forward presence/effects of NULL values
   if(!is.null(input_windows$pre) & !is.null(input_windows$post)){
     time_pre <- ppg_data[[time_col]][between(ppg_data[[time_col]], input_windows$pre[1], input_windows$pre[2])]
     time_post <- ppg_data[[time_col]][between(ppg_data[[time_col]], input_windows$post[1], input_windows$post[2])]
@@ -32,38 +32,19 @@ generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NUL
   }
 
   # Enforcing guardrails for processing steps that could return NULLs as invalid processing outputs
-  if(exists("time_pre") & exists("ppg_pre")){
-    browser()
-    if(length(time_pre) == length(ppg_pre)){
-      select_seq <- seq(1, length(time_pre), by=sample_rate)
-      time_pre <- time_pre[select_seq]
-      ppg_pre <- ppg_pre[select_seq]
-    }
-    else{
-      warning("Input time vector and ppg vector do not match in length. Specify your imputation window again.", "\n",
-              "If this continues to happen either contact the developer (mbarstead@deadreckoning.consulting), or", "\n",
-              "submit an issue on GitHub: https://github.com/dr-consulting/ibi_vizedit")
-      time_pre <- NULL
-      ppg_pre <- NULL
-    }
+  if(exists('time_pre') & exists('ppg_pre')){
+    select_seq <- seq(1, length(time_pre), by=sample_rate)
+    time_pre <- time_pre[select_seq]
+    ppg_pre <- ppg_pre[select_seq]
   }
-
+  
   # Enforcing guardrails for processing steps that could return NULLs as invalid processing outputs
   if(exists("time_post") & exists("ppg_post")){
-    if(length(time_post) == length(ppg_post)){
-      select_seq <- seq(1, length(time_post), by=sample_rate)
-      time_post <- time_post[select_seq]
-      ppg_post <- ppg_post[select_seq]
-    }
-    else{
-      warning("Input time vector and ppg vector do not match in length. Specify your imputation window again.", "\n",
-              "If this continues to happen either contact the developer (mbarstead@deadreckoning.consulting), or", "\n",
-              "submit an issue on GitHub: https://github.com/matgbar/IBI_VizEdit")
-      time_post <- NULL
-      ppg_post <- NULL
-    }
+    select_seq <- seq(1, length(time_post), by=sample_rate)
+    time_post <- time_post[select_seq]
+    ppg_post <- ppg_post[select_seq]
   }
-
+  
   # Return an empty object if there is an error in this processing step - will be govern display of user warnings
   if(is.null(time_pre) | is.null(time_post)){
     inputs_df <- NULL

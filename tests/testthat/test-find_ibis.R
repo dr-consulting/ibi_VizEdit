@@ -1,7 +1,7 @@
 # Testing functionality of peak detection algorithm support utilities
 source("../testdata/testing_data_utils.R")
 
-test_that("find_ibis: a properly formatted list of data.frames simulated data", {
+test_that("find_ibis: returns a properly formatted list of data.frames simulated data", {
   # test stub
   sampling_rate <- 1000
   min_time <- -1 
