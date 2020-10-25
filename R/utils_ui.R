@@ -262,7 +262,7 @@ ppgEditingTools <- function(){
   tagList(tags$h4("Plot Settings"),
           sliderInput("ppg_y_axis", label="Set y-axis min/max:", min=-5, max=5, value=c(0, 2), step=.25),
           fluidRow(
-            dynamicClrButtonModUI("set_y_axis")
+            dynamicClrButtonModUI("set_ppg_y_axis")
             ),
           tags$hr(),
           tags$h4("Editing Mode:"),

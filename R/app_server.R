@@ -200,7 +200,6 @@ app_server <- function( input, output, session ) {
              trigger_id="ibi_drag_select")
   
   observeEvent(TRIGGERS[["ibi_drag_select"]], {
-    #browser()
     if(TRIGGERS[["ibi_drag_select"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ibi"]])){
       TEMP_GRAPHICS_SETTINGS[["select_mode"]] <- "drag"
       BUTTON_STATUS[["ibi_click_select"]] <- FALSE
@@ -291,7 +290,7 @@ app_server <- function( input, output, session ) {
   # --------------------------------------------------------------------------------------------------------------------
   # PPG Editing Tab
   # --------------------------------------------------------------------------------------------------------------------
-  callModule(dynamicClrButtonMod, "ppg_y_axis", status_name="set_ppg_y_axis", label="Set y-axis")
+  callModule(dynamicClrButtonMod, "set_ppg_y_axis", status_name="set_ppg_y_axis", label="Set y-axis")
   callModule(dynamicClrButtonMod, "ppg_edit_mode", status_name="ppg_edit_mode", label="Insert/Remove")
   callModule(dynamicClrButtonMod, "ppg_imp_mode", status_name="ppg_imp_mode", label="Imputation Mode")
   callModule(dynamicClrButtonMod, "insert", status_name="insert", label="Insert")
@@ -308,4 +307,38 @@ app_server <- function( input, output, session ) {
   output$ppg_main_scroll <- renderPlot({
     basic_ppg(ppg_data=STATIC_DATA[["processed_ppg100"]])
   })
-}
+  
+  # Enable reactivity with the set_ppg_y_axis button
+  callModule(eventTriggerMod, "set_ppg_y_axis", input_id="click_in",
+             trigger_items=reactive({BUTTON_STATUS[["set_ppg_y_axis"]]}), trigger_values=TRUE, trigger_object=TRIGGERS,
+             trigger_id="set_ppg_y_axis")
+  
+  
+  # Enable reactivity using the ppg_edit_mode button
+  callModule(eventTriggerMod, "ppg_edit_mode", input_id="click_in",
+             trigger_items=reactive({BUTTON_STATUS[["ppg_imp_mode"]]}), trigger_values=TRUE, trigger_object=TRIGGERS,
+             trigger_id="ppg_edit_mode")
+  
+  observeEvent(TRIGGERS[["ppg_edit_mode"]], {
+    if(TRIGGERS[["ppg_edit_mode"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ppg"]])){
+      TEMP_GRAPHICS_SETTINGS[["ppg_mode"]] <- "edit"
+      BUTTON_STATUS[["ppg_imp_mode"]] <- FALSE
+      BUTTON_STATUS[["ppg_edit_mode"]] <- ifelse(!BUTTON_STATUS[["ppg_edit_mode"]], TRUE, FALSE)
+    }
+  })
+  
+  # Enable reactivity using the ppg_imp_mode button
+  callModule(eventTriggerMod, "ppg_imp_mode", input_id="click_in",
+             trigger_items=reactive({BUTTON_STATUS[["ppg_edit_mode"]]}), trigger_values=TRUE,
+             trigger_object=TRIGGERS, trigger_id="ppg_imp_mode")
+  
+  observeEvent(TRIGGERS[["ppg_imp_mode"]], {
+    if(TRIGGERS[["ppg_imp_mode"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ppg"]])){
+      TEMP_GRAPHICS_SETTINGS[["select_mode"]] <- "impute"
+      BUTTON_STATUS[["ppg_edit_mode"]] <- FALSE
+      BUTTON_STATUS[["ppg_imp_mode"]] <- ifelse(!BUTTON_STATUS[["ppg_imp_mode"]], TRUE, FALSE)
+    }
+  })
+  
+  
+} # end of server
