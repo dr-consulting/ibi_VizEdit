@@ -40,6 +40,7 @@ IBI_POINT_COLORS <- c(combined="#e482ff",
                       averaged="#e482ff",
                       divided="#e482ff",
                       original="#426ebd",
+                      manual="#fd8d3c",
                       uneditable="#c0392b")
 
 #' Location of the main Dead Reckoning logo
@@ -116,8 +117,6 @@ BUTTON_STATUS <- reactiveValues(
   set_ppg_y_axis=0,
   ppg_edit_mode=0,
   ppg_imp_mode=0,
-  insert=0,
-  remove=0,
   erase_ppg=0,
   set_impute_window=0,
   set_valid_ibis=0,

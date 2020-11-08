@@ -208,7 +208,13 @@ ppg_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
   else{
     p <- generate_base_gui_plot(ibi_data=ibi_data, color_map=IBI_POINT_COLORS)
     if(!is.null(brush_in)){
-      p <- p + coord_cartesian(xlim=c(brush_in$xmin, brush_in$xmax))
+      if(!is.null(TEMP_GRAPHICS_SETTINGS[["ymin"]])){
+        p <- p + coord_cartesian(xlim=c(brush_in$xmin, brush_in$xmax),
+                                 ylim=c(TEMP_GRAPHICS_SETTINGS[["ymin"]], TEMP_GRAPHICS_SETTINGS[["ymax"]]))
+      }
+      else{
+        p <- p + coord_cartesian(xlim=c(brush_in$xmin, brush_in$xmax))
+      }
     }
     p <- add_task_v_lines(base_plot=p, timing_data=STATIC_DATA[["display_task_times"]])
     p <- add_ppg_waveform(base_plot=p, ppg_data=DYNAMIC_DATA[["edited_ppg"]],
@@ -283,6 +289,77 @@ click_point_selection <- function(input, click_id, dbl_click_id, valid_status="c
       if(!is.null(DYNAMIC_DATA[["selected_points"]])){
         DYNAMIC_DATA[["selected_points"]] <- NULL
       }
+    }
+  })
+}
+
+
+#' Server side function that enables manual addition and removal of IBI points using the PPG waveform
+#' 
+#' Note that this function is mainly intended for use after imputing a section of PPG data. It can however be used
+#' in conjunction with the raw PPG signal. Results may not differ from those produced by the initial peak detection
+#' algorithm because the function leverages the same basic peak detection machinery \(see \code{find_peaks}\), albeit
+#' on a set of points closer to the peak manually identified by the user. 
+#' 
+#' @param input {shiny} internal
+#' @param click_id the click id used to perform point selection in the "main" editing plot on a given panel
+#' @param dbl_click_id the double click id used to perform point selection in the "main" editing plot on a given panel. 
+#' This action is used to reset or "de-select" any points that were previously highlighted by the user. 
+#' @param valid_status defaults to "click" - the other option is "drag" in terms of point selection
+#' @param status_var the reactiveValues that "track" whether the select_mode status is "drag" or "click"
+#' 
+#' @importFrom dplyr between filter
+
+click_ppg_editing <- function(input, click_id, dbl_click_id, valid_status="edit",
+                              status_var=reactive({TEMP_GRAPHICS_SETTINGS[["ppg_mode"]]})){
+  observeEvent(input[[click_id]], {
+    if(status_var() == valid_status & !is.null(input[[click_id]])){
+      # if clicked need to find the peak near that location
+      bw <- STATIC_DATA[["peak_detect_tab"]][["BW"]][1] # extract final bandwidth used
+      hz <- STATIC_DATA[["hz_output"]]
+      ppg_peak_data <- nearPoints(DYNAMIC_DATA[["edited_ppg"]], input[[click_id]], xvar="Time",
+                                  yvar="PPG", maxpoints = bw)
+      
+      peak_loc <- find_peaks(ppg_peak_data[["PPG"]], bw)
+      
+      ibi_before <- DYNAMIC_DATA[["edited_ibi"]] %>% 
+        dplyr::filter(Time < ppg_peak_data[["Time"]][peak_loc])
+      
+      ibi_after <- DYNAMIC_DATA[["edited_ibi"]] %>% 
+        dplyr::filter(Time > ppg_peak_data[["Time"]][peak_loc])
+      
+      time_new <- c(ibi_before[["Time"]], ppg_peak_data[["Time"]][peak_loc], ibi_after[["Time"]])
+      pnt_type <- c(ibi_before[["pnt_type"]], "manual", ibi_after[["pnt_type"]])
+      ibi_new <- time_diff(time_new)[-1]
+      ibi_new <- c(DYNAMIC_DATA[['edited_ibi']][['IBI']][1], ibi_new)
+      
+      DYNAMIC_DATA[['edited_ibi']] <- data.frame(IBI=ibi_new,
+                             Time=time_new,
+                             pnt_type=pnt_type,
+                             stringsAsFactors = FALSE)
+    }
+  })
+  
+  observeEvent(input[[dbl_click_id]], {
+    # Removes a point when double-clicked on in the PPG editing panel
+    if(status_var() == valid_status){
+      ibi_data <- nearPoints(DYNAMIC_DATA[["edited_ibi"]], input[[dbl_click_id]], xvar="Time",
+                                  yvar="IBI", maxpoints = 1)
+      
+      ibi_before <- DYNAMIC_DATA[["edited_ibi"]] %>% 
+        dplyr::filter(Time < ibi_data[["Time"]][1])
+      
+      ibi_after <-  DYNAMIC_DATA[["edited_ibi"]] %>% 
+        dplyr::filter(Time > ibi_data[["Time"]][1])
+      
+      time_new <- c(ibi_before[["Time"]], ibi_after[["Time"]])
+      pnt_type <- c(ibi_before[["pnt_type"]], ibi_after[["pnt_type"]])
+      ibi_new <- time_diff(time_new)[-1]
+      ibi_new <- c(DYNAMIC_DATA[['edited_ibi']][['IBI']][1], ibi_new)
+      DYNAMIC_DATA[['edited_ibi']] <- data.frame(IBI=ibi_new,
+                                                 Time=time_new,
+                                                 pnt_type=pnt_type,
+                                                 stringsAsFactors = FALSE)
     }
   })
 }

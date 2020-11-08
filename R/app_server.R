@@ -67,7 +67,7 @@ app_server <- function( input, output, session ) {
       }
       
       if(!is.null(STATIC_DATA[["orig_ppg"]])){
-        BUTTON_STATUS[["process_ppg"]] <- 1
+        BUTTON_STATUS[["process_ppg"]] <- TRUE
       }
     }
   })
@@ -148,9 +148,14 @@ app_server <- function( input, output, session ) {
         DYNAMIC_DATA[["edited_ibi"]] <- STATIC_DATA[["orig_ibi"]]
       }
       
+      # "Turn on" IBI buttons
       BUTTON_STATUS[["set_ibi_y_axis"]] <- TRUE
       BUTTON_STATUS[["show_ppg"]] <- TRUE
       BUTTON_STATUS[["ibi_drag_select"]] <- TRUE
+      
+      # "Turn on" PPG buttons
+      BUTTON_STATUS[["set_ppg_y_axis"]] <- TRUE
+      BUTTON_STATUS[["ppg_imp_mode"]] <- TRUE
     }
   })
   
@@ -300,19 +305,17 @@ app_server <- function( input, output, session ) {
   callModule(dynamicClrButtonMod, "set_valid_ibis", status_name="set_valid_ibis", label="Lock IBIs")
   callModule(dynamicClrButtonMod, "gp_impute", status_name="gp_impute",label="Run Bayesian GPM")
   
-  output$ppg_main_plot <- renderPlot({
-    ppg_editing_plot(brush_in=input$editing_scroll_x)
-  })
-  
-  output$ppg_main_scroll <- renderPlot({
-    basic_ppg(ppg_data=STATIC_DATA[["processed_ppg100"]])
-  })
-  
   # Enable reactivity with the set_ppg_y_axis button
   callModule(eventTriggerMod, "set_ppg_y_axis", input_id="click_in",
              trigger_items=reactive({BUTTON_STATUS[["set_ppg_y_axis"]]}), trigger_values=TRUE, trigger_object=TRIGGERS,
              trigger_id="set_ppg_y_axis")
   
+  observeEvent(TRIGGERS[["set_ppg_y_axis"]], {
+    if(TRIGGERS[["set_ppg_y_axis"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ppg"]])){
+      TEMP_GRAPHICS_SETTINGS[["ymin"]] <- input$ppg_y_axis[1]
+      TEMP_GRAPHICS_SETTINGS[["ymax"]] <- input$ppg_y_axis[2]
+    }
+  })
   
   # Enable reactivity using the ppg_edit_mode button
   callModule(eventTriggerMod, "ppg_edit_mode", input_id="click_in",
@@ -340,5 +343,14 @@ app_server <- function( input, output, session ) {
     }
   })
   
+  click_ppg_editing(input, click_id="add_ibi_ppg", dbl_click_id="del_ibi_ppg")
+  
+  output$ppg_main_plot <- renderPlot({
+    ppg_editing_plot(brush_in=input$editing_scroll_x)
+  })
+  
+  output$ppg_main_scroll <- renderPlot({
+    basic_ppg(ppg_data=STATIC_DATA[["processed_ppg100"]])
+  })
   
 } # end of server

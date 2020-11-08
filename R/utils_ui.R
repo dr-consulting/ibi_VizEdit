@@ -7,6 +7,7 @@ addLogo <- function(logo_filepath=NULL, url="https://www.deadreckoning.consultin
   tags$a(href=url, tags$img(src=logo_filepath))
 }
 
+
 #' UI utility for \code{ibiVizEdit} that generates a series of file and director input objects
 #'
 #' @param button_color hexidecimal code for the button coloring
@@ -267,14 +268,8 @@ ppgEditingTools <- function(){
           tags$hr(),
           tags$h4("Editing Mode:"),
           fluidRow(
-            dynamicClrButtonModUI("ppg_edit_mode", inline=TRUE),
-            dynamicClrButtonModUI("ppg_imp_mode", inline=TRUE)
-            ),
-          tags$hr(),
-          tags$h4("Editing Actions:"),
-          fluidRow(
-            dynamicClrButtonModUI("insert", inline=TRUE),
-            dynamicClrButtonModUI("remove", inline=TRUE)
+            dynamicClrButtonModUI("ppg_imp_mode", inline=TRUE), 
+            dynamicClrButtonModUI("ppg_edit_mode", inline=TRUE)
           ),
           tags$hr(),
           tags$h4("Imuputation Input Data Tools:"),
@@ -304,8 +299,8 @@ ppgEditingTools <- function(){
 #' @importFrom shiny plotOutput
 
 ppgEditingPlots <- function(){
-  tagList(plotOutput("ppg_main_plot", height=600, brush=brushOpts("select_ppg", direction="x"), click="click_ppg",
-                     dblclick="dbclick_ppg"),
+  tagList(plotOutput("ppg_main_plot", height=600, brush=brushOpts("select_ppg", direction="x"), click="add_ibi_ppg",
+                     dblclick="del_ibi_ppg"),
           plotOutput("ppg_main_scroll", height=125, brush=brushOpts("editing_scroll_x", direction="x")))
 }
 
