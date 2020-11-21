@@ -5,7 +5,7 @@
 \alias{IBI_POINT_COLORS}
 \title{Central location for IBI point colors used throughout the plots based on point type as defined in this named vector}
 \format{
-An object of class \code{character} of length 5.
+An object of class \code{character} of length 6.
 }
 \usage{
 IBI_POINT_COLORS

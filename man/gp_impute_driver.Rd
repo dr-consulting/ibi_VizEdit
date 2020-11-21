@@ -24,7 +24,7 @@ gp_impute_driver(
 \arguments{
 \item{iter}{number of iterations per chain}
 
-\item{warmup}{number of warmup interations}
+\item{warmup}{number of warmup iterations}
 
 \item{adapt_delta}{parameter passed to rstan call}
 

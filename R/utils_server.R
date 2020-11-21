@@ -199,7 +199,7 @@ generate_heads_up_info <- function(input, hover_id=NULL, ibi_data=NULL){
 #' @param ibi_data IBI data stored in a list of reactiveValues and edited during the user's {ibiVizEdit} session
 #' @param brush_in the brush used to define the time window for inspection
 #' 
-#' @importFrom ggplot coord_cartesian
+#' @importFrom ggplot2 coord_cartesian geom_rect
 
 ppg_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NULL){
   if(is.null(ibi_data)){
@@ -220,6 +220,26 @@ ppg_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
     p <- add_ppg_waveform(base_plot=p, ppg_data=DYNAMIC_DATA[["edited_ppg"]],
                           show_ppg=TRUE)
     p <- highlight_ibis(base_plot=p, selected_points=DYNAMIC_DATA[["selected_points"]])
+    
+    browser()
+    if(!is.null(DYNAMIC_DATA[["impute_target"]]) & !is.null(TEMP_GRAPHICS_SETTINGS[['impute_windows']])) {
+      if(!is.null(TEMP_GRAPHICS_SETTINGS[['impute_windows']][['pre']])) {
+        p <- p + geom_rect(data = data.frame(xmin=TEMP_GRAPHICS_SETTINGS[['impute_windows']][['pre']][1], 
+                                             xmax=TEMP_GRAPHICS_SETTINGS[['impute_windows']][['pre']][2], 
+                                             ymin=-Inf, 
+                                             ymax=Inf),
+                           aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
+                           fill="#33ff64", alpha=.5, inherit.aes = FALSE)
+      }
+      if(!is.null(TEMP_GRAPHICS_SETTINGS[['impute_windows']][['post']])) {
+        p <- p + geom_rect(data = data.frame(xmin=TEMP_GRAPHICS_SETTINGS[['impute_windows']][['post']][1], 
+                                             xmax=TEMP_GRAPHICS_SETTINGS[['impute_windows']][['post']][2], 
+                                             ymin=-Inf, 
+                                             ymax=Inf),
+                           aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
+                           fill="#33ff64", alpha=.5, inherit.aes = FALSE)
+      }
+    }
   }
   return(p)
 }
@@ -232,15 +252,15 @@ ppg_editing_plot <- function(ibi_data=DYNAMIC_DATA[["edited_ibi"]], brush_in=NUL
 #' @param valid_status defaults to "drag" - the other option is "click" in terms of point selection
 #' @param status_var the reactiveValues that "track" whether the select_mode status is "drag" or "click"
 
-drag_point_collection <- function(input, brush_id, valid_status="drag",
+drag_point_collection <- function(input, brush_id, selected_name, valid_status="drag", target_df = "edited_ibi",
                                   status_var=reactive({TEMP_GRAPHICS_SETTINGS[["select_mode"]]})){
   observeEvent(input[[brush_id]], {
     if(status_var() == valid_status){
       if(!is.null(input[[brush_id]])){
-        DYNAMIC_DATA[["selected_points"]] <- brushedPoints(DYNAMIC_DATA[["edited_ibi"]], input[[brush_id]])
+        DYNAMIC_DATA[[selected_name]] <- brushedPoints(DYNAMIC_DATA[[target_df]], input[[brush_id]])
       }
       else{
-        DYNAMIC_DATA[["selected_points"]] <- NULL
+        DYNAMIC_DATA[[selected_name]] <- NULL
       }
     }
   },

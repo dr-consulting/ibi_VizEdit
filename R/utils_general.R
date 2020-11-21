@@ -97,7 +97,7 @@ estimate_average_HR <- function(ibi_data=NULL, ibi_col="IBI", trim=3){
 
 estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL,
                                      respiration_mapping=AVERAGE_RESPIRATION_BY_AGE, ibi_col="IBI", time_col="Time"){
-
+  
   respiration_bounds <- respiration_mapping[respiration_cat][[1]]/60
 
   # Upsampling the IBI signal to enable interpolation for additional processing.
@@ -125,7 +125,8 @@ estimate_avg_respiration <- function(ibi_data=NULL, respiration_cat=NULL,
   sd_resp <- sqrt(wss)
 
   resp_stats <- c(mean=mean_resp, sd=sd_resp)
-
+  
+  # TODO NEED CHECKS HERE FOR OUTPUT MUST BE VALID RANGE
   return(resp_stats)
 }
 

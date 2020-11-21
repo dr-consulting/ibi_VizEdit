@@ -50,7 +50,7 @@ app_server <- function( input, output, session ) {
              trigger_values=TRUE, trigger_object=TRIGGERS, trigger_id="load")
   
   observeEvent(TRIGGERS[["load"]], {
-    if(TRIGGERS[["load"]] == TRUE){
+    if(TRIGGERS[["load"]]){
       
       showModal(modalDialog(
         title = 'Loading Files',
@@ -131,7 +131,7 @@ app_server <- function( input, output, session ) {
                                    min_time=min(STATIC_DATA[["display_task_times"]][["Start"]]),
                                    peak_iter=STATIC_DATA[["peak_iter"]])
       
-      # Save the original set of IBIs detetectd at the start of the program run to a static data location
+      # Save the original set of IBIs detected at the start of the program run to a static data location
       STATIC_DATA[["orig_ibi"]] <- ibi_output_list[["IBI_out"]]
       STATIC_DATA[["orig_ibi"]][["pnt_type"]] <- "original"
       
@@ -226,7 +226,7 @@ app_server <- function( input, output, session ) {
   })
   
   # Next building out capacity to store "selected_points" - using drag to select
-  drag_point_collection(input, brush_id="drag_ibis")
+  drag_point_collection(input, brush_id="drag_ibis", selected_name = "selected_points")
   
   # Using click to select
   click_point_selection(input, click_id="click_ibis", dbl_click_id="clear_ibis")
@@ -301,10 +301,13 @@ app_server <- function( input, output, session ) {
   callModule(dynamicClrButtonMod, "insert", status_name="insert", label="Insert")
   callModule(dynamicClrButtonMod, "remove", status_name="remove", label="Remove")
   callModule(dynamicClrButtonMod, "erase_ppg", status_name="erase_ppg", label="Erase PPG")
-  callModule(dynamicClrButtonMod, "set_impute_window", status_name="set_impute_window", label="Lock Window")
+  callModule(dynamicClrButtonMod, "set_impute_window", status_name="set_impute_window", label="Lock Window", 
+             updated_label = "Unset Window", default_display_name = "set_impute_window_default")
   callModule(dynamicClrButtonMod, "set_valid_ibis", status_name="set_valid_ibis", label="Lock IBIs")
   callModule(dynamicClrButtonMod, "gp_impute", status_name="gp_impute",label="Run Bayesian GPM")
   
+  drag_point_collection(input, brush_id = "select_ppg", selected_name = "impute_target", valid_status = TRUE, 
+                        target_df =  "edited_ppg", status_var = reactive({BUTTON_STATUS[["ppg_imp_mode"]]}))
   # Enable reactivity with the set_ppg_y_axis button
   callModule(eventTriggerMod, "set_ppg_y_axis", input_id="click_in",
              trigger_items=reactive({BUTTON_STATUS[["set_ppg_y_axis"]]}), trigger_values=TRUE, trigger_object=TRIGGERS,
@@ -344,6 +347,56 @@ app_server <- function( input, output, session ) {
   })
   
   click_ppg_editing(input, click_id="add_ibi_ppg", dbl_click_id="del_ibi_ppg")
+  
+  
+  observeEvent(input[["select_ppg"]], {
+    if(!is.null(input[['select_ppg']]) & !is.null(DYNAMIC_DATA[['edited_ppg']]) & 
+       BUTTON_STATUS[["set_impute_window_default"]]) {
+      # TODO: understand why this is getting hit twice each time
+      browser()
+      BUTTON_STATUS[["set_impute_window"]] <- TRUE
+    }
+    else if(is.null(input[['select_ppg']]) & !is.null(DYNAMIC_DATA[['edited_ppg']]) 
+            & BUTTON_STATUS[["set_impute_window_default"]]) {
+      browser()
+      BUTTON_STATUS[["set_impute_window"]] <- FALSE
+    }
+  })
+  
+  # Enable reactivity the lock window function
+  callModule(eventTriggerMod, "set_impute_window", input_id="click_in",
+             trigger_items=reactive({BUTTON_STATUS[["set_impute_window"]]}), trigger_values=TRUE,
+             trigger_object=TRIGGERS, trigger_id="set_impute_window")
+  
+  observeEvent(TRIGGERS[["set_impute_window"]], {
+    if(TRIGGERS[["set_impute_window"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ppg"]]) & 
+       BUTTON_STATUS[["set_impute_window_default"]]){
+      # Start testing basic functionality here. 
+      browser()
+      resp_stats <- estimate_avg_respiration(ibi_data=DYNAMIC_DATA[['edited_ibi']],
+                                             respiration_cat=input[['resp_age_grp']],
+                                             respiration_mapping=AVERAGE_RESPIRATION_BY_AGE, 
+                                             ibi_col="IBI", time_col="Time")
+      
+      TEMP_GRAPHICS_SETTINGS[['impute_windows']] <- generate_imputation_input_windows(
+        time_vector=DYNAMIC_DATA[['edited_ppg']][["Time"]], 
+        total_input_time=3/resp_stats[1], 
+        target_time_min=input[["select_ppg"]]$xmin, 
+        target_time_max=input[["select_ppg"]]$xmax
+      )
+      
+      BUTTON_STATUS[["set_impute_window_default"]] <- FALSE
+    }
+    
+    else if(TRIGGERS[["set_impute_window"]] == TRUE & !is.null(DYNAMIC_DATA[["edited_ppg"]]) & 
+             !BUTTON_STATUS[["set_impute_window_default"]]) {
+      TEMP_GRAPHICS_SETTINGS[['impute_windows']] <- NULL
+      BUTTON_STATUS[["set_impute_window_default"]] <- TRUE
+    }
+  })
+  
+  # TODO: add erase ppg... need to do this in a way that maintains the greenshading
+  # TODO: change lock IBIs to lock PPG - a final step after cleaning to enable imputation
   
   output$ppg_main_plot <- renderPlot({
     ppg_editing_plot(brush_in=input$editing_scroll_x)

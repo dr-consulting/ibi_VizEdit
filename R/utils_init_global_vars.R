@@ -119,6 +119,7 @@ BUTTON_STATUS <- reactiveValues(
   ppg_imp_mode=0,
   erase_ppg=0,
   set_impute_window=0,
+  set_impute_window_default=TRUE,
   set_valid_ibis=0,
   gp_impute=0
 )
@@ -136,7 +137,8 @@ TRIGGERS <- reactiveValues(
   average=0, 
   set_ppg_y_axis=0, 
   ppg_edit_mode=0,
-  ppg_imp_mode=0
+  ppg_imp_mode=0, 
+  set_impute_window=0
 )
 
 #' Initialization of SUMMARY_STATS reactiveValues used to store summary values calculated during application usage
@@ -181,8 +183,14 @@ DYNAMIC_DATA <- reactiveValues(
 #' can be modified by user when interacting with the application. 
 TEMP_GRAPHICS_SETTINGS <- reactiveValues(
   ymin=NULL,
+  
   ymax=NULL,
   show_ppg=FALSE,
   select_mode="drag", 
-  ppg_mode='impute'
+  ppg_mode='impute' 
+)
+
+#' Imputation data - should be ephemeral though certain properties will be appended to output/logs in the end
+IMPUTE_DATA <- reactiveValues(
+  impute_inputs = NULL
 )

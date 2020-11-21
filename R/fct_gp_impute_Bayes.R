@@ -2,7 +2,7 @@
 #' 
 #' This could use a considerable refactor - need to back through and break up a lot of these complicated functions
 #' @param iter number of iterations per chain
-#' @param warmup number of warmup interations
+#' @param warmup number of warmup iterations
 #' @param adapt_delta parameter passed to rstan call 
 #' @param time_min lower boundary of the time window for imputation 
 #' @param time_max upper boundary of the time window for imputation

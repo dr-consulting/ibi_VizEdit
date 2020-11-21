@@ -21,7 +21,7 @@
 generate_model_ppg_inputs <- function(time_min=NULL, time_max=NULL, ppg_data=NULL, ds=NULL,
                                       input_windows=NULL, ppg_col="PPG", time_col="Time"){
 
-  sample_rate <- round(ds/10)
+  sample_rate <- floor(ds/10)
 
   # Creating a basic set of guardrails here to propagate forward presence/effects of NULL values
   if(!is.null(input_windows$pre) & !is.null(input_windows$post)){
@@ -88,7 +88,7 @@ generate_imputation_input_windows <- function(time_vector, total_input_time, tar
   pre_bounds <- c(target_time_min - total_input_time/2, target_time_min)
   post_bounds <- c(target_time_max, target_time_max + total_input_time/2)
 
-  # Logic that attempts to balance and maxiimze the amount of input data around the target window.
+  # Logic that attempts to balance and maximize the amount of input data around the target window.
   if(pre_bounds[1] < time_vector_min | post_bounds[2] > time_vector_max){
     if(pre_bounds[1] < time_vector_min & post_bounds[2] > time_vector_max){
       pre_bounds[1] <- time_vector_min

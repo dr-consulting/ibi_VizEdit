@@ -8,7 +8,6 @@ generate_model_ppg_inputs(
   time_min = NULL,
   time_max = NULL,
   ppg_data = NULL,
-  total_time = NULL,
   ds = NULL,
   input_windows = NULL,
   ppg_col = "PPG",
@@ -22,11 +21,9 @@ generate_model_ppg_inputs(
 
 \item{ppg_data}{\code{data.frame} that contains the PPG data}
 
-\item{total_time}{is the total length of the PPG data selected for imputation in seconds}
-
 \item{ds}{downsampled sampling rate in Hz}
 
-\item{input_windows}{a \code{list} that cotains the pre and post timing boundaries for the input data used in the 
+\item{input_windows}{a \code{list} that contains the pre and post timing boundaries for the input data used in the 
 imputation model}
 
 \item{ppg_col}{name of the column in the PPG \code{data.frame} that contains the PPG signal}
